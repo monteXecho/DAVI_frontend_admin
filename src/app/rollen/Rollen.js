@@ -37,7 +37,7 @@ export default function Rollen () {
                                 onClick={() => setActiveIndex(index)}
                                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
                                 ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
-                                w-[82px] font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
+                                w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
                                 `}
                             >
                                 {tab.label}

@@ -2,17 +2,13 @@
 import { useState } from "react"
 
 import GebruikersTab from "./components/GebruikersTab"
-import MakenTab from "./components/MakenTab"
-import ToewijzenTab from "./components/ToewijzenTab"
-import VersturenTab from "./components/VersturenTab"
-import WijzigenTab from "./components/WijzigenTab"
+import GekoppeldDocumentTab from "./components/GekoppeldDocumentTab"
+import GekoppeldMapTab from "./components/GekoppeldMapTab"
 
 const tabsConfig = [
   { label: 'Gebruikers', component: GebruikersTab },
-  { label: 'Maken', component: MakenTab },
-  { label: 'Toewijzen', component: ToewijzenTab },
-  { label: 'Wijzigen', component: WijzigenTab },
-  { label: 'Versturen', component: VersturenTab },
+  { label: 'Gekoppeld aan document', component: GekoppeldDocumentTab },
+  { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
 ]
 
 export default function RolPz () {
@@ -37,7 +33,7 @@ export default function RolPz () {
                                 onClick={() => setActiveIndex(index)}
                                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
                                 ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
-                                w-[82px] font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
+                                w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
                                 `}
                             >
                                 {tab.label}

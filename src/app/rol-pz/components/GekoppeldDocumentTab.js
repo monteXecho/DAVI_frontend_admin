@@ -2,56 +2,66 @@
 import { useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
 
-const RolPZData = [
+const GekoppeldDocumentData = [
     {
-        Naam: 'Anna Bijsterbosch',
-        Email: 'info@annabijsterbosch.nl',
+        Map: 'Kwaliteit/veiligheid',
+        Bestand: 'kwaliteit-veiligheid-2025.pdf',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'Carsten Altena',
-        Email: 'info@creeert.net',
+        Map: 'Pedagogiek 0-4',
+        Bestand: 'beleid-pedagogiek-0-4-jarig.docx',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'JP Meijer',
-        Email: 'jeanphilippe.meijer@mijndavi.nl',
+        Map: 'Gezondheid/voeding',
+        Bestand: 'info-voeding-v2b.pdf',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'Carsten Altena',
-        Email: 'info@creeert.net',
+        Map: 'Kwaliteit/veiligheid',
+        Bestand: 'kwaliteit-veiligheid-2025.pdf',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'JP Meijer',
-        Email: 'jeanphilippe.meijer@mijndavi.nl',
+        Map: 'Pedagogiek 0-4',
+        Bestand: 'beleid-pedagogiek-0-4-jarig.docx',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'Carsten Altena',
-        Email: 'info@creeert.net',
+        Map: 'Pedagogiek 0-4',
+        Bestand: 'beleid-pedagogiek-0-4-jarig.docx',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'JP Meijer',
-        Email: 'jeanphilippe.meijer@mijndavi.nl',
+        Map: 'Pedagogiek 0-4',
+        Bestand: 'beleid-pedagogiek-0-4-jarig.docx',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'Carsten Altena',
-        Email: 'info@creeert.net',
+        Map: 'Pedagogiek 0-4',
+        Bestand: 'beleid-pedagogiek-0-4-jarig.docx',
         greenIcon: true,
         redIcon: true,
     },{
-        Naam: 'JP Meijer',
-        Email: 'jeanphilippe.meijer@mijndavi.nl',
+        Map: 'Kwaliteit/veiligheid',
+        Bestand: 'kwaliteit-veiligheid-2025.pdf',
+        greenIcon: true,
+        redIcon: true,
+    },{
+        Map: 'Kwaliteit/veiligheid',
+        Bestand: 'kwaliteit-veiligheid-2025.pdf',
+        greenIcon: true,
+        redIcon: true,
+    },{
+        Map: 'Kwaliteit/veiligheid',
+        Bestand: 'kwaliteit-veiligheid-2025.pdf',
         greenIcon: true,
         redIcon: true,
     }
 ]
 
-export default function GebruikersTab() {
+export default function GekoppeldDocumentTab() {
   const defaultValue = "Bulkacties";
   const allOptions = ["Option 1", "Option 2", "Option 3"];
   const [selected, setSelected] = useState(defaultValue);
@@ -74,18 +84,11 @@ export default function GebruikersTab() {
   return (
     <div className="flex flex-col w-[777px]">
         <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-            14 gebruikers met de rol PZ
+            786 documenten gekoppeld aan de rol PZ
         </div>
 
         <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-             <button className="w-[149px] h-[50px] border-[2px] border-[#23BD92] rounded-[8px] font-bold text-[16px] leading-[100%] tracking-[0] text-center text-[#23BD92]">
-                Bulk uploaden
-            </button>
-            <AddButton onClick={() => {}} text="Toevoegen" />
-        </div>
-
-        <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-            {/* <div className="flex gap-4"> */}
+            <div className="flex gap-4">
                 <div className="relative">
                     <div
                         className="flex items-center justify-between w-60 h-10 bg-white border border-[#D9D9D9] rounded-[8px] px-4 cursor-pointer select-none"
@@ -112,47 +115,17 @@ export default function GebruikersTab() {
                     )}
                 </div>
 
-                <div className="flex gap-2 items-center">
-                    <div className="relative">
-                        <div
-                            className="flex items-center justify-between w-60 h-10 bg-white border border-[#D9D9D9] rounded-[8px] px-4 cursor-pointer select-none"
-                            onClick={toggleDropdown}
-                            tabIndex={0}
-                            onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDropdown(); } }}
-                            aria-haspopup="listbox"
-                            aria-expanded={open}
-                        >
-                            <div className="font-montserrat font-normal text-base leading-6 text-[#1E1E1E]">{selected}</div>
-                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={open ? "rotate-180" : ""} style={{ transition: "transform 0.2s" }}>
-                            <path d="M1 1L5 5L9 1" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </div>
-
-                        {open && (
-                            <ul className="absolute top-full left-0 w-full bg-white border border-[#D9D9D9] rounded-lg mt-1 shadow-md max-h-48 overflow-auto z-10" role="listbox" tabIndex={-1}>
-                            {dropdownOptions.map(opt => (
-                                <li key={opt} className="px-4 py-2 cursor-pointer hover:bg-gray-100" onClick={() => selectOption(opt)} role="option" aria-selected={selected === opt} tabIndex={0} onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); selectOption(opt); } }}>
-                                {opt}
-                                </li>
-                            ))}
-                            </ul>
-                        )}
-                    </div>
-
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.997 0.00292969C15.515 0.00292969 19.995 4.48293 19.995 9.99993C19.995 15.5179 15.515 19.9979 9.997 19.9979C4.48 19.9979 0 15.5179 0 9.99993C0 4.48293 4.48 0.00292969 9.997 0.00292969ZM9.997 8.93593L7.276 6.21393C7.13 6.06793 6.937 5.99493 6.745 5.99493C6.341 5.99493 5.995 6.31893 5.995 6.74393C5.995 6.93693 6.068 7.12793 6.214 7.27493L8.936 9.99693L6.208 12.7249C6.061 12.8719 5.988 13.0649 5.988 13.2559C5.988 13.6829 6.338 14.0059 6.739 14.0059C6.931 14.0059 7.123 13.9329 7.269 13.7869L9.997 11.0589L12.726 13.7869C12.872 13.9329 13.064 14.0059 13.256 14.0059C13.657 14.0059 14.006 13.6829 14.006 13.2559C14.006 13.0649 13.933 12.8719 13.786 12.7249L11.059 9.99693L13.776 7.27993C13.922 7.13293 13.995 6.94193 13.995 6.74893C13.995 6.32393 13.649 5.99893 13.245 5.99893C13.053 5.99893 12.86 6.07193 12.714 6.21893L9.997 8.93593Z" fill="#C5BEBE"/>
+                <div className="relative w-[203px] h-10">
+                <input placeholder="Zoek gebruiker..." className="w-full h-full bg-white border border-[#D9D9D9] focus:outline-none rounded-full pl-4 pr-10 font-montserrat font-normal text-base leading-6 text-[#1E1E1E]" />
+                <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 13L10.1 10.1M11.6667 6.33333C11.6667 9.27885 9.27885 11.6667 6.33333 11.6667C3.38781 11.6667 1 9.27885 1 6.33333C1 3.38781 3.38781 1 6.33333 1C9.27885 1 11.6667 3.38781 11.6667 6.33333Z" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                </div>    
-
-                <div className="relative w-[213px] h-10">
-                    <input placeholder="Zoek gebruiker..." className="w-full h-full bg-white border border-[#D9D9D9] focus:outline-none rounded-full pl-4 pr-10 font-montserrat font-normal text-base leading-6 text-[#1E1E1E]" />
-                    <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13 13L10.1 10.1M11.6667 6.33333C11.6667 9.27885 9.27885 11.6667 6.33333 11.6667C3.38781 11.6667 1 9.27885 1 6.33333C1 3.38781 3.38781 1 6.33333 1C9.27885 1 11.6667 3.38781 11.6667 6.33333Z" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </div>
                 </div>
-            {/* </div> */}
+                </div>
+            </div>
+
+            <AddButton onClick={() => {}} text="Toevoegen" />
         </div>        
 
         <table className="w-full border-separate border-spacing-0 border border-transparent">
@@ -161,14 +134,14 @@ export default function GebruikersTab() {
                 {/* We can't use flex on <tr> so use table-layout fixed and padding to simulate */}
                     <th className="flex items-center gap-5 w-3/7 font-montserrat font-bold text-[16px] leading-6 text-black">
                         <input type="checkbox" className="box-border w-4 h-4 bg-white border border-[#757575] rounded-sm" />                        
-                        <span>Naam</span>
+                        <span>Map</span>
                         <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
                         </svg>
 
                     </th>
                     <th className="flex items-center gap-5 w-4/7 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        E-mail
+                        Bestand
                         <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
                         </svg>
@@ -178,13 +151,13 @@ export default function GebruikersTab() {
             </thead>
             <tbody>
                 {/* Example data rows */}
-                {RolPZData.map(({Naam, Email, greenIcon, redIcon}, i) => (
+                {GekoppeldDocumentData.map(({Map, Bestand, greenIcon, redIcon}, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
                         <td className="flex gap-5 w-3/7 font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                             <input type="checkbox" className="box-border w-4 h-4 bg-white border border-[#757575] rounded-sm" />                        
-                            {Naam}
+                            {Map}
                         </td>
-                        <td className="w-4/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{Email}</td>
+                        <td className="w-4/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{Bestand}</td>
                         <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
                         {greenIcon 
                         &&  <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
