@@ -8,7 +8,7 @@ import ChatItem from '@/assets/chat_item.png'
 import BKRItem from '@/assets/BKR_item.png'
 import VGCItem from '@/assets/VGC_item.png'
 import uursItem from '@/assets/uurs_item.png'
-import FooterItem from "./FooterItem"
+import FooterItem from "../FooterItem"
 
 export default function Footer () {
   const [activeTab, setActiveTab] = useState(null)

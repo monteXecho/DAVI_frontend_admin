@@ -9,7 +9,7 @@ import { useApi } from '@/lib/useApi';
 import UploadBttn from '@/components/buttons/UploadBttn';
 import UploadingBttn from '@/components/buttons/UploadingBttn';
 import SuccessBttn from '@/components/buttons/SuccessBttn';
-
+     
 const UploadStates = {
   IDLE: 'idle',
   UPLOADING: 'uploading',

@@ -1,6 +1,6 @@
-import SearchIcon from './icons/SearchIcon';
-import HistoryIcon from './icons/HistoryIcon';
-import DocumentIcon from './icons/DocumentIcon';
+import SearchIcon from '../icons/SearchIcon';
+import HistoryIcon from '../icons/HistoryIcon';
+import DocumentIcon from '../icons/DocumentIcon';
 
 export default function RightSidebar () {
     return (

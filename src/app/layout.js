@@ -1,9 +1,9 @@
 import './globals.css'
 import '@fontsource/montserrat/800.css';
-import LeftSidebar from '@/components/LeftSidebar'
-import RightSidebar from '@/components/RightSidebar'
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import LeftSidebar from '@/components/layout/LeftSidebar'
+import RightSidebar from '@/components/layout/RightSidebar'
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import KeycloakProviderWrapper from '@/components/KeycloakProviderWrapper'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
               </KeycloakProviderWrapper>
             </main>
           <div className='lg:hidden'> <Footer /> </div>
-          <div className='lg:block hidden'> <RightSidebar /> </div>
+          {/* <div className='lg:block hidden'> <RightSidebar /> </div> */}
         </div>
       </body>
     </html>
