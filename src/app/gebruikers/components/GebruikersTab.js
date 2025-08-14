@@ -1,6 +1,7 @@
 'use client'
 import { useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
+import CheckBox from "@/components/buttons/CheckBox";
 
 const RolPZData = [
     { Naam: 'Anna Bijsterbosch', Email: 'info@annabijsterbosch.nl', Rol: 'Beheerder' },
@@ -141,16 +142,7 @@ export default function GebruikersTab() {
             <thead className="bg-[#F9FBFA] border-b border-[#C5BEBE]">
                 <tr className="h-[51px] flex items-center gap-[40px] px-2">
                     <th className="flex items-center gap-5 w-3/8 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        <div className="inline-flex items-center">
-                            <label className="flex items-center relative">
-                                <input type="checkbox" className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[#23BD92] checked:border-[#23BD92]" id="check4" />
-                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>  
+                        <CheckBox toggle={false} color='#23BD92' />  
                         <span>Naam</span>
                         <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
@@ -194,7 +186,7 @@ export default function GebruikersTab() {
                                 <path d="M10.005 0.5C4.4825 0.5 0.00500488 4.9775 0.00500488 10.5C0.00500488 16.0225 4.4825 20.5 10.005 20.5C15.5275 20.5 20.005 16.0225 20.005 10.5C20.005 4.9775 15.5275 0.5 10.005 0.5ZM5.83834 14.6667L6.67667 11.3033L9.26501 13.8908L5.83834 14.6667ZM10.1383 13.1008L7.47001 10.4325L12.3375 5.5L15.005 8.16667L10.1383 13.1008Z" fill="#23BD92"/>
                             </svg>
                             <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M23.626 9.512C23.873 10.471 24.005 11.476 24.005 12.512C24.005 19.135 18.628 24.5 12.005 24.5C5.382 24.5 0.00500488 19.135 0.00500488 12.512C0.00500488 5.889 5.382 0.512 12.005 0.512C14.586 0.512 16.974 1.334 18.932 2.723L20.65 0.5L22.585 6.512H16.005L17.708 4.308C16.088 3.18 14.126 2.512 12.005 2.512C6.485 2.512 2.005 6.993 2.005 12.512C2.005 18.032 6.485 22.512 12.005 22.512C17.524 22.512 22.005 18.032 22.005 12.512C22.005 11.467 21.844 10.459 21.547 9.512H23.626ZM16.005 17.5H8.005V11.5H9.005V9.5C9.005 7.844 10.349 6.5 12.005 6.5C13.661 6.5 15.005 7.844 15.005 9.5V11.5H16.005V17.5ZM11.005 9.5V11.5H13.005V9.5C13.005 8.948 12.557 8.5 12.005 8.5C11.453 8.5 11.005 8.948 11.005 9.5Z" fill="#23BD92"/>
+                                <path fillRule="evenodd" clip-rule="evenodd" d="M23.626 9.512C23.873 10.471 24.005 11.476 24.005 12.512C24.005 19.135 18.628 24.5 12.005 24.5C5.382 24.5 0.00500488 19.135 0.00500488 12.512C0.00500488 5.889 5.382 0.512 12.005 0.512C14.586 0.512 16.974 1.334 18.932 2.723L20.65 0.5L22.585 6.512H16.005L17.708 4.308C16.088 3.18 14.126 2.512 12.005 2.512C6.485 2.512 2.005 6.993 2.005 12.512C2.005 18.032 6.485 22.512 12.005 22.512C17.524 22.512 22.005 18.032 22.005 12.512C22.005 11.467 21.844 10.459 21.547 9.512H23.626ZM16.005 17.5H8.005V11.5H9.005V9.5C9.005 7.844 10.349 6.5 12.005 6.5C13.661 6.5 15.005 7.844 15.005 9.5V11.5H16.005V17.5ZM11.005 9.5V11.5H13.005V9.5C13.005 8.948 12.557 8.5 12.005 8.5C11.453 8.5 11.005 8.948 11.005 9.5Z" fill="#23BD92"/>
                             </svg>
                             <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M10.002 0.50293C15.52 0.50293 20 4.98293 20 10.4999C20 16.0179 15.52 20.4979 10.002 20.4979C4.485 20.4979 0.00500488 16.0179 0.00500488 10.4999C0.00500488 4.98293 4.485 0.50293 10.002 0.50293ZM10.002 9.43593L7.281 6.71393C7.135 6.56793 6.942 6.49493 6.75 6.49493C6.346 6.49493 6 6.81893 6 7.24393C6 7.43693 6.073 7.62793 6.219 7.77493L8.941 10.4969L6.21301 13.2249C6.06601 13.3719 5.993 13.5649 5.993 13.7559C5.993 14.1829 6.34301 14.5059 6.74401 14.5059C6.93601 14.5059 7.12801 14.4329 7.274 14.2869L10.002 11.5589L12.731 14.2869C12.877 14.4329 13.069 14.5059 13.261 14.5059C13.662 14.5059 14.011 14.1829 14.011 13.7559C14.011 13.5649 13.938 13.3719 13.791 13.2249L11.064 10.4969L13.781 7.77993C13.927 7.63293 14 7.44193 14 7.24893C14 6.82393 13.654 6.49893 13.25 6.49893C13.058 6.49893 12.865 6.57193 12.719 6.71893L10.002 9.43593Z" fill="#E94F4F"/>

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from "react";
 import AddButton from "@/components/buttons/AddButton";
+import CheckBox from "@/components/buttons/CheckBox";
 
 const GekoppeldDocumentData = [
     {
@@ -169,16 +170,7 @@ export default function GekoppeldDocumentTab() {
                 <tr className="h-[51px] flex items-center gap-[40px] w-full px-2">
                 {/* We can't use flex on <tr> so use table-layout fixed and padding to simulate */}
                     <th className="flex items-center gap-5 w-3/9 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        <div className="inline-flex items-center">
-                            <label className="flex items-center relative">
-                                <input type="checkbox" className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[#23BD92] checked:border-[#23BD92]" id="check4" />
-                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                    </svg>
-                                </span>
-                            </label>
-                        </div>  
+                        <CheckBox toggle={false} color='#23BD92' />  
                         <span>Map</span>
                         <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
