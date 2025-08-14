@@ -25,7 +25,7 @@ const PdfSnippetList = ({ documents }) => {
     <div className='w-full flex flex-col gap-[11px]'>
       { Array.isArray(documents) && documents.length > 0 && (
         <>
-          <div className='font-montserrat font-bold text-sm leading-6 tracking-normal'>Bronnen</div>
+          <div className='font-montserrat font-bold text-[16px] leading-6 tracking-normal'>Bronnen</div>
           <div>
             {Object.entries(grouped).map(([file, snippets], idx) => (
               <div key={file} className="border-t-2 border-t-[#C5BEBE] py-2">

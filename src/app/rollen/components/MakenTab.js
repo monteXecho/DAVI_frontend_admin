@@ -2,14 +2,14 @@ import Toggle from "@/components/buttons/Toggle"
 
 export default function MakenTab () {
     return (
-        <div className="flex flex-col gap-11">
-            <div className="flex flex-col">
-                <span className="mb-2 font-montserrat font-normal text-sm leading-normal tracking-normal">Rolnaam</span>
-                <input type="text" className="mb-5 w-60 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
+        <div className="flex flex-col w-full gap-11">
+            <div className="flex flex-col w-full">
+                <span className="mb-2 font-montserrat font-normal text-[16px] leading-normal tracking-normal">Rolnaam</span>
+                <input type="text" className="mb-5 w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
                
-                <span className="mb-2 font-montserrat font-normal text-sm leading-normal tracking-normal">Toegang tot map/document</span>
+                <span className="mb-2 font-montserrat font-normal text-[16px] leading-normal tracking-normal">Toegang tot map/document</span>
                 <div className="flex mb-4  gap-[14px] items-center">
-                    <input type="text" placeholder="//beleid" className="w-60 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
+                    <input type="text" placeholder="//beleid" className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
                     <div className="flex gap-[6px]">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M9.997 0C15.515 0 19.995 4.48 19.995 9.998C19.995 15.515 15.515 19.995 9.997 19.995C4.48 19.995 0 15.515 0 9.998C0 4.48 4.48 0 9.997 0ZM9.25 9.25H5.75C5.336 9.25 5 9.586 5 10C5 10.414 5.336 10.75 5.75 10.75H9.25V14.25C9.25 14.664 9.586 15 10 15C10.414 15 10.75 14.664 10.75 14.25V10.75H14.25C14.664 10.75 15 10.414 15 10C15 9.586 14.664 9.25 14.25 9.25H10.75V5.75C10.75 5.336 10.414 5 10 5C9.586 5 9.25 5.336 9.25 5.75V9.25Z" fill="#23BD92"/>
@@ -21,7 +21,7 @@ export default function MakenTab () {
                     </div>
                 </div>
                 <div className="flex mb-4  gap-[14px] items-center">
-                    <input type="text" placeholder="//kwaliteit/bkr" className="w-60 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
+                    <input type="text" placeholder="//kwaliteit/bkr" className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
                     <div className="flex gap-[6px]">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M9.997 0C15.515 0 19.995 4.48 19.995 9.998C19.995 15.515 15.515 19.995 9.997 19.995C4.48 19.995 0 15.515 0 9.998C0 4.48 4.48 0 9.997 0ZM9.25 9.25H5.75C5.336 9.25 5 9.586 5 10C5 10.414 5.336 10.75 5.75 10.75H9.25V14.25C9.25 14.664 9.586 15 10 15C10.414 15 10.75 14.664 10.75 14.25V10.75H14.25C14.664 10.75 15 10.414 15 10C15 9.586 14.664 9.25 14.25 9.25H10.75V5.75C10.75 5.336 10.414 5 10 5C9.586 5 9.25 5.336 9.25 5.75V9.25Z" fill="#23BD92"/>
@@ -34,7 +34,7 @@ export default function MakenTab () {
                 </div>
             </div>
 
-            <div className="flex flex-col w-[378px] gap-10">
+            <div className="flex flex-col w-1/3 gap-10">
                 <div className="flex flex-col w-full gap-[23px]">
                     <div className="flex w-full items-center justify-between">
                         <span className="font-montserrat font-bold text-2xl leading-normal tracking-normal">AI-modules</span>
@@ -44,7 +44,7 @@ export default function MakenTab () {
                     {['Documentenchat', 'Vaste gezichten criterium', '3-uursregeling check', 'BKR check'].map(item => {
                         return (
                              <div key={item} className="flex w-full items-center justify-between">
-                                <span className="font-montserrat font-normal text-sm leading-normal tracking-normal">{item}</span>
+                                <span className="font-montserrat font-normal text-[16px] leading-normal tracking-normal">{item}</span>
                                 <Toggle checked={true}/>
                             </div>
                         )

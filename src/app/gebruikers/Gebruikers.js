@@ -2,16 +2,20 @@
 import { useState } from "react"
 
 import GebruikersTab from "./components/GebruikersTab"
+import MakenTab from "./components/MakenTab"
 import GekoppeldDocumentTab from "./components/GekoppeldDocumentTab"
 import GekoppeldMapTab from "./components/GekoppeldMapTab"
+import WijzigenTab from "./components/WijzigenTab"
 
 const tabsConfig = [
   { label: 'Gebruikers', component: GebruikersTab },
+  { label: 'Maken', component: MakenTab },
+  { label: 'Wijzigen', component: WijzigenTab },
   { label: 'Gekoppeld aan document', component: GekoppeldDocumentTab },
   { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
 ]
 
-export default function RolPz () {
+export default function Gebruikers () {
     const [activeIndex, setActiveIndex] = useState(0)
 
     const ActiveComponent = tabsConfig[activeIndex].component
@@ -19,7 +23,7 @@ export default function RolPz () {
     return (
         <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
            <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl leading-[100%] tracking-[0]">
-                Rol - PZ
+                Gebruikers
             </div>
 
             <div className="flex flex-col w-full">

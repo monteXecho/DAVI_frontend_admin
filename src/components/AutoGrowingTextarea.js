@@ -43,7 +43,7 @@ export default function AutoGrowingTextarea({ onSubmit, loading }) {
       </div>
 
       {loading && (
-        <p className="text-sm text-gray-500 mt-1">Bezig met laden...</p>
+        <p className="text-[16px] text-gray-500 mt-1">Bezig met laden...</p>
       )}
     </div>
   );

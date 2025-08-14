@@ -106,7 +106,7 @@ export default function DocumentClient() {
           <h1 className="text-[#342222] font-montserrat font-extrabold text-3xl leading-none">
             Documenten Robin!
           </h1>
-          <p className="text-black font-montserrat font-normal text-sm leading-6">
+          <p className="text-black font-montserrat font-normal text-[16px] leading-6">
             Hallo Robin! Hier vind je alle bedrijfs- en algemene documenten.
             <br />
             Je kunt direct een vraag stellen, of een eigen document uploaden voor analyse.
@@ -137,7 +137,7 @@ export default function DocumentClient() {
 
           {/* Response text */}
           {response && (
-            <div className="w-full font-montserrat font-normal text-sm whitespace-pre-wrap leading-normal">
+            <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
               {response}
             </div>
           )}
@@ -150,7 +150,7 @@ export default function DocumentClient() {
           
           {/* Error */}
           {error && (
-            <div className="text-red-600 text-sm font-medium">
+            <div className="text-red-600 text-[16px] font-medium">
               {error.message || 'Er is een fout opgetreden.'}
             </div>
           )}

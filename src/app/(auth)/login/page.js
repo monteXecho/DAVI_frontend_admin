@@ -23,7 +23,7 @@
 //             <p>Welcome, {keycloak.tokenParsed?.preferred_username}</p>
 //             <button
 //               onClick={() => keycloak.logout()}
-//               className="mt-2 text-sm text-red-500"
+//               className="mt-2 text-[16px] text-red-500"
 //             >
 //               Logout
 //             </button>

@@ -47,7 +47,7 @@ export default function Rollen () {
                     </div>
                     <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
                 </div>
-                <div className="w-full pl-[102px] pt-[46px]">
+                <div className="w-full px-[102px] py-[46px]">
                     <ActiveComponent />
                 </div>
             </div>
