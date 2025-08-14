@@ -140,7 +140,7 @@ export default function GebruikersTab() {
             <tbody>
                 {RolPZData.map(({Naam, Email, greenIcon, redIcon}, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
-                        <td className="flex gap-5 w-3/7 px-2">
+                        <td className="flex gap-5 w-3/7 px-2 items-center">
                             <input type="checkbox" className="w-4 h-4" />                        
                             {Naam}
                         </td>

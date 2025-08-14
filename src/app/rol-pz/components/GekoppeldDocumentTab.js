@@ -153,7 +153,7 @@ export default function GekoppeldDocumentTab() {
                 {/* Example data rows */}
                 {GekoppeldDocumentData.map(({Map, Bestand, greenIcon, redIcon}, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
-                        <td className="flex gap-5 w-3/7 font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
+                        <td className="flex gap-5 w-3/7 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                             <input type="checkbox" className="box-border w-4 h-4 bg-white border border-[#757575] rounded-sm" />                        
                             {Map}
                         </td>
