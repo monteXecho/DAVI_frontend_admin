@@ -1,9 +1,11 @@
 'use client'
-import { useState } from "react";
+
 import AddButton from "@/components/buttons/AddButton";
 import CheckBox from "@/components/buttons/CheckBox";
 import SearchBox from "@/components/input/SearchBox";
 import DropdownMenu from "@/components/input/DropdownMenu";
+import DownArrowIcon from "@/components/icons/DownArrowIcon";
+import EditIcon from "@/components/icons/EditIcon";
 
 const RolData = [
     {
@@ -47,26 +49,19 @@ export default function AlleRollenTab() {
         <table className="w-full border-separate border-spacing-0 border border-transparent">
             <thead className="bg-[#F9FBFA] border-b border-[#C5BEBE]">
                 <tr className="h-[51px] flex items-center gap-[40px] w-full px-2">
-                {/* We can't use flex on <tr> so use table-layout fixed and padding to simulate */}
                     <th className="flex items-center gap-5 w-2/7 font-montserrat font-bold text-[16px] leading-6 text-black">
                         <CheckBox toggle={false} color='#23BD92' /> 
                         <span>Rol</span>
-                        <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
-                        </svg>
+                        <DownArrowIcon />
 
                     </th>
                     <th className="flex items-center gap-5 w-2/7 font-montserrat font-bold text-[16px] leading-6 text-black">
                         Gebruikers
-                        <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
-                        </svg>
+                        <DownArrowIcon />
                     </th>
                     <th className="flex items-center gap-5 w-3/7 font-montserrat font-bold text-[16px] leading-6 text-black">
                         Documenten toegewezen
-                        <svg width="15" height="9" viewBox="0 0 15 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 1L7.5 7L1 0.999999" stroke="#8F8989" strokeWidth="2"/>
-                        </svg>
+                        <DownArrowIcon />
                     </th>
                     <th className="w-[52px] px-4 py-2"></th>
                 </tr>
@@ -82,12 +77,8 @@ export default function AlleRollenTab() {
                         <td className="w-2/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{gebruikers}</td>
                         <td className="w-3/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{documenten}</td>
                         <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                            <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10.005 0.5C4.4825 0.5 0.00500488 4.9775 0.00500488 10.5C0.00500488 16.0225 4.4825 20.5 10.005 20.5C15.5275 20.5 20.005 16.0225 20.005 10.5C20.005 4.9775 15.5275 0.5 10.005 0.5ZM5.83834 14.6667L6.67667 11.3033L9.26501 13.8908L5.83834 14.6667ZM10.1383 13.1008L7.47001 10.4325L12.3375 5.5L15.005 8.16667L10.1383 13.1008Z" fill="#23BD92"/>
-                            </svg>
-                            <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10.002 0.50293C15.52 0.50293 20 4.98293 20 10.4999C20 16.0179 15.52 20.4979 10.002 20.4979C4.485 20.4979 0.00500488 16.0179 0.00500488 10.4999C0.00500488 4.98293 4.485 0.50293 10.002 0.50293ZM10.002 9.43593L7.281 6.71393C7.135 6.56793 6.942 6.49493 6.75 6.49493C6.346 6.49493 6 6.81893 6 7.24393C6 7.43693 6.073 7.62793 6.219 7.77493L8.941 10.4969L6.21301 13.2249C6.06601 13.3719 5.993 13.5649 5.993 13.7559C5.993 14.1829 6.34301 14.5059 6.74401 14.5059C6.93601 14.5059 7.12801 14.4329 7.274 14.2869L10.002 11.5589L12.731 14.2869C12.877 14.4329 13.069 14.5059 13.261 14.5059C13.662 14.5059 14.011 14.1829 14.011 13.7559C14.011 13.5649 13.938 13.3719 13.791 13.2249L11.064 10.4969L13.781 7.77993C13.927 7.63293 14 7.44193 14 7.24893C14 6.82393 13.654 6.49893 13.25 6.49893C13.058 6.49893 12.865 6.57193 12.719 6.71893L10.002 9.43593Z" fill="#E94F4F"/>
-                            </svg> 
+                            <EditIcon />
+                            <EditIcon />
                         </td>
                     </tr>
                 ))}
