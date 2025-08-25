@@ -83,7 +83,6 @@ export default function GekoppeldDocumentTab() {
         <table className="w-full border-separate border-spacing-0 border border-transparent">
             <thead className="bg-[#F9FBFA]">                
                 <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
-                {/* We can't use flex on <tr> so use table-layout fixed and padding to simulate */}
                     <th className="flex items-center gap-5 w-3/9 font-montserrat font-bold text-[16px] leading-6 text-black">
                         <CheckBox toggle={false} color='#23BD92' /> 
                         <span>Map</span>
@@ -97,7 +96,6 @@ export default function GekoppeldDocumentTab() {
                 </tr>
             </thead>
             <tbody>
-                {/* Example data rows */}
                 {GekoppeldDocumentData.map(({Map, Bestand}, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
                         <td className="flex gap-5 w-3/9 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
