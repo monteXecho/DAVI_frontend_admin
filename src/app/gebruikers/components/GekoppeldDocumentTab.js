@@ -88,7 +88,7 @@ export default function GekoppeldDocumentTab() {
                     aria-expanded={open1}
                 >
                     <div className="font-montserrat font-normal text-base leading-6 text-[#1E1E1E]">{selected1}</div>
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={open ? "rotate-180" : ""} style={{ transition: "transform 0.2s" }}>
+                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={open1 ? "rotate-180" : ""} style={{ transition: "transform 0.2s" }}>
                     <path d="M1 1L5 5L9 1" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </div>
@@ -136,7 +136,7 @@ export default function GekoppeldDocumentTab() {
                         aria-expanded={open2}
                     >
                         <div className="font-montserrat font-normal text-base leading-6 text-[#1E1E1E]">{selected2}</div>
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={open ? "rotate-180" : ""} style={{ transition: "transform 0.2s" }}>
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={open2 ? "rotate-180" : ""} style={{ transition: "transform 0.2s" }}>
                         <path d="M1 1L5 5L9 1" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                     </div>

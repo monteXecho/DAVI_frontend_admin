@@ -43,6 +43,7 @@ export default function LeftSidebar() {
       '/vgc': 'VGC',
       '/3-uurs': '3-uurs',
       '/rollen': 'Rollen',
+      '/rol-pz': 'Rollen',
       '/gebruikers': 'Gebruikers',
       '/documenten': 'Documenten',
       '/instellingen': 'Instellingen',
@@ -76,7 +77,7 @@ export default function LeftSidebar() {
   return (
     <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
       <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-        <div className="font-extrabold text-xl leading-none tracking-normal font-montserrat text-[#23BD92] cursor-pointer"
+        <div className="font-extrabold text-[40px] leading-none tracking-normal font-montserrat text-[#23BD92] cursor-pointer"
             onClick={() => {router.push('/'); setActiveTab(null)}}
         >
           DAVI

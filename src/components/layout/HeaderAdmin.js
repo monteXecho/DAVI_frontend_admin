@@ -1,13 +1,18 @@
+'use client'
+
 import Image from 'next/image'
+import { useRouter } from "next/navigation"
 
 import RollenItem from '@/assets/rollen_item.png'
 import GebruikersItem from '@/assets/gebruikers_item.png'
 import DocumentenItem from '@/assets/documenten_item.png'
 
-export default function HeaderAdmin () {
+export default function HeaderAdmin ({ onOpenDocuments }) {
+    const router = useRouter()
+
     return (
         <div className="flex w-full h-[63px] border-b-[1px] border-b-[#C5BEBE] pl-[50px] items-center gap-12">
-            <div className='flex gap-2 items-center'>
+            <div className='flex gap-2 items-center cursor-pointer' onClick={() => router.push('/rollen')}>
                 <div className="font-montserrat font-normal text-[#8F8989] text-[12px] leading-[100%] tracking-[0] text-center">Alle rollen</div>
                 <div className='flex gap-1 items-center'>
                     <Image src={RollenItem} alt='Rollen' className='w-4 h-4 object-cover' />
@@ -51,13 +56,13 @@ export default function HeaderAdmin () {
                 </div>
             </div>
 
-            <div className='flex gap-2 items-center'>
+            <div className='flex gap-2 items-center cursor-pointer'>
                 <div className="font-montserrat font-normal text-[#8F8989] text-[12px] leading-[100%] tracking-[0] text-center">PZ</div>
-                <div className='flex gap-1 items-center'>
+                <div className='flex gap-1 items-center' onClick={() => router.push('/rol-pz')}>
                     <Image src={GebruikersItem} alt='Rollen' className='w-4 h-4 object-cover' />
                     <div className="font-montserrat font-normal text-[#8F8989] text-[12px] leading-[100%] tracking-[0] text-center">14</div>
                 </div>
-                <div className='flex gap-1 items-center'>
+                <div className='flex gap-1 items-center' onClick={onOpenDocuments}>
                     <Image src={DocumentenItem} alt='Rollen' className='w-4 h-4 object-cover' />
                     <div className="font-montserrat font-normal text-[#8F8989] text-[12px] leading-[100%] tracking-[0] text-center">786</div>
                 </div>

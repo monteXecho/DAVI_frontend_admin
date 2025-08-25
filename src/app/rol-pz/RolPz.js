@@ -11,10 +11,10 @@ const tabsConfig = [
   { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
 ]
 
-export default function RolPz () {
-    const [activeIndex, setActiveIndex] = useState(0)
+export default function RolPz ({ activeIndex = 0, setActiveIndex }) {
+    // const [activeIndex, setActiveIndex] = useState(0)
 
-    const ActiveComponent = tabsConfig[activeIndex].component
+    const ActiveComponent = tabsConfig[activeIndex]?.component || tabsConfig[0].component
 
     return (
         <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
