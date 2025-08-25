@@ -13,10 +13,8 @@ export default function RollenPage () {
 
     const handleOpenDocuments = () => {
         if (pathname === "/rol-pz") {
-            // already here → just switch tab
             setActiveIndex(1)
         } else {
-            // navigating here → go to page + ensure tab 1
             router.push("/rol-pz?tab=1")
         }
     }

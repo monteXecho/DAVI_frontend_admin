@@ -12,7 +12,9 @@ export default function Instellingen () {
                 {
                     InstellingenData.map(data => { 
                         return (
-                            <div key={data} className="w-[320px] h-[50px] bg-[#23BD92] rounded-[8px] flex flex-row justify-center items-center gap-[10px] px-[13px] py-[15px] font-montserrat font-bold text-[16px] leading-[20px] text-white text-center cursor-pointer"
+                            <div 
+                                key={data} 
+                                className="w-[320px] h-[50px] bg-[#23BD92] rounded-[8px] flex flex-row justify-center items-center gap-[10px] px-[13px] py-[15px] font-montserrat font-bold text-[16px] leading-[20px] text-white text-center cursor-pointer"
                             >
                                 {data}
                             </div>

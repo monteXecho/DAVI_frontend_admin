@@ -46,8 +46,8 @@ export default function GekoppeldMapTab() {
         </div>        
 
         <table className="w-full border-separate border-spacing-0 border border-transparent">
-            <thead className="bg-[#F9FBFA] border-b border-[#C5BEBE]">
-                <tr className="h-[51px] flex items-center gap-[40px] w-full px-2">
+            <thead className="bg-[#F9FBFA]">                
+                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
                     <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
                         <CheckBox toggle={false} color='#23BD92' /> 
                         <span>Map</span>

@@ -65,8 +65,8 @@ export default function GebruikersTab() {
 
         {/* Table */}
         <table className="w-full border-separate border-spacing-0">
-            <thead className="bg-[#F9FBFA] border-b border-[#C5BEBE]">
-                <tr className="h-[51px] flex items-center gap-[40px] px-2">
+            <thead className="bg-[#F9FBFA]">                
+                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2">
                     <th className="flex items-center gap-5 w-3/8">
                         <CheckBox toggle={false} color='#23BD92'/> 
                         <span>Naam</span>
