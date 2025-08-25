@@ -4,6 +4,7 @@ import AddButton from "@/components/buttons/AddButton";
 import CheckBox from "@/components/buttons/CheckBox";
 import EditIcon from "@/components/icons/EditIcon";
 
+
 const UsersData = [
     {
         Naam: 'Anna Bijsterbosch',
