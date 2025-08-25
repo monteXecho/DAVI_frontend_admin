@@ -104,28 +104,14 @@ export default function GekoppeldDocumentTab() {
                 )}
             </div>
 
-            <div className="relative w-3/10 h-10">
-                <input placeholder="Zoek gebruiker..." className="w-full h-full bg-white border border-[#D9D9D9] focus:outline-none rounded-full pl-4 pr-10 font-montserrat font-normal text-base leading-6 text-[#1E1E1E]" />
-                <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13 13L10.1 10.1M11.6667 6.33333C11.6667 9.27885 9.27885 11.6667 6.33333 11.6667C3.38781 11.6667 1 9.27885 1 6.33333C1 3.38781 3.38781 1 6.33333 1C9.27885 1 11.6667 3.38781 11.6667 6.33333Z" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                </div>
+            <div className="w-3/10">
+                <SearchBox placeholderText='Zoek gebruiker...' />
             </div>
         </div>
 
         <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
             <div className="flex w-2/3 gap-4 items-center">
-                <div className="inline-flex items-center">
-                    <label className="flex items-center relative">
-                        <input type="checkbox" className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[#23BD92] checked:border-[#23BD92]" id="check4" />
-                        <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                            </svg>
-                        </span>
-                    </label>
-                </div>  
+                <CheckBox toggle={false} color='#23BD92' />  
                 <div className="relative w-4/9">
                     <div
                         className="flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-[8px] px-4 cursor-pointer select-none"
@@ -152,13 +138,8 @@ export default function GekoppeldDocumentTab() {
                     )}
                 </div>
 
-                <div className="relative w-4/9 h-10">
-                    <input placeholder="Zoek document..." className="w-full h-full bg-white border border-[#D9D9D9] focus:outline-none rounded-full pl-4 pr-10 font-montserrat font-normal text-base leading-6 text-[#1E1E1E]" />
-                    <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 13L10.1 10.1M11.6667 6.33333C11.6667 9.27885 9.27885 11.6667 6.33333 11.6667C3.38781 11.6667 1 9.27885 1 6.33333C1 3.38781 3.38781 1 6.33333 1C9.27885 1 11.6667 3.38781 11.6667 6.33333Z" stroke="#1E1E1E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </div>
+                <div className="w-4/9">
+                    <SearchBox placeholderText='Zoek gebruiker...' />
                 </div>
             </div>
 
@@ -190,16 +171,7 @@ export default function GekoppeldDocumentTab() {
                 {GekoppeldDocumentData.map(({Map, Bestand}, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
                         <td className="flex gap-5 w-3/9 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                            <div className="inline-flex items-center">
-                                <label className="flex items-center relative">
-                                    <input type="checkbox" className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[#23BD92] checked:border-[#23BD92]" id="check4" />
-                                    <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                        </svg>
-                                    </span>
-                                </label>
-                            </div>  
+                            <CheckBox toggle={false} color='#23BD92' />   
                             {Map}
                         </td>
                         <td className="w-6/9 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{Bestand}</td>
