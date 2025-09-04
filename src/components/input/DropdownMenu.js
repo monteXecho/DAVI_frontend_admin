@@ -6,7 +6,6 @@ import DownArrow from "../icons/DownArrowIcon";
 export default function DropdownMenu ({ value, onChange, allOptions }) {
     const [open, setOpen] = useState(false);
 
-    // Options to show, always keep selected visible
     const dropdownOptions = allOptions.filter(opt => opt !== value);
 
     function toggleDropdown() {
@@ -14,7 +13,7 @@ export default function DropdownMenu ({ value, onChange, allOptions }) {
     }
 
     function selectOption(option) {
-        onChange(option); // <- update parent
+        onChange(option); 
         setOpen(false);
     }
 

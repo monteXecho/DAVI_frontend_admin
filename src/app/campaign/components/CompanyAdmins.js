@@ -1,11 +1,12 @@
-// CompanyAdmins.jsx
 'use client'
 import { useState } from "react";
 import Section from "./Section";
 import AddAdmin from "./modals/AddAdmin";
+import DeleteAdmin from "./modals/DeleteAdmin";
 
 export default function CompanyAdmins({ admins, selectedId, onSelect, selectedCompany, companies = [] }) {
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [isDeleteAdminOpen, setIsDeleteAdminOpen] = useState(false);
 
   return (
     <div className="w-full h-2/3 min-h-fit flex flex-col p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50">
@@ -25,33 +26,52 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, selectedCo
         ))}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col xl:flex-row gap-3">
         <button
-          className="w-fit px-7 py-3 bg-[#F1F4F9] rounded-full shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
+          className="xl:w-fit w-full px-7 py-3 bg-[#F1F4F9] rounded-full shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
           onClick={() => setIsAddAdminOpen(true)}
         >
           Nieuw admin
         </button>
-        <button className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white">
+        <button 
+          className="xl:w-fit w-full px-7 py-3 bg-[#0E1629] rounded-full text-white"
+          onClick={() => setIsDeleteAdminOpen(true)}
+        >
           Verwijderen admin
         </button>
       </div>
 
-      {/* AddAdmin Modal */}
       {isAddAdminOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
           onClick={() => setIsAddAdminOpen(false)}
         >
           <div
             className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* pass selectedCompany + companies here */}
             <AddAdmin
               onClose={() => setIsAddAdminOpen(false)}
               selectedCompany={selectedCompany}
               companies={companies}
+            />
+          </div>
+        </div>
+      )}
+
+      {isDeleteAdminOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={() => setIsDeleteAdminOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DeleteAdmin
+              onClose={() => setIsDeleteAdminOpen(false)}
+              selectedCompany={selectedCompany}
+              selectedAdminId={selectedId} 
             />
           </div>
         </div>

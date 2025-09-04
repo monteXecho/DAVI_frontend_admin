@@ -15,9 +15,7 @@ export default function Footer () {
   const router = useRouter()
   const pathname = usePathname() 
 
-  // Set active tab based on the current route
   useEffect(() => {
-    // Define route-to-tab mapping
     const routeToTab = {
       '/document': 'Chat',
       '/bkr': 'BKR',
@@ -25,9 +23,9 @@ export default function Footer () {
       '/3-uurs': '3-uurs'
     }
 
-    const tab = routeToTab[pathname] || null  // Get the corresponding tab
-    setActiveTab(tab)  // Set the active tab
-  }, [pathname])  // Trigger this effect whenever pathname changes
+    const tab = routeToTab[pathname] || null 
+    setActiveTab(tab) 
+  }, [pathname]) 
 
   const handleClick = (label) => {
     setActiveTab(label)
@@ -42,7 +40,6 @@ export default function Footer () {
     }
   }
 
-  // Array of footer items with relevant data
   const footerItems = [
     {
       image: ChatItem,

@@ -34,9 +34,7 @@ export default function LeftSidebar() {
   }
 
 
-  // Set active tab based on the current route
   useEffect(() => {
-    // Define route-to-tab mapping
     const routeToTab = {
       '/documentchat': 'Documentenchat',
       '/bkr': 'BKR',
@@ -49,10 +47,10 @@ export default function LeftSidebar() {
       '/instellingen': 'Instellingen',
     }
 
-    const tab = routeToTab[pathname] || null  // Get the corresponding tab
-    setActiveTab(tab)  // Set the active tab
-  }, [pathname])  // Trigger this effect whenever pathname changes
-
+    const tab = routeToTab[pathname] || null 
+    setActiveTab(tab) 
+  }, [pathname]) 
+  
   const handleClick = (label) => {
     setActiveTab(label)
     if (label === 'Documentenchat') {

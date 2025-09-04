@@ -9,7 +9,6 @@ export default function WijzigenTab() {
   const allOptions = ["Staff", "Option 1", "Option 2", "Option 3"];
   const [selected, setSelected] = useState(allOptions[0]);
 
-  // modules state
   const initialModules = [
     { name: "Documentenchat", enabled: true },
     { name: "Vaste gezichten criterium", enabled: false },
@@ -18,7 +17,6 @@ export default function WijzigenTab() {
   ];
   const [modules, setModules] = useState(initialModules);
 
-  // master toggle = true only if all modules are enabled
   const allEnabled = useMemo(() => modules.every((m) => m.enabled), [modules]);
 
   const toggleAll = (val) => {

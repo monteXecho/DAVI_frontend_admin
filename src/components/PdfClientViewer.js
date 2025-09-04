@@ -1,4 +1,3 @@
-// src/components/PdfClientViewer.js
 'use client';
 
 import PdfViewerWithSearch from './PdfViewerWithSearch';

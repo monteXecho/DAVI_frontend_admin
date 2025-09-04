@@ -36,7 +36,6 @@ export default function BKRtClient() {
     keycloak?.authenticated &&
     keycloak?.tokenParsed?.realm_access?.roles?.includes('admin');
 
-  // Load persisted history from localStorage
   const initialHistory = getStoredHistory();
 
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE);
@@ -51,20 +50,18 @@ export default function BKRtClient() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Set the upload status and file name while the document is uploading
     setUploadedFileName(file.name);
     setUploadStatus(UploadStates.UPLOADING);
 
     const formData = new FormData();
     formData.append('file', file);
 
-    // Add the uploading state to the history before uploading
     const newHistory = [
       ...uploadHistory,
       { fileName: file.name, status: UploadStates.UPLOADING, timestamp: new Date().toISOString() },
     ];
     setUploadHistory(newHistory);
-    saveHistoryToLocalStorage(newHistory); // Save history with "uploading" state
+    saveHistoryToLocalStorage(newHistory); 
 
     const { success, data } = await uploadDocument(formData, 'bkr');
     if (success) {
@@ -73,13 +70,12 @@ export default function BKRtClient() {
         newStatus = UploadStates.ISSUE;
       }
 
-      // Update the status of the current upload in the history
       const updatedHistory = newHistory.map((doc) =>
         doc.fileName === file.name ? { ...doc, status: newStatus } : doc
       );
 
-      setUploadHistory(updatedHistory); // Update state with final status (success or issue)
-      saveHistoryToLocalStorage(updatedHistory); // Persist updated history
+      setUploadHistory(updatedHistory); 
+      saveHistoryToLocalStorage(updatedHistory); 
 
       setUploadStatus(newStatus);
     } else {
@@ -88,7 +84,7 @@ export default function BKRtClient() {
       );
       setUploadHistory(updatedHistory);
       saveHistoryToLocalStorage(updatedHistory);
-      setUploadStatus(UploadStates.IDLE); // Reset to idle after failure
+      setUploadStatus(UploadStates.IDLE); 
       setUploadedFileName('');
     }
   };
@@ -113,7 +109,6 @@ export default function BKRtClient() {
             onChange={handleDocumentUpload}
           />
 
-          {/* Render previous upload history */}
           <div className="">
             {uploadHistory.map((file, index) => {
               switch (file.status) {

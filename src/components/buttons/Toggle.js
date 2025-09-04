@@ -6,7 +6,7 @@ export default function Toggle({
   activeColor = "#23BD92"
 }) {
   const toggleSwitch = () => {
-    if (onChange) onChange(!checked); // controlled: rely on parent state
+    if (onChange) onChange(!checked);
   };
 
   return (

@@ -22,11 +22,9 @@ const RolPZData = [
 ];
 
 export default function GebruikersTab() {
-  // Dropdown 1
   const allOptions1 = ["Bulkacties", "Option 1", "Option 2", "Option 3"]; 
   const [selected1, setSelected1] = useState(allOptions1[0]); 
 
-  // Dropdown 2
   const allOptions2 = ["Filter op PZ", "Option 01", "Option 02", "Option 03"]; 
   const [selected2, setSelected2] = useState(allOptions2[0]); 
 
@@ -44,26 +42,21 @@ export default function GebruikersTab() {
         </div>
 
         <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-            {/* Dropdown 1 */}
             <div className="w-32/99">
                 <DropdownMenu value={selected1} onChange={setSelected1} allOptions={allOptions1} />
             </div>
 
             <div className="flex gap-2 items-center w-32/99">
-                {/* Dropdown 2 */}
                 <DropdownMenu value={selected2} onChange={setSelected2} allOptions={allOptions2} />
 
-                {/* Close icon */}
                 <GrayCancelIcon />
             </div>
 
-            {/* Search */}
             <div className="w-32/99">
                 <SearchBox placeholderText='Zoek gebruiker...' />
             </div>
         </div>        
 
-        {/* Table */}
         <table className="w-full border-separate border-spacing-0">
             <thead className="bg-[#F9FBFA]">                
                 <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2">

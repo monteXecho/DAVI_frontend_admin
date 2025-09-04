@@ -1,15 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-/**
- * Persisted state hook using localStorage.
- * @param {string} key - Storage key
- * @param {any} defaultValue - Initial value if none found in storage
- */
 export function usePersistentState(key, defaultValue) {
   const [state, setState] = useState(defaultValue)
 
-  // Load from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(key)
@@ -21,7 +15,6 @@ export function usePersistentState(key, defaultValue) {
     }
   }, [key])
 
-  // Save to localStorage whenever state changes
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state))

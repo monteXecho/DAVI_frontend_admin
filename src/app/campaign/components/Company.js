@@ -10,7 +10,6 @@ export default function Company({ companies, selectedId, onSelect }) {
 
   return (
     <div className="w-full h-2/3 min-h-fit flex flex-col p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50 relative">
-      {/* Company List */}
       <div className="flex flex-col gap-3">
         <span className="text-lg font-bold text-zinc-500">1) Kies compagnie</span>
         {companies.map((item) => (
@@ -24,53 +23,50 @@ export default function Company({ companies, selectedId, onSelect }) {
         ))}
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
+      <div className="flex flex-col xl:flex-row gap-3">
         <button
-          className="w-fit px-7 py-3 bg-[#F1F4F9] rounded-full shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
+          className="xl:w-fit w-full px-7 py-3 bg-[#F1F4F9] rounded-full shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
           onClick={() => setIsAddCompanyOpen(true)}
         >
           Nieuw bedrijf
         </button>
         <button 
-          className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white"
+          className="xl:w-fit w-full px-7 py-3 bg-[#0E1629] rounded-full text-white"
           onClick={() => setIsDeleteCompanyOpen(true)}
         >
           Verwijderen company
         </button>
       </div>
 
-      {/* AddCompany Modal */}
       {isAddCompanyOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setIsAddCompanyOpen(false)} // click on overlay closes modal
+          onClick={() => setIsAddCompanyOpen(false)}
         >
           <div
             className="bg-white rounded-2xl p-6 w-fit"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside modal
+            onClick={(e) => e.stopPropagation()}
           >
             <AddCompany onClose={() => setIsAddCompanyOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* AddCompany Modal */}
       {isDeleteCompanyOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setIsDeleteCompanyOpen(false)} // click on overlay closes modal
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={() => setIsDeleteCompanyOpen(false)} 
         >
           <div
             className="bg-white rounded-2xl p-6 w-fit"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside modal
+            onClick={(e) => e.stopPropagation()}
           >
             {console.log("Company name: ", selectedCompany?.name)}
             <DeleteCompany 
               selectedCompany={selectedCompany} 
               onClose={() => setIsDeleteCompanyOpen(false)} 
               onDelete={(id) => {
-                // remove from companies list (you can manage this in parent state)
+
                 console.log("Deleting company with ID:", id);
               }}
             />

@@ -1,6 +1,6 @@
 export default function AddCompany ({ onClose }) {
     return (
-        <div className="w-full h-fit flex flex-col gap-5 p-7 rounded-2xl border border-none">
+        <div className="w-full h-fit flex flex-col gap-5 xl:p-7 p-1 rounded-2xl border border-none">
             <span className="text-2xl font-bold text-[#020003]">Add Company</span>
             <span className="text-md text-[#697A8E]">Register a new organization (tenant). You can assign modules and a primary admin now or later.</span>
             <div className="flex flex-col gap-3">
@@ -8,7 +8,7 @@ export default function AddCompany ({ onClose }) {
                 <input
                     type="text"
                     placeholder="e.g., Parkview Childcare BV"
-                    className="w-full h-12 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+                    className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
                 />
             </div>
             <div className="flex gap-3 justify-end">

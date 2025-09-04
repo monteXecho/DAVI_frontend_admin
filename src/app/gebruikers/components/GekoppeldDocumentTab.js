@@ -54,11 +54,9 @@ const GekoppeldDocumentData = [
 ]
 
 export default function GekoppeldDocumentTab() {
-  // Dropdown 1
   const allOptions1 = ["Option 1", "Option 2", "Option 3"]; 
   const [selected1, setSelected1] = useState(allOptions1[0]); 
 
-  // Dropdown 2
   const allOptions2 = ["Option 01", "Option 02", "Option 03"]; 
   const [selected2, setSelected2] = useState(allOptions2[0]); 
 

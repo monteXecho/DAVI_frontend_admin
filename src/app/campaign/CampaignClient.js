@@ -13,7 +13,6 @@ export default function CampaignClient() {
 
   const selectedCompany = data.companies.find((c) => c.id === selectedCompanyId);
 
-  // Set first admin as default when company changes
   useEffect(() => {
     if (selectedCompany && selectedCompany.admins.length > 0) {
       setSelectedAdminId(selectedCompany.admins[0].email);
@@ -24,7 +23,6 @@ export default function CampaignClient() {
 
   return (
     <div className="w-full h-full flex flex-col xl:flex-row p-5 xl:p-10 gap-8">
-      {/* Company */}
       <div className="w-full xl:w-1/3 h-fit xl:h-full">
         <Company
           companies={data.companies}
@@ -35,18 +33,16 @@ export default function CampaignClient() {
         />
       </div>
 
-      {/* Admins */}
       <div className="w-full xl:w-1/3 h-fit xl:h-full">
         <CompanyAdmins
           admins={selectedCompany?.admins || []}
-          selectedId={selectedAdminId}s
+          selectedId={selectedAdminId}
           onSelect={setSelectedAdminId}
           selectedCompany={selectedCompany}    
           companies={data.companies}            
         />
       </div>
 
-      {/* Modules */}
       <div className="w-full xl:w-1/3 h-fit xl:h-full">
         <AssignModules modules={selectedCompany?.modules || []} />
       </div>

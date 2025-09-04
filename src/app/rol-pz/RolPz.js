@@ -12,8 +12,6 @@ const tabsConfig = [
 ]
 
 export default function RolPz ({ activeIndex = 0, setActiveIndex }) {
-    // const [activeIndex, setActiveIndex] = useState(0)
-
     const ActiveComponent = tabsConfig[activeIndex]?.component || tabsConfig[0].component
 
     return (

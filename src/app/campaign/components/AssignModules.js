@@ -5,7 +5,6 @@ import SectionWithToggle from "./SectionWithToggle";
 export default function AssignModules({ modules }) {
   const [localModules, setLocalModules] = useState(modules);
 
-  // Reset when company changes
   useEffect(() => {
     setLocalModules(modules);
   }, [modules]);
@@ -30,7 +29,7 @@ export default function AssignModules({ modules }) {
           />
         ))}
       </div>
-      <button className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white">
+      <button className="xl:w-fit w-full px-7 py-3 bg-[#0E1629] rounded-full text-white">
         Opslaan
       </button>
     </div>

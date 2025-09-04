@@ -4,7 +4,6 @@ import Toggle from "@/components/buttons/Toggle";
 import AddIcon from "@/components/icons/AddIcon";
 import RedCancelIcon from "@/components/icons/RedCancelIcon";
 
-// seed your modules (could also be props)
 const initialModules = [
   { name: "Documentenchat", enabled: true },
   { name: "Vaste gezichten criterium", enabled: true },
@@ -15,7 +14,6 @@ const initialModules = [
 export default function MakenTab() {
   const [modules, setModules] = useState(initialModules);
 
-  // master toggle reflects current state
   const allEnabled = useMemo(() => modules.every(m => m.enabled), [modules]);
 
   const toggleAll = (val) => {
@@ -27,7 +25,6 @@ export default function MakenTab() {
   };
 
   const handleSave = () => {
-    // do whatever you need with `modules`
     console.log("Saving modules:", modules);
   };
 
@@ -77,7 +74,6 @@ export default function MakenTab() {
             <span className="font-montserrat font-bold text-2xl leading-normal tracking-normal">
               AI-modules
             </span>
-            {/* Master switch controls all */}
             <Toggle checked={allEnabled} onChange={toggleAll} activeColor="#23BD92" />
           </div>
 

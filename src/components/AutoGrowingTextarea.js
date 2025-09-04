@@ -11,9 +11,8 @@ export default function AutoGrowingTextarea({ onSubmit, loading }) {
     onSubmit(input);
     setInput('');
 
-    // Reset height
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'; // collapse
+      textareaRef.current.style.height = 'auto'; 
     }
   };
 

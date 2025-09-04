@@ -23,20 +23,16 @@ const RolPZData = [
 ];
 
 export default function GebruikersTab() {
-    // Dropdown 1
     const allOptions1 = ["Bulkacties", "Option 1", "Option 2", "Option 3"]; 
     const [selected1, setSelected1] = useState(allOptions1[0]); 
 
-    // Dropdown 2 (Filter)
     const allOptions2 = ["Filter op rol", "Filter op Beheerder", "Option 02", "Option 03"]; 
     const [selected2, setSelected2] = useState(allOptions2[0]); 
 
-    // Filter the data based on dropdown 2 selection
     const filteredData = selected2 === "Filter op Beheerder"
     ? RolPZData.filter(user => user.Rol === "Beheerder")
     : RolPZData;
 
-    // Dynamic title text
     let titleText = "";
     if (selected2 === "Filter op Beheerder") {
         titleText = `${filteredData.length} gebruiker${filteredData.length !== 1 ? 's' : ''} met de rol “Beheerder”`;
@@ -58,23 +54,19 @@ export default function GebruikersTab() {
         </div>
 
         <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-            {/* Dropdown 1 */}
             <div className="w-32/99">
                 <DropdownMenu value={selected1} onChange={setSelected1} allOptions={allOptions1} />
             </div>
 
-            {/* Dropdown 2 */}
             <div className="w-32/99">
                 <DropdownMenu value={selected2} onChange={setSelected2} allOptions={allOptions2} />
             </div>
 
-            {/* Search */}
             <div className="w-32/99">
                 <SearchBox placeholderText='Zoek gebruiker...' />
             </div>
         </div>        
 
-        {/* Table */}
         <table className="w-full border-separate border-spacing-0">
             <thead className="bg-[#F9FBFA]">                
                 <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2">

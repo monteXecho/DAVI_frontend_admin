@@ -20,10 +20,8 @@ const RoleData = [
 ]
 
 export default function AppearInRoleTab() {
-  // Dropdown 1
   const SelectedDoc = "kwaliteit-veiligheid-2025.pdf"; 
 
-  // Dropdown 2
   const allOptions = ["Bulkacties", "Option 01", "Option 02", "Option 03"]; 
   const [selected, setSelected] = useState(allOptions[0]); 
 
