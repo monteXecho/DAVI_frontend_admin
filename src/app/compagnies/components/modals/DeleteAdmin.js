@@ -9,7 +9,7 @@ export default function DeleteAdmin({ onClose, selectedCompany, selectedAdminId,
   const handleDelete = () => {
     if (!selectedAdmin) return;
 
-    onDelete(selectedCompany.id, selectedAdmin);
+    onDelete(selectedCompany.id, selectedAdminId);
     onClose();
   };
 
@@ -35,7 +35,13 @@ export default function DeleteAdmin({ onClose, selectedCompany, selectedAdminId,
           <span className="text-xl font-bold text-[#020003]">
             Admin
           </span>
-          <DropdownMenu value={selectedAdmin} onChange={setSelectedAdmin} allOptions={allOptions} />
+          <input
+            type="text"
+            className="w-full h-10 rounded-[8px] border border-[#D9D9D9] px-4 py-3 bg-gray-100 text-gray-700"
+            value={selectedAdmin}
+            readOnly
+          />
+          {/* <DropdownMenu value={selectedAdmin} onChange={setSelectedAdmin} allOptions={allOptions} /> */}
         </div>
       </div>
 

@@ -17,18 +17,17 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="lg:h-screen">
         <div className="flex flex-col lg:flex-row w-full h-full">
-          <div className='lg:block hidden'> <LeftSidebar /> </div>
-          <div className='lg:hidden'> <Header /> </div>
+          <KeycloakProviderWrapper>
+            <ProtectedRoute>
+              <div className='lg:block hidden'> <LeftSidebar /> </div>
+              <div className='lg:hidden'> <Header /> </div>
 
-            <main className="flex-1 mt-[90px] mb-[120px] lg:mt-0 lg:mb-0">
-              <KeycloakProviderWrapper>
-                <ProtectedRoute>
-                  {children}                
-                </ProtectedRoute>
-              </KeycloakProviderWrapper>
-            </main>
-          <div className='lg:hidden'> <Footer /> </div>
-          {/* <div className='lg:block hidden'> <RightSidebar /> </div> */}
+              <main className="flex-1 mt-[90px] mb-[120px] lg:mt-0 lg:mb-0">
+                    {children}                
+              </main>
+              <div className='lg:hidden'> <Footer /> </div>
+          </ProtectedRoute>
+        </KeycloakProviderWrapper>
         </div>
       </body>
     </html>

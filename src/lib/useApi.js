@@ -62,9 +62,92 @@ export function useApi() {
     [withAuth]
   );
 
+  // --- Companies ---
+  const getCompanies = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/super-admin/companies', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const createCompany = useCallback(
+    (company) =>
+      withAuth((token) =>
+        apiClient
+          .post('/super-admin/companies', company, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const deleteCompany = useCallback(
+    (companyId) =>
+      withAuth((token) =>
+        apiClient
+          .delete(`/super-admin/companies/${companyId}`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  // --- Company Admins ---
+  const getCompanyAdmins = useCallback(
+    (companyId) =>
+      withAuth((token) =>
+        apiClient
+          .get(`/super-admin/companies/${companyId}/admins`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const addCompanyAdmin = useCallback(
+    (companyId, name, email, modules) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/super-admin/companies/${companyId}/admins`, { name, email, modules }, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const assignModules = useCallback(
+    (companyId, adminId, modules) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/super-admin/companies/${companyId}/admins/${adminId}/modules`, modules, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );  
+
+  const deleteCompanyAdmin = useCallback(
+    (companyId, adminId) =>
+      withAuth((token) =>
+        apiClient
+          .delete(`/super-admin/companies/${companyId}/admins/${adminId}`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     askQuestion,
     uploadDocument,
+
+    getCompanies,
+    createCompany,
+    deleteCompany,
+
+    getCompanyAdmins,
+    addCompanyAdmin,
+    deleteCompanyAdmin,
+
+    assignModules,
+
     loading,
     error,
   };

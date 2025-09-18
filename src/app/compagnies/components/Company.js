@@ -3,13 +3,14 @@ import Section from "./Section";
 import AddCompany from "./modals/AddCompany";
 import DeleteCompany from "./modals/DeleteCompany";
 
-export default function Company({ companies, selectedId, onSelect }) {
+export default function Company({ companies, selectedId, onSelect, onCreateCompany, onDeleteCompany }) {
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isDeleteCompanyOpen, setIsDeleteCompanyOpen] = useState(false);
+
   const selectedCompany = companies.find((c) => c.id === selectedId);
 
   return (
-    <div className="w-full h-2/3 min-h-fit flex flex-col p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50 relative">
+    <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50 relative">
       <div className="flex flex-col gap-3">
         <span className="text-lg font-bold text-zinc-500">1) Kies compagnie</span>
         {companies.map((item) => (
@@ -23,7 +24,7 @@ export default function Company({ companies, selectedId, onSelect }) {
         ))}
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-3">
+      <div className="flex flex-col xl:flex-row gap-3 justify-end">
         <button
           className="xl:w-fit w-full px-7 py-3 bg-[#F1F4F9] rounded-full shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
           onClick={() => setIsAddCompanyOpen(true)}
@@ -47,7 +48,13 @@ export default function Company({ companies, selectedId, onSelect }) {
             className="bg-white rounded-2xl p-6 w-fit"
             onClick={(e) => e.stopPropagation()}
           >
-            <AddCompany onClose={() => setIsAddCompanyOpen(false)} />
+            <AddCompany 
+              onClose={() => setIsAddCompanyOpen(false)} 
+              onCreate={(newCompanyName) => {
+                if (onCreateCompany) onCreateCompany({ name: newCompanyName });
+                setIsAddCompanyOpen(false);
+              }}
+            />
           </div>
         </div>
       )}
@@ -66,8 +73,8 @@ export default function Company({ companies, selectedId, onSelect }) {
               selectedCompany={selectedCompany} 
               onClose={() => setIsDeleteCompanyOpen(false)} 
               onDelete={(id) => {
-
-                console.log("Deleting company with ID:", id);
+                if (onDeleteCompany) onDeleteCompany(id);
+                setIsDeleteCompanyOpen(false);
               }}
             />
           </div>

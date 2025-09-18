@@ -45,7 +45,6 @@ const PdfSnippetList = ({ documents }) => {
                     </div>
                   </div>
 
-                  {/* <div className='flex w-fit items-center'> */}
                     <Link
                       href={`${process.env.NEXT_PUBLIC_API_BASE_URL }/output/highlighted/${encodeURIComponent(file)}#page=${snippets[0].page}`}
                       target="_blank"
@@ -55,7 +54,6 @@ const PdfSnippetList = ({ documents }) => {
                         <path d="M0 0.5V19.5H19V0.5H0ZM8.97196 16.3333H3.16667V10.528L4.95029 12.3109L7.32688 9.94458L9.56571 12.1834L7.18913 14.5497L8.97196 16.3333ZM15.8333 9.47196L14.0497 7.68913L11.7388 10L9.5 7.76117L11.8109 5.45029L10.028 3.66667H15.8333V9.47196Z" fill="#23BD92"/>
                       </svg>
                     </Link>
-                  {/* </div> */}
                 </div>
 
                 {openFile === file && (

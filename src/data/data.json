@@ -4,41 +4,68 @@
       "id": "c1",
       "name": "Kinderopvang Zon BV",
       "admins": [
-        { "name": "Joy de Vries", "email": "joy@zonbv.nl" },
-        { "name": "Kim Bakker", "email": "kim@zonbv.nl" }
-      ],
-      "modules": [
-        { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": true },
-        { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
-        { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": false },
-        { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+        { 
+          "name": "Joy de Vries", 
+          "email": "joy@zonbv.nl",
+          "modules": [
+            { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": true },
+            { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
+            { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": false },
+            { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+          ]
+        },
+        { 
+          "name": "Kim Bakker", 
+          "email": "kim@zonbv.nl", 
+          "modules": [
+            { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": true },
+            { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
+            { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": false },
+            { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+          ]
+        }
       ]
     },
     {
       "id": "c2",
       "name": "Op Stoom Holding",
       "admins": [
-        { "name": "Mark Jansen", "email": "mark@opstoom.nl" },
-        { "name": "Eva de Groot", "email": "eva@opstoom.nl" }
-      ],
-      "modules": [
-        { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": false },
-        { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": true },
-        { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": true },
-        { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": false }
+        { 
+          "name": "Mark Jansen", 
+          "email": "mark@opstoom.nl", 
+          "modules": [
+            { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": true },
+            { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
+            { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": false },
+            { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": false }
+          ]
+        },
+        { 
+          "name": "Eva de Groot", 
+          "email": "eva@opstoom.nl", 
+          "modules": [
+            { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": true },
+            { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": true },
+            { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": false },
+            { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+          ]          
+        }
       ]
     },
     {
       "id": "c3",
       "name": "DAVI Demo Org",
       "admins": [
-        { "name": "Sara Visser", "email": "sara@davi.org" }
-      ],
-      "modules": [
-        { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": false },
-        { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
-        { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": true },
-        { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+        { 
+          "name": "Sara Visser", 
+          "email": "sara@davi.org",
+          "modules": [
+            { "name": "Documenten chat", "desc": "AI-zoek & Q&A over geuploade documenten.", "enabled": false },
+            { "name": "VGC module", "desc": "Vaste gezichten criterium controles & rapportage.", "enabled": false },
+            { "name": "3-uurs regeling", "desc": "Toetsing + logica voor afwijkvensters.", "enabled": true },
+            { "name": "BKR", "desc": "Beroepskracht-kindratio berekenen & bewaken.", "enabled": true }
+          ]          
+         }
       ]
     }
   ]

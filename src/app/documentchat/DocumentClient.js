@@ -123,7 +123,6 @@ export default function DocumentClient() {
 
           {renderUploadSection()}
 
-          {/* Question + Spinner */}
           {submittedQuestion && (
             <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-[8px] flex justify-between items-start px-4 gap-11">
               <p className="w-fit h-[24px] m-auto text-[#342222] text-[16px] leading-[24px] font-normal font-Montserrat">
@@ -135,7 +134,6 @@ export default function DocumentClient() {
             </div>
           )}
 
-          {/* Response text */}
           {response && (
             <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
               {response}
@@ -148,19 +146,16 @@ export default function DocumentClient() {
             </section>
           )}
           
-          {/* Error */}
           {error && (
             <div className="text-red-600 text-[16px] font-medium">
               {error.message || 'Er is een fout opgetreden.'}
             </div>
           )}
 
-          {/* Input reappears after loading */}
           {!loadingCardVisible && submittedQuestion && (
             <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
           )}
 
-          {/* Initial state input */}
           {!submittedQuestion && !loadingCardVisible && (
             <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
           )}

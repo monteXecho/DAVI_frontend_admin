@@ -17,7 +17,7 @@ export default function Footer () {
 
   useEffect(() => {
     const routeToTab = {
-      '/document': 'Chat',
+      '/documentchat': 'Chat',
       '/bkr': 'BKR',
       '/vgc': 'VGC',
       '/3-uurs': '3-uurs'
@@ -30,7 +30,7 @@ export default function Footer () {
   const handleClick = (label) => {
     setActiveTab(label)
     if (label === 'Chat') {
-      router.push('/document')
+      router.push('/documentchat')
     } else if (label === 'BKR') {
       router.push('/bkr')
     } else if (label === 'VGC') {
@@ -44,7 +44,7 @@ export default function Footer () {
     {
       image: ChatItem,
       text: 'Chat',
-      route: '/document',
+      route: '/documentchat',
       width: '45px',
       height: '49px',
       gap: '2',

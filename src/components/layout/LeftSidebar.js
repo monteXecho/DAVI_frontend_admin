@@ -4,6 +4,7 @@ import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { usePathname } from 'next/navigation' 
+import { useKeycloak } from '@react-keycloak/web'
 
 import userPhoto from '@/assets/user_photo.jpg'
 import MenuButton from '@/components/buttons/MenuButton'
@@ -16,23 +17,37 @@ import RollenItem from '@/assets/rollen_item.png'
 import GebruikersItem from '@/assets/gebruikers_item.png'
 import DocumentenItem from '@/assets/documenten_item.png'
 import InstellingenItem from '@/assets/instellingen_item.png'
+import CompanyItem from '@/assets/company_item.png'
 
 export default function LeftSidebar() {
   const [activeTab, setActiveTab] = useState(null)
   const router = useRouter()
   const pathname = usePathname() 
+  const { keycloak } = useKeycloak()
+
+  const isSuperAdmin = 
+    keycloak?.authenticated &&
+    keycloak?.tokenParsed?.realm_access?.roles?.includes("super_admin")
+
+  const isCompanyAdmin = 
+    keycloak?.authenticated &&
+    keycloak?.tokenParsed?.realm_access?.roles?.includes("company_admin")
+
+  const isCompanyUser = 
+    keycloak?.authenticated &&
+    keycloak?.tokenParsed?.realm_access?.roles?.includes("company_user")
 
   const icons = {
     Documentenchat: ChatItem,
     BKR: BKRItem,
     VGC: VGCItem,
     '3-uurs': uursItem,
+    Compagnies: CompanyItem,
     Rollen: RollenItem,
     Gebruikers: GebruikersItem,
     Documenten: DocumentenItem,
     Instellingen: InstellingenItem,
   }
-
 
   useEffect(() => {
     const routeToTab = {
@@ -40,6 +55,7 @@ export default function LeftSidebar() {
       '/bkr': 'BKR',
       '/vgc': 'VGC',
       '/3-uurs': '3-uurs',
+      '/compagnies': 'Compagnies',
       '/rollen': 'Rollen',
       '/rol-pz': 'Rollen',
       '/gebruikers': 'Gebruikers',
@@ -63,6 +79,8 @@ export default function LeftSidebar() {
       router.push('/3-uurs')
     } else if (label === 'Rollen') {
       router.push('/rollen')
+    } else if (label === 'Compagnies') {
+      router.push('/compagnies')
     } else if (label === 'Gebruikers') {
       router.push('/gebruikers')
     } else if (label === 'Documenten') {
@@ -96,7 +114,16 @@ export default function LeftSidebar() {
           <div className="w-full h-[1px] bg-[#C5BEBE]"></div>
 
           <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-            {['Rollen', 'Gebruikers', 'Documenten', 'Instellingen'].map(label => (
+            {isSuperAdmin && (
+              <MenuButton
+                text="Compagnies"
+                image={icons["Compagnies"]}
+                isActive={activeTab === "Compagnies"}
+                onClick={() => handleClick("Compagnies")}
+              />
+            )}
+            
+            {(isSuperAdmin || isCompanyAdmin) && ['Rollen', 'Gebruikers', 'Documenten', 'Instellingen'].map(label => (
               <MenuButton
                 key={label}
                 text={label}

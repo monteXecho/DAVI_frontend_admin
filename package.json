@@ -13,6 +13,7 @@
     "@react-keycloak/web": "^3.4.0",
     "@svgr/webpack": "^8.1.0",
     "axios": "^1.10.0",
+    "jose": "^6.1.0",
     "keycloak-js": "^26.2.0",
     "next": "15.3.5",
     "pdfjs-dist": "^5.3.31",

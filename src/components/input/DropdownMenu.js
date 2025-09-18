@@ -33,8 +33,8 @@ export default function DropdownMenu ({ value, onChange, allOptions }) {
 
             {open && (
                 <ul className="absolute top-full left-0 w-full bg-white border border-[#D9D9D9] rounded-lg mt-1 shadow-md max-h-48 overflow-auto z-10" role="listbox" tabIndex={0}>
-                {dropdownOptions.map(opt => (
-                    <li key={opt} className="px-4 py-2 cursor-pointer hover:bg-gray-100" 
+                {dropdownOptions.map((opt, index) => (
+                    <li key={index} className="px-4 py-2 cursor-pointer hover:bg-gray-100" 
                         onClick={() => selectOption(opt)} 
                         role="option" aria-selected={value === opt} tabIndex={0} 
                         onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); selectOption(opt); } }}>

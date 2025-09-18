@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import DropdownMenu from "@/components/input/DropdownMenu";
 
-export default function AddAdmin({ onClose, selectedCompany, companies = [] }) {
+export default function AddAdmin({ onClose, onCreate, selectedCompany, companies = [] }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const allOptions = companies.map((c) => c.name);
   const [selected, setSelected] = useState(() => selectedCompany?.name || allOptions[0] || "");
 
@@ -36,6 +38,8 @@ export default function AddAdmin({ onClose, selectedCompany, companies = [] }) {
           <input
             type="text"
             placeholder="person@company.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
         </div>
@@ -45,6 +49,8 @@ export default function AddAdmin({ onClose, selectedCompany, companies = [] }) {
           <input
             type="text"
             placeholder="First Last"
+            value={name}
+            onChange={e => setName(e.target.value)}
             className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
         </div>
@@ -57,7 +63,15 @@ export default function AddAdmin({ onClose, selectedCompany, companies = [] }) {
         >
           Cancel
         </button>
-        <button className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white cursor-pointer">
+        <button 
+          className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white cursor-pointer"
+          onClick={() => {
+              if (name.trim()) {
+              onCreate(selectedCompany.id ,name, email);
+              onClose();
+              }
+          }}          
+        >
           Create Admin
         </button>
       </div>

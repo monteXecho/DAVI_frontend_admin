@@ -1,4 +1,8 @@
-export default function AddCompany ({ onClose }) {
+import { useState } from "react";
+
+export default function AddCompany ({ onClose, onCreate }) {
+    const [name, setName] = useState("");
+
     return (
         <div className="w-full h-fit flex flex-col gap-5 xl:p-7 p-1 rounded-2xl border border-none">
             <span className="text-2xl font-bold text-[#020003]">Add Company</span>
@@ -7,6 +11,8 @@ export default function AddCompany ({ onClose }) {
                 <span className="text-xl font-bold text-[#020003]">Company name *</span>
                 <input
                     type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., Parkview Childcare BV"
                     className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
                 />
@@ -18,7 +24,15 @@ export default function AddCompany ({ onClose }) {
                 >
                     Cancel
                 </button>
-                <button className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white cursor-pointer">
+                <button 
+                    className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white cursor-pointer"
+                    onClick={() => {
+                        if (name.trim()) {
+                        onCreate(name);
+                        onClose();
+                        }
+                    }}
+                >
                     Create
                 </button>
             </div>
