@@ -66,14 +66,27 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
         <button 
           className="w-fit px-7 py-3 bg-[#0E1629] rounded-full text-white cursor-pointer"
           onClick={() => {
-              if (name.trim()) {
-              onCreate(selectedCompany.id ,name, email);
-              onClose();
-              }
-          }}          
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+              alert("You have to match email format (e.g. person@company.com)");
+              return;
+            }
+
+            if (!name.trim()) {
+              alert("Full name is required");
+              return;
+            }
+
+            if (onCreate && selectedCompany) {
+              onCreate(selectedCompany.id, name, email);
+            }
+            onClose();
+          }}
         >
           Create Admin
         </button>
+
       </div>
     </div>
   );
