@@ -134,6 +134,30 @@ export function useApi() {
     [withAuth]
   );
 
+  const register = useCallback(async (user) => {
+    try {
+      const payload = {
+        fullName: user.fullName,
+        email: user.email,
+        username: user.username,
+        password: user.password,
+      };
+      
+      const { data } = await apiClient.post('/auth/register', payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return { ok: true, data };
+    } catch (err) {
+      console.error('Register error:', err);
+      return {
+        ok: false,
+        data:
+          err.response?.data ||
+          { detail: 'Registration failed. Please try again.' },
+      };
+    }
+  }, []);
+
   return {
     askQuestion,
     uploadDocument,
@@ -148,7 +172,10 @@ export function useApi() {
 
     assignModules,
 
+    register,
+
     loading,
-    error,
+    error
+
   };
 }

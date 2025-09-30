@@ -10,6 +10,8 @@ import UploadBttn from '@/components/buttons/UploadBttn';
 import UploadingBttn from '@/components/buttons/UploadingBttn';
 import SuccessBttn from '@/components/buttons/SuccessBttn';
      
+import { hasRole } from '@/lib/keycloak';
+
 const UploadStates = {
   IDLE: 'idle',
   UPLOADING: 'uploading',
@@ -18,9 +20,7 @@ const UploadStates = {
 
 export default function DocumentClient() {
   const { keycloak } = useKeycloak();
-  const isAdmin =
-    keycloak?.authenticated &&
-    keycloak?.tokenParsed?.realm_access?.roles?.includes('admin');
+  const isAdmin = hasRole(keycloak, ['super_admin', 'company_admin'])
 
   const { askQuestion, uploadDocument, loading: apiLoading, error } = useApi();
 

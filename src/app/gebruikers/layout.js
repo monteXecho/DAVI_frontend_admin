@@ -1,10 +1,9 @@
-import Landing from "./landing/page";
 import MainLayout from "@/components/layout/mainLayout"
 
-export default function Home() {
+export default function layout({ children }) {
   return (
     <MainLayout>
-      <Landing />
+        {children}
     </MainLayout>
-  );
+  )
 }
