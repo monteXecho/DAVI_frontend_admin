@@ -39,6 +39,7 @@ export default function LeftSidebar() {
 
   const icons = {
     Documentenchat: ChatItem,
+    'GGD Checks': VGCItem,
     BKR: BKRItem,
     VGC: VGCItem,
     '3-uurs': uursItem,
@@ -52,9 +53,10 @@ export default function LeftSidebar() {
   useEffect(() => {
     const routeToTab = {
       '/documentchat': 'Documentenchat',
-      '/bkr': 'BKR',
-      '/vgc': 'VGC',
-      '/3-uurs': '3-uurs',
+      '/GGD': 'GGD Checks',
+      // '/bkr': 'BKR',
+      // '/vgc': 'VGC',
+      // '/3-uurs': '3-uurs',
       '/compagnies': 'Compagnies',
       '/rollen': 'Rollen',
       '/rol-pz': 'Rollen',
@@ -71,13 +73,18 @@ export default function LeftSidebar() {
     setActiveTab(label)
     if (label === 'Documentenchat') {
       router.push('/documentchat')
-    } else if (label === 'BKR') {
-      router.push('/bkr')
-    } else if (label === 'VGC') {
-      router.push('/vgc')
-    } else if (label === '3-uurs') {
-      router.push('/3-uurs')
-    } else if (label === 'Rollen') {
+    } 
+    // else if (label === 'BKR') {
+    //   router.push('/bkr')
+    // } else if (label === 'VGC') {
+    //   router.push('/vgc')
+    // } else if (label === '3-uurs') {
+    //   router.push('/3-uurs')
+    // } 
+    else if (label === 'GGD Checks') {
+      router.push('/GGD')
+    }
+    else if (label === 'Rollen') {
       router.push('/rollen')
     } else if (label === 'Compagnies') {
       router.push('/compagnies')
@@ -100,7 +107,7 @@ export default function LeftSidebar() {
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-            {['Documentenchat', 'BKR', 'VGC', '3-uurs'].map(label => (
+            {['Documentenchat', 'GGD Checks'].map(label => (
               <MenuButton
                 key={label}
                 text={label}

@@ -13,14 +13,19 @@
     "@react-keycloak/web": "^3.4.0",
     "@svgr/webpack": "^8.1.0",
     "axios": "^1.10.0",
+    "clsx": "^2.1.1",
     "jose": "^6.1.0",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "keycloak-js": "^26.2.0",
     "next": "15.3.5",
     "pdfjs-dist": "^5.3.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-modal-image": "^2.6.0",
     "react-pdf": "^10.0.1",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
