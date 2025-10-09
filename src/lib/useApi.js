@@ -158,6 +158,47 @@ export function useApi() {
     }
   }, []);
 
+  // -------- company users -------------
+  const getUsers = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/users', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const addUser = useCallback(
+    (email, company_role) =>
+      withAuth((token) =>
+        apiClient
+          .post('/company-admin/users', { email, company_role }, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );  
+
+  const updateUser = useCallback(
+    (payload) =>
+      withAuth((token) =>
+        apiClient
+          .put(`/company-admin/users/${payload.id}`, payload, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const deleteUser = useCallback(
+    (userId) =>
+      withAuth((token) =>
+        apiClient
+          .delete(`/company-admin/users/${userId}`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     askQuestion,
     uploadDocument,
@@ -169,6 +210,11 @@ export function useApi() {
     getCompanyAdmins,
     addCompanyAdmin,
     deleteCompanyAdmin,
+
+    getUsers,
+    addUser,
+    updateUser,
+    deleteUser,
 
     assignModules,
 
