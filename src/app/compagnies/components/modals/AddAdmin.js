@@ -15,12 +15,14 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
   }, [selectedCompany]);
 
   useEffect(() => {
-    if (!selected && allOptions.length > 0) {
+    if (allOptions.length === 0) return;
+
+    if (!selected) {
       setSelected(allOptions[0]);
-    } else if (selected && allOptions.length > 0 && !allOptions.includes(selected)) {
+    } else if (!allOptions.includes(selected)) {
       setSelected(selectedCompany?.name || allOptions[0]);
     }
-  }, [companies]); 
+  }, [companies, allOptions, selected, selectedCompany?.name]);
 
   return (
     <div className="w-full h-fit flex flex-col gap-5 xl:p-7 p-1 rounded-2xl border border-none">
