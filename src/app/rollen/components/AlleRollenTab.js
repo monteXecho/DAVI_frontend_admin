@@ -1,90 +1,121 @@
-'use client'
-import { useState } from "react";
-import AddButton from "@/components/buttons/AddButton";
-import CheckBox from "@/components/buttons/CheckBox";
-import SearchBox from "@/components/input/SearchBox";
-import DropdownMenu from "@/components/input/DropdownMenu";
-import DownArrow from "@/components/icons/DownArrowIcon";
-import EditIcon from "@/components/icons/EditIcon";
-import RedCancelIcon from "@/components/icons/RedCancelIcon";
+'use client';
 
-const RolData = [
-    {
-        rol: 'Beheerder',
-        gebruikers: '1',
-        documenten: '2256',
-    },{
-        rol: 'PM’er',
-        gebruikers: '201',
-        documenten: '1767',
-    },{
-        rol: 'Staff',
-        gebruikers: '19',
-        documenten: '2254',
-    },{
-        rol: 'PZ',
-        gebruikers: '14',
-        documenten: '786',
-    }
-]
+import { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import AddButton from '@/components/buttons/AddButton';
+import CheckBox from '@/components/buttons/CheckBox';
+import SearchBox from '@/components/input/SearchBox';
+import DropdownMenu from '@/components/input/DropdownMenu';
+import DownArrow from '@/components/icons/DownArrowIcon';
+import EditIcon from '@/components/icons/EditIcon';
+import RedCancelIcon from '@/components/icons/RedCancelIcon';
 
-export default function AlleRollenTab() {
-  const allOptions = ["Bulkacties", "Option 1", "Option 2", "Option 3"];
+export default function AlleRollenTab({ admin_counts, user_counts, admin_docs, user_docs }) {
+  const allOptions = ['Bulkacties', 'Option 1', 'Option 2', 'Option 3'];
   const [selected, setSelected] = useState(allOptions[0]);
+
+  // Derived data (memoized for clarity & performance)
+  const RolData = useMemo(
+    () => [
+      { rol: 'Beheerder', gebruikers: admin_counts, documenten: admin_docs },
+      { rol: 'PM’er', gebruikers: user_counts, documenten: user_docs },
+    ],
+    [admin_counts, user_counts, admin_docs, user_docs]
+  );
 
   return (
     <div className="flex flex-col w-full">
-        <div className="flex w-full h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-            <div className="flex w-2/3 gap-4">
-                <div className="w-4/9">
-                    <DropdownMenu value={selected} onChange={setSelected} allOptions={allOptions} />
-                </div>
+      {/* Header controls */}
+      <div className="flex w-full h-[60px] bg-[#F9FBFA] items-center justify-between px-4">
+        <div className="flex w-2/3 gap-4">
+          <div className="w-1/3">
+            <DropdownMenu value={selected} onChange={setSelected} allOptions={allOptions} />
+          </div>
 
-                <div className="w-4/9">
-                    <SearchBox placeholderText='Zoek gebruiker...' />
-                </div>
-            </div>
-
-            <AddButton onClick={() => {}} text="Toevoegen" />
+          <div className="w-1/3">
+            <SearchBox placeholderText="Zoek gebruiker..." />
+          </div>
         </div>
 
-        <table className="w-full border-separate border-spacing-0 border border-transparent">
-            <thead className="bg-[#F9FBFA]">                
-                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
-                    <th className="flex items-center gap-5 w-2/7 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        <CheckBox toggle={false} color='#23BD92' /> 
-                        <span>Rol</span>
-                        <DownArrow />
+        <AddButton onClick={() => {}} text="Toevoegen" />
+      </div>
 
-                    </th>
-                    <th className="flex items-center gap-5 w-2/7 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        Gebruikers
-                        <DownArrow />
-                    </th>
-                    <th className="flex items-center gap-5 w-3/7 font-montserrat font-bold text-[16px] leading-6 text-black">
-                        Documenten toegewezen
-                        <DownArrow />
-                    </th>
-                    <th className="w-[52px] px-4 py-2"></th>
-                </tr>
-            </thead>
-            <tbody>
-                {RolData.map(({rol, gebruikers, documenten }, i) => (
-                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
-                        <td className="flex gap-5 w-2/7 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                        <CheckBox toggle={false} color='#23BD92' /> 
-                            {rol}
-                        </td>
-                        <td className="w-2/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{gebruikers}</td>
-                        <td className="w-3/7 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">{documenten}</td>
-                        <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                            <EditIcon />
-                            <RedCancelIcon />
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
+      {/* Data Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead className="bg-[#F9FBFA]">
+            <tr className="h-[51px] border-b border-[#C5BEBE]">
+              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <div className="flex items-center gap-3">
+                  <CheckBox toggle={false} color="#23BD92" />
+                  <span>Rol</span>
+                  <DownArrow />
+                </div>
+              </th>
+              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <div className="flex items-center gap-3">
+                  Gebruikers
+                  <DownArrow />
+                </div>
+              </th>
+              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <div className="flex items-center gap-3">
+                  Documenten toegewezen
+                  <DownArrow />
+                </div>
+              </th>
+              <th className="px-4 py-2 w-[52px]"></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {RolData.map(({ rol, gebruikers, documenten }) => (
+              <tr
+                key={rol}
+                className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+              >
+                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                  <div className="flex items-center gap-3">
+                    <CheckBox toggle={false} color="#23BD92" />
+                    {rol}
+                  </div>
+                </td>
+
+                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                  {gebruikers}
+                </td>
+
+                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                  {documenten}
+                </td>
+
+                <td className="px-4 py-2 flex justify-end gap-3">
+                  <button
+                    aria-label={`Edit ${rol}`}
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    aria-label={`Delete ${rol}`}
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <RedCancelIcon />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
+      </div>
     </div>
   );
 }
+
+// ✅ Prop validation (if not using TypeScript)
+AlleRollenTab.propTypes = {
+  admin_counts: PropTypes.number,
+  user_counts: PropTypes.number,
+  admin_docs: PropTypes.number,
+  user_docs: PropTypes.number,
+};

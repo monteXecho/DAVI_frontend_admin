@@ -40,9 +40,6 @@ export default function LeftSidebar() {
   const icons = {
     Documentenchat: ChatItem,
     'GGD Checks': VGCItem,
-    BKR: BKRItem,
-    VGC: VGCItem,
-    '3-uurs': uursItem,
     Compagnies: CompanyItem,
     Rollen: RollenItem,
     Gebruikers: GebruikersItem,
@@ -54,9 +51,6 @@ export default function LeftSidebar() {
     const routeToTab = {
       '/documentchat': 'Documentenchat',
       '/GGD': 'GGD Checks',
-      // '/bkr': 'BKR',
-      // '/vgc': 'VGC',
-      // '/3-uurs': '3-uurs',
       '/compagnies': 'Compagnies',
       '/rollen': 'Rollen',
       '/rol-pz': 'Rollen',
@@ -74,13 +68,6 @@ export default function LeftSidebar() {
     if (label === 'Documentenchat') {
       router.push('/documentchat')
     } 
-    // else if (label === 'BKR') {
-    //   router.push('/bkr')
-    // } else if (label === 'VGC') {
-    //   router.push('/vgc')
-    // } else if (label === '3-uurs') {
-    //   router.push('/3-uurs')
-    // } 
     else if (label === 'GGD Checks') {
       router.push('/GGD')
     }

@@ -37,10 +37,10 @@ export function useApi() {
   );
 
   const askQuestion = useCallback(
-    (question, model = 'granite-3.2-8b-instruct@q8_0') =>
+    (question) =>
       withAuth((token) =>
         apiClient
-          .post('/ask', { question, model }, createAuthHeaders(token))
+          .post('/ask.run', {question}, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -199,6 +199,16 @@ export function useApi() {
     [withAuth]
   );
 
+  const getCompanyStats = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get(`/company-admin/stats`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     askQuestion,
     uploadDocument,
@@ -215,6 +225,8 @@ export function useApi() {
     addUser,
     updateUser,
     deleteUser,
+
+    getCompanyStats,
 
     assignModules,
 

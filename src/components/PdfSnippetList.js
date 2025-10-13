@@ -46,7 +46,7 @@ const PdfSnippetList = ({ documents }) => {
                   </div>
 
                     <Link
-                      href={`${process.env.NEXT_PUBLIC_API_BASE_URL }/output/highlighted/${encodeURIComponent(file)}#page=${snippets[0].page}`}
+                      href={`${process.env.NEXT_PUBLIC_API_BASE_URL }/highlighted/${encodeURIComponent(file)}#page=${snippets[0].page}`}
                       target="_blank"
                       rel="noreferrer"
                     >

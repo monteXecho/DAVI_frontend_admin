@@ -6,10 +6,12 @@ const keycloak = new Keycloak({
   clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID,
 });
 
+const keycloak_server = process.env.NEXT_PUBLIC_KEYCLOAK_URL
+
 export default keycloak;
  
 export const keycloakLoginUrl =
-  "http://localhost:8080/realms/DAVI/protocol/openid-connect/auth" +
+  `${keycloak_server}/realms/DAVI/protocol/openid-connect/auth` +
   "?client_id=frontend" +
   "&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fdocumentchat" +
   "&response_type=code" +

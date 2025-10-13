@@ -11,7 +11,7 @@ import DeleteUserModal from "./modals/DeleteUserModal";
 
 import { useState, useMemo } from "react";
 
-export default function GebruikersTab({ users = [], loading, onEditUser, onDeleteUser }) {
+export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -108,42 +108,32 @@ export default function GebruikersTab({ users = [], loading, onEditUser, onDelet
         </thead>
 
         <tbody>
-          {loading ? (
-            <tr className="h-[51px] flex items-center justify-center text-gray-500 font-montserrat text-[16px] w-full">
-              <td>Laden...</td>
+          {filteredData.map((user) => (
+            <tr
+              key={user.id}
+              className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2"
+            >
+              <td className="flex gap-5 w-3/8 items-center font-montserrat font-normal text-[16px] leading-6 text-black">
+                <CheckBox toggle={false} color="#23BD92" />
+                {user.Naam}
+              </td>
+              <td className="w-3/8 font-montserrat font-normal text-[16px] leading-6 text-black">
+                {user.Email}
+              </td>
+              <td className="w-1/8 font-montserrat font-normal text-[16px] leading-6 text-black">
+                {user.Rol}
+              </td>
+              <td className="w-1/8 flex justify-end items-center gap-3">
+                <button onClick={() => onEditUser && onEditUser(user)}>
+                  <EditIcon />
+                </button>
+                <ResetPassIcon />
+                <button onClick={() => handleDeleteClick(user)}>
+                  <RedCancelIcon />
+                </button>
+              </td>
             </tr>
-          ) : filteredData.length === 0 ? (
-            <tr className="h-[51px] flex items-center justify-center text-gray-500 font-montserrat text-[16px] w-full">
-              <td>Geen gebruikers gevonden</td>
-            </tr>
-          ) : (
-            filteredData.map((user) => (
-              <tr
-                key={user.id}
-                className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2"
-              >
-                <td className="flex gap-5 w-3/8 items-center font-montserrat font-normal text-[16px] leading-6 text-black">
-                  <CheckBox toggle={false} color="#23BD92" />
-                  {user.Naam}
-                </td>
-                <td className="w-3/8 font-montserrat font-normal text-[16px] leading-6 text-black">
-                  {user.Email}
-                </td>
-                <td className="w-1/8 font-montserrat font-normal text-[16px] leading-6 text-black">
-                  {user.Rol}
-                </td>
-                <td className="w-1/8 flex justify-end items-center gap-3">
-                  <button onClick={() => onEditUser && onEditUser(user)}>
-                    <EditIcon />
-                  </button>
-                  <ResetPassIcon />
-                  <button onClick={() => handleDeleteClick(user)}>
-                    <RedCancelIcon />
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
+          ))}
         </tbody>
       </table>
 

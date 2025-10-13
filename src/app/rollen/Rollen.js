@@ -1,6 +1,7 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 
+import { useApi } from "@/lib/useApi"
 import AlleRollenTab from "./components/AlleRollenTab"
 import MakenTab from "./components/MakenTab"
 import ToewijzenTab from "./components/ToewijzenTab"
@@ -17,8 +18,29 @@ const tabsConfig = [
 
 export default function Rollen () {
     const [activeIndex, setActiveIndex] = useState(0)
+    const { getCompanyStats } = useApi()
+    const [ cadmins, setCadmins ] = useState()
+    const [ cusers, setCusers ] = useState()
+    const [ adocs, setAdocs ] = useState()
+    const [ udocs, setUdocs ] = useState()
 
     const ActiveComponent = tabsConfig[activeIndex].component
+
+    const fetchCompanyStats = useCallback (async () => {
+        try {
+            const data = await getCompanyStats()
+            setCadmins(data.company_admin_count)
+            setCusers(data.company_user_count)
+            setAdocs(data.documents_for_admins)
+            setUdocs(data.documents_for_users)
+        } catch(err) {
+            console.log("Failed to fetch company stats.")
+        }
+    }, [getCompanyStats])
+
+    useEffect (() => {
+        fetchCompanyStats()
+    }, [fetchCompanyStats])
 
     return (
         <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
@@ -48,7 +70,7 @@ export default function Rollen () {
                     <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
                 </div>
                 <div className="w-full px-[102px] py-[46px]">
-                    <ActiveComponent />
+                    <ActiveComponent admin_counts={cadmins} user_counts={cusers} admin_docs={adocs} user_docs={udocs}/>
                 </div>
             </div>
         </div>
