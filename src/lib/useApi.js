@@ -209,6 +209,36 @@ export function useApi() {
     [withAuth]
   );
 
+  const getRoles = useCallback(
+      () =>
+        withAuth((token) =>
+          apiClient
+            .get(`/company-admin/roles`, createAuthHeaders(token))
+            .then((res) => res.data)
+        ),
+      [withAuth]
+    );
+
+  const addOrUpdateRole = useCallback(
+    (role_name, folders) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/roles`, { role_name, folders }, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const deleteRole = useCallback(
+    (role_name) =>
+      withAuth((token) =>
+        apiClient
+          .delete(`/company-admin/roles/${role_name}`, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     askQuestion,
     uploadDocument,
@@ -227,6 +257,10 @@ export function useApi() {
     deleteUser,
 
     getCompanyStats,
+
+    getRoles,
+    addOrUpdateRole,
+    deleteRole,
 
     assignModules,
 
