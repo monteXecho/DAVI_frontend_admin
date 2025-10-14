@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { toLocaleDateString } from "../../helpers/date";
+import { copyClipboard } from "../../helpers/clipboard";
 
 export default function CustomizedSelect({
-  options: externalOptions,
+  options,
   value,
   onChange,
   placeholder = "Select an item…",
@@ -12,29 +14,33 @@ export default function CustomizedSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [options, setOptions] = useState(externalOptions || []);
 
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
   const listRef = useRef(null);
 
-  useEffect(() => {
-    setOptions(externalOptions || []);
-  }, [externalOptions]);
+  const updatedOptions = useMemo(
+    () =>
+      options.map(({ date, ...rest }) => ({
+        ...rest,
+        date: date.map((item) => toLocaleDateString(item)),
+      })),
+    [options]
+  );
 
   const filtered = useMemo(() => {
-    if (!query) return options;
+    if (!query) return updatedOptions;
     const q = query.toLowerCase();
-    return options.filter(
-      (o) =>
-        o.title.toLowerCase().includes(q) ||
-        (o.description || "").toLowerCase().includes(q)
+    return updatedOptions.filter((o) =>
+      JSON.stringify([o.check_id, o.date, o.modules, o.group])
+        .toLowerCase()
+        .includes(q)
     );
-  }, [query, options]);
+  }, [query, updatedOptions]);
 
   const selected = useMemo(
-    () => options.find((o) => o.id === value) || null,
-    [options, value]
+    () => updatedOptions.find((o) => o.check_id === value) || null,
+    [updatedOptions, value]
   );
 
   useEffect(() => {
@@ -122,12 +128,24 @@ export default function CustomizedSelect({
         }}
         className={clsx(
           "w-full inline-flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm",
-          "hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          "hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
           <span className="block truncate font-medium text-gray-900">
-            {selected ? selected.title : placeholder}
+            {selected ? (
+              <>
+                {selected.date && selected.date.length > 0 && (
+                  <span className="">
+                    {selected.date[0]}
+                    {selected.date.length !== 1 &&
+                      `~${selected.date[selected.date.length - 1]}`}
+                  </span>
+                )}
+              </>
+            ) : (
+              placeholder
+            )}
           </span>
           {selected?.description ? (
             <span className="ml-2 truncate text-gray-500 hidden sm:inline">
@@ -164,7 +182,7 @@ export default function CustomizedSelect({
         >
           <div className="p-2 border-b bg-gray-50">
             <label className="sr-only" htmlFor="tls-search">
-              Search
+              Zoekopdracht
             </label>
             <input
               id="tls-search"
@@ -174,27 +192,27 @@ export default function CustomizedSelect({
                 setQuery(e.target.value);
                 setActiveIndex(0);
               }}
-              placeholder="Search…"
-              className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Zoekopdracht..."
+              className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <ul className="max-h-72 overflow-auto py-1" tabIndex={-1}>
             {filtered.length === 0 && (
-              <li className="px-3 py-3 text-gray-500">No results</li>
+              <li className="px-3 py-3 text-gray-500">Geen resultaten</li>
             )}
             {filtered.map((o, idx) => (
               <li
-                id={`option-${o.id}`}
-                key={o.id}
+                id={`option-${o.check_id}`}
+                key={o.check_id}
                 role="option"
-                aria-selected={value === o.id}
+                aria-selected={value === o.check_id}
                 onMouseEnter={() => setActiveIndex(idx)}
                 onMouseDown={(e) => {
                   e.preventDefault();
                 }}
                 onClick={() => {
-                  onChange?.(o.id);
+                  onChange?.(o.check_id);
                   setOpen(false);
                   setQuery("");
                   setActiveIndex(-1);
@@ -202,69 +220,43 @@ export default function CustomizedSelect({
                 }}
                 className={clsx(
                   "group cursor-pointer px-3 py-2 transition-colors",
-                  idx === activeIndex ? "bg-indigo-50" : ""
+                  idx === activeIndex ? "bg-green-50" : ""
                 )}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-gray-900">
-                      {o.title}
-                    </div>
-                    {o.description ? (
-                      <div className="truncate text-gray-500 text-xs">
-                        {o.description}
-                      </div>
-                    ) : null}
-                  </div>
-                  {value === o.id && (
-                    <div className="opacity-0 transition-opacity group-hover:opacity-100">
-                      <span className="inline-flex items-center rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-                        Selected
-                      </span>
-                    </div>
+                <div
+                  className={clsx("truncate font-medium text-gray-700", {
+                    "!text-gray-900": value === o.check_id,
+                  })}
+                >
+                  {o.date && o.date.length > 0 && (
+                    <span className="">
+                      {o.date[0]}
+                      {o.date.length !== 1 && `~${o.date[o.date.length - 1]}`}
+                    </span>
                   )}
+                </div>
+                <div className="flex justify-between">
+                  <span
+                    className="truncate text-gray-500 text-xs hover:rounded hover:bg-green-200 transition-all"
+                    title="Klik om de cheque-ID te kopiëren"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      copyClipboard(o.check_id);
+                    }}
+                  >
+                    <i>check id</i>: {o.check_id.substring(0, 8)}...
+                    {o.check_id.substring(o.check_id.length - 8)}
+                  </span>
+                  <span className="truncate text-gray-500 text-xs">
+                    {o.modules.join(", ").toUpperCase()}
+                  </span>
                 </div>
               </li>
             ))}
           </ul>
         </div>
       )}
-    </div>
-  );
-}
-
-export function Demo() {
-  const [value, setValue] = useState("2");
-  const [options, setOptions] = useState([
-    { id: "1", title: "Paris", description: "City of Light" },
-    { id: "2", title: "Tokyo", description: "Vibrant tech & culture" },
-    { id: "3", title: "São Paulo", description: "Brazilian megacity" },
-    { id: "4", title: "Kyiv", description: "Historic capital" },
-    { id: "5", title: "Toronto", description: "CN Tower views" },
-  ]);
-
-  return (
-    <div className="min-h-[60vh] w-full bg-gradient-to-b from-white to-gray-50 p-6">
-      <div className="mx-auto max-w-md">
-        <h1 className="mb-3 text-xl font-semibold tracking-tight">
-          Two‑Line Editable Select
-        </h1>
-        <p className="mb-4 text-sm text-gray-600">
-          Search in the dropdown, edit an option in place, and select.
-        </p>
-        <CustomizedSelect
-          options={options}
-          value={value}
-          onChange={setValue}
-        />
-
-        <div className="mt-6 rounded-xl border bg-white p-4 text-sm shadow-sm">
-          <div className="mb-2 font-medium">Selected value</div>
-          <pre className="whitespace-pre-wrap rounded-lg bg-gray-50 p-3">
-            {JSON.stringify({ value }, null, 2)}
-          </pre>
-        </div>
-      </div>
     </div>
   );
 }

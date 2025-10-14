@@ -39,7 +39,7 @@ export default function FoldableDetailView({ goBottom, children }) {
             />
           </svg>
           <span className="font-medium text-sm">
-            {open ? "hide" : "view more"}
+            {open ? "Verbergen" : "Bekijk meer"}
           </span>
         </button>
       </div>

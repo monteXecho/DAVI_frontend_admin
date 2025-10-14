@@ -80,9 +80,8 @@ function recommendStaffFromDetails(slices) {
 export default function ComplianceDetailView({
   checkResult,
   modules,
-  groupName, // optional: "Dolfijntjes"
-  groupType = "Group", // optional: "Baby Group"
-  showUnknownNote = true, // show note about Unknown slots for VGC
+  groupName,
+  showUnknownNote = true,
 }) {
   const dateStr = checkResult?.day || "";
   const slices = checkResult?.slices || [];
@@ -91,9 +90,6 @@ export default function ComplianceDetailView({
   const checkVGC = modules.includes("vgc");
   const checkThreeHours = modules.includes("threeHours");
 
-  const groupLabel = groupName ? `${groupType} "${groupName}"` : groupType;
-
-  // Module computations
   const bkr = mergeFailRanges(slices, "BKR");
   const vgc = mergeFailRanges(slices, "VGC");
   const bkrPassSlots = countPassedBKR(slices);
@@ -101,7 +97,6 @@ export default function ComplianceDetailView({
   const vgcUnknownSlots = countUnknownVgc(slices);
   const vgcRec = recommendStaffFromDetails(slices);
 
-  // 3-UURS block straight from summary
   const threeFlag = three["3-UURS"];
   const threeReason = three.Reason;
   const threeDevs = Array.isArray(three.Deviations) ? three.Deviations : [];
@@ -112,15 +107,15 @@ export default function ComplianceDetailView({
       className="border rounded shadow-lg p-2 flex flex-col gap-2"
     >
       <div className="font-bold mb-2 pl-2 border-b">
-        {toLocaleDateString(dateStr)} — {groupLabel}
+        {toLocaleDateString(dateStr)} — {groupName}
       </div>
 
-      {/* BKR */}
       <section>
         <div className="font-bold pl-2">BKR</div>
         {emptyDay ? (
           <div className="flex items-center gap-1">
-            <Icon size={14} name="yellowRoundWarning" /> No child present.
+            <Icon size={14} name="yellowRoundWarning" />
+            Er is geen kind aanwezig.
           </div>
         ) : bkr.ranges.length ? (
           <>
@@ -130,28 +125,29 @@ export default function ComplianceDetailView({
               </div>
             ))}
             <div className="text-gray-700 text-sm my-2">
-              {`BKR failed in ${bkr.slots} slot${
+              {`BKR is mislukt in ${bkr.slots} slot${
                 bkr.slots !== 1 ? "s" : ""
               } (${minutesToHoursStr(bkr.totalFailMins)} ${
-                bkr.totalFailMins === 60 ? "hour" : "hours"
-              } total).`}{" "}
-              The 3-hours allowance is evaluated separately below.
+                bkr.totalFailMins === 60 ? "uur" : "uurs"
+              } totaal).`}{" "}
+              De 3-uursvergoeding wordt hieronder apart beoordeeld.
             </div>
           </>
         ) : (
           <div className="flex items-center gap-1">
-            <Icon size={14} name="greenRoundCheck" /> All slots compliant.
+            <Icon size={14} name="greenRoundCheck" />
+            Alle slots compatibel.
           </div>
         )}
       </section>
 
-      {/* VGC */}
       {checkVGC && (
         <section>
           <div className="font-bold pl-2">VGC</div>
           {emptyDay ? (
             <div className="flex items-center gap-1">
-              <Icon size={14} name="yellowRoundWarning" /> No child present.
+              <Icon size={14} name="yellowRoundWarning" />
+              Er is geen kind aanwezig.
             </div>
           ) : vgc.ranges.length ? (
             <>
@@ -161,38 +157,39 @@ export default function ComplianceDetailView({
                 </div>
               ))}
               <div className="text-gray-700 text-sm my-2">
-                {`VGC not met in ${vgc.slots} slot${
+                {`VGC niet gehaald in ${vgc.slots} slot${
                   vgc.slots !== 1 ? "s" : ""
                 } (${minutesToHoursStr(vgc.totalFailMins)} ${
-                  vgc.totalFailMins === 60 ? "hour" : "hours"
-                } total).`}
+                  vgc.totalFailMins === 60 ? "uur" : "uurs"
+                } totaal).`}
                 {vgcRec
-                  ? ` Recommendation: try scheduling staff member ${vgcRec}.`
+                  ? ` Aanbeveling: probeer medewerker ${vgcRec} in te plannen.`
                   : ""}
               </div>
             </>
           ) : (
             <div className="flex items-center gap-1">
-              <Icon size={14} name="greenRoundCheck" /> All slots compliant.
+              <Icon size={14} name="greenRoundCheck" />
+              Alle slots compatibel.
             </div>
           )}
-          {showUnknownNote && vgcUnknownSlots > 0 ? (
+          {!emptyDay && showUnknownNote && vgcUnknownSlots > 0 ? (
             <div className="text-xs text-gray-500">
               {`${vgcUnknownSlots} slot${
-                vgcUnknownSlots !== 1 ? "s were" : " was"
-              } marked as "Unknown" and not counted in VGC results (likely outside staffed windows or missing data).`}
+                vgcUnknownSlots !== 1 ? "s werden" : " was"
+              } gemarkeerd als 'Onbekend' en werden niet meegeteld in de VGC-resultaten (waarschijnlijk buiten de bemande vensters of ontbrekende gegevens).`}
             </div>
           ) : null}
         </section>
       )}
 
-      {/* 3-UURS */}
       {checkThreeHours && (
         <section>
           <div className="font-bold pl-2">3-UURS</div>
           {emptyDay ? (
             <div className="flex items-center gap-1">
-              <Icon size={14} name="yellowRoundWarning" /> No child present.
+              <Icon size={14} name="yellowRoundWarning" />
+              Er is geen kind aanwezig.
             </div>
           ) : (
             <>

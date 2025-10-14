@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLICK_GGD_BACKEND_URL;
+const API_BASE_URL = "/api";
 
 export const FileKind = {
   STAFF_PLANNING: "staff-planning",
@@ -103,6 +103,12 @@ export async function getCheckProgress(checkId) {
 
 export async function getCheckIds() {
   return request(`/checks`, {
+    method: "GET",
+  });
+}
+
+export async function getCheckList() {
+  return request(`/checks/list`, {
     method: "GET",
   });
 }

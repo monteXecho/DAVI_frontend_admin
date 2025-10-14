@@ -48,35 +48,35 @@ export default function ResultTable({ days, resultData, modules }) {
         <table className="min-w-full border border-gray-300 rounded">
           <thead className="bg-green-100">
             <tr>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-left">
-                From
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
+                Van
               </th>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-left">
-                To
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
+                Aan
               </th>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
-                Children
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
+                Kinderen
               </th>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
-                Required Staff
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
+                Benodigd personeel
               </th>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
-                Staff
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
+                Personeel
               </th>
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
                 BKR
               </th>
               {checkVGC && (
-                <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
+                <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
                   VGC
                 </th>
               )}
               {checkThreeHours && (
-                <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-center">
+                <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-center align-bottom">
                   3-UURS
                 </th>
               )}
-              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 px-3 py-2 text-left">
+              <th className="sticky top-0 z-0 border border-greeb-300 bg-green-100 text-green-700 text-sm px-2 py-1 text-left align-bottom">
                 Details
               </th>
             </tr>

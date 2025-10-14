@@ -10,6 +10,7 @@ const CheckResults = ({ data }) => {
   const days = data.date;
   const modules = data.modules;
   const resultData = data.result;
+  const groupName = data.group;
 
   function goBottom() {
     if (bottomRef && bottomRef.current) {
@@ -46,8 +47,7 @@ const CheckResults = ({ data }) => {
                 key={index}
                 checkResult={item}
                 modules={modules}
-                groupName="KDV RI Vrolijke Verkenners"
-                groupType="Group"
+                groupName={groupName}
                 bkrDailyLimitHours={3}
               />
             ))
@@ -58,7 +58,7 @@ const CheckResults = ({ data }) => {
 
         <FoldableDetailView goBottom={goBottom}>
           <div className="flex flex-col gap-2 mb-4">
-            <h3 className="font-semibold text-lg">Summary</h3>
+            <h3 className="font-semibold text-lg">Samenvatting</h3>
             <p>{data.summary}</p>
             {days && days.length > 0 && (
               <span className="">
@@ -68,14 +68,13 @@ const CheckResults = ({ data }) => {
               </span>
             )}
             <div>
-              <p>Files</p>
+              <p>Bestanden</p>
               {data.references.flat().map((item, index) => (
                 <p key={index} className="pl-2 text-sm">
                   {item.substring(9)}
                 </p>
               ))}
             </div>
-            {/* <SummaryView result={resultData} modules={modules} /> */}
           </div>
 
           <ResultTable resultData={resultData} modules={modules} days={days} />

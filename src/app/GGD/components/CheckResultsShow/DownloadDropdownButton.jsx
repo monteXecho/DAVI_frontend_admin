@@ -105,44 +105,44 @@ export default function DownloadDropdownButton({ day, days, data }) {
                   onClick={handleClickCSV}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to EXCEL
+                  naar EXCEL
                 </button>
                 <button
                   onClick={handleClickJSON}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to JSON
+                  naar JSON
                 </button>
                 <button
                   onClick={handleClickPDF}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to PDF
+                  naar PDF
                 </button>
               </>
             )}
             {days && days.length > 1 && (
               <>
                 <p className="block w-full text-right px-4 border-b text-xs text-gray-500">
-                  Download all
+                  Alles downloaden
                 </p>
                 <button
                   onClick={handleClickCSVAll}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to EXCEL
+                  naar EXCEL
                 </button>
                 <button
                   onClick={handleClickJSONAll}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to JSON
+                  naar JSON
                 </button>
                 <button
                   onClick={handleClickPDFAll}
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
                 >
-                  Download to PDF
+                  naar PDF
                 </button>
               </>
             )}

@@ -4,16 +4,16 @@ import { useState, useEffect, useCallback } from "react"
 import { useApi } from "@/lib/useApi"
 import AlleRollenTab from "./components/AlleRollenTab"
 import MakenTab from "./components/MakenTab"
-import ToewijzenTab from "./components/ToewijzenTab"
-import VersturenTab from "./components/VersturenTab"
+// import ToewijzenTab from "./components/ToewijzenTab"
+// import VersturenTab from "./components/VersturenTab"
 import WijzigenTab from "./components/WijzigenTab"
 
 const tabsConfig = [
   { label: 'Alle rollen', component: AlleRollenTab },
   { label: 'Maken', component: MakenTab },
-  { label: 'Toewijzen', component: ToewijzenTab },
+//   { label: 'Toewijzen', component: ToewijzenTab },
   { label: 'Wijzigen', component: WijzigenTab },
-  { label: 'Versturen', component: VersturenTab },
+//   { label: 'Versturen', component: VersturenTab },
 ]
 
 export default function Rollen () {
