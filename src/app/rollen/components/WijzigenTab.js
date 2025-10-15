@@ -5,12 +5,9 @@ import Toggle from "@/components/buttons/Toggle"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
-import { useApi } from "@/lib/useApi"
 
-export default function WijzigenTab() {
-  const { getRoles, addOrUpdateRole, deleteRole } = useApi()
-
-  const [roles, setRoles] = useState([])
+export default function WijzigenTab({ roles, onUpdateRole, onDeleteRole }) {
+  const [roleNames, setRoleNames] = useState([])
   const [selected, setSelected] = useState("")
   const [folders, setFolders] = useState(["/beleid"])
   const [modules, setModules] = useState([
@@ -26,24 +23,13 @@ export default function WijzigenTab() {
 
   const allEnabled = useMemo(() => modules.every(m => m.enabled), [modules])
 
-  // ✅ Fetch roles on mount
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        setLoading(true)
-        const res = await getRoles()
-        const roleNames = res?.roles?.map(r => r.name) || []
-        setRoles(roleNames)
-        if (roleNames.length > 0) setSelected(roleNames[0])
-      } catch (err) {
-        console.error("Failed to load roles:", err)
-        setError("Kon de rollen niet laden.")
-      } finally {
-        setLoading(false)
-      }
+    const roleList = roles?.map(r => r.name) || []
+    setRoleNames(roleList)
+    if (roleList.length > 0 && !selected) {
+      setSelected(roleList[0])
     }
-    fetchRoles()
-  }, [getRoles])
+  }, [roles]) 
 
   // --- Folder management ---
   const addFolder = () => setFolders(prev => [...prev, ""])
@@ -66,7 +52,7 @@ export default function WijzigenTab() {
     try {
       setSaving(true)
       const cleanFolders = folders.map(f => f.trim()).filter(Boolean)
-      await addOrUpdateRole(selected, cleanFolders)
+      await onUpdateRole(selected, cleanFolders)
       alert(`Rol "${selected}" is bijgewerkt.`)
     } catch (err) {
       console.error("Error updating role:", err)
@@ -83,10 +69,10 @@ export default function WijzigenTab() {
 
     try {
       setLoading(true)
-      await deleteRole(selected)
+      await onDeleteRole(selected)
       alert(`Rol "${selected}" is verwijderd.`)
-      setRoles(prev => prev.filter(r => r !== selected))
-      setSelected(prev => (roles.length > 1 ? roles.find(r => r !== prev) || "" : ""))
+      setRoleNames(prev => prev.filter(r => r !== selected))
+      setSelected(prev => (roleNames.length > 1 ? roleNames.find(r => r !== prev) || "" : ""))
     } catch (err) {
       console.error("Error deleting role:", err)
       setError("Kon de rol niet verwijderen.")
@@ -108,7 +94,7 @@ export default function WijzigenTab() {
               <DropdownMenu
                 value={selected}
                 onChange={setSelected}
-                allOptions={roles}
+                allOptions={roleNames}
               />
             )}
           </div>

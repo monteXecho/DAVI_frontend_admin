@@ -14,7 +14,7 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getRoles, deleteRole } = useApi()
+  const { getRoles, addOrUpdateRole, deleteRole } = useApi()
   const [roles, setRoles] = useState([])
 
   const ActiveComponent = tabsConfig[activeIndex].component
@@ -40,6 +40,15 @@ export default function Rollen() {
     await fetchRoles()
   } catch (err) {
     console.error("❌ Failed to delete role:", err)
+  }
+ }
+
+ const handleAddOrUpdateRole = async (role_name, folders) => {
+  try {
+    await addOrUpdateRole(role_name, folders)
+    await fetchRoles()
+  } catch (err) {
+    console.log("Failed to update role.", err)
   }
  }
   
@@ -74,7 +83,7 @@ export default function Rollen() {
 
         {/* Active Tab */}
         <div className="w-full px-[102px] py-[46px]">
-          <ActiveComponent roles={roles} refreshRoles={fetchRoles} onDeleteRole={handleDeleteRole} />
+          <ActiveComponent roles={roles} refreshRoles={fetchRoles} onDeleteRole={handleDeleteRole} onAddOrUpdateRole={handleAddOrUpdateRole} />
         </div>
       </div>
     </div>

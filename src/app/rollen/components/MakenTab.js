@@ -4,7 +4,6 @@ import { useState, useMemo } from "react"
 import Toggle from "@/components/buttons/Toggle"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
-import { useApi } from "@/lib/useApi"
 
 const initialModules = [
   { name: "Documentenchat", enabled: true },
@@ -13,13 +12,11 @@ const initialModules = [
   { name: "BKR check", enabled: true },
 ]
 
-export default function MakenTab() {
+export default function MakenTab({ onAddOrUpdateRole }) {
   const [roleName, setRoleName] = useState("")
   const [folders, setFolders] = useState(["/beleid", "/kwaliteit/bkr"])
   const [modules, setModules] = useState(initialModules)
   const [loading, setLoading] = useState(false)
-
-  const { addOrUpdateRole } = useApi()
 
   const allEnabled = useMemo(() => modules.every(m => m.enabled), [modules])
 
@@ -58,8 +55,7 @@ export default function MakenTab() {
 
     try {
       setLoading(true)
-      const res = await addOrUpdateRole(roleName, cleanFolders)
-      console.log("✅ Role saved:", res)
+      await onAddOrUpdateRole(roleName, cleanFolders)
       alert(`Rol "${roleName}" succesvol opgeslagen!`)
       setRoleName("")
     } catch (err) {

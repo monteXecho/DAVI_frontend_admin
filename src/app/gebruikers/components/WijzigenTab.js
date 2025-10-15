@@ -6,9 +6,7 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
 
 export default function WijzigenTab({ user, roles = [], onUpdateUser, loading }) {
-  // roles prop is array of role objects: [{ name: 'role_A' }, ...] or { role } depending on your API.
-  // Normalize to string list (try `name` then `role`)
-  const allRoles = useMemo(
+   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
   )
@@ -166,7 +164,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading })
 
         {/* Roles section */}
         <div className="flex flex-col gap-2">
-          <span className="font-montserrat text-[16px]">Rol(len)</span>
+          <span className="font-montserrat text-[16px]">Rol</span>
 
           <div className="flex flex-wrap gap-3 mt-2">
             {updatedRoles.length > 0 ? (
