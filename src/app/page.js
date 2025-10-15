@@ -1,4 +1,4 @@
-import Landing from "./landing/page";
+import Landing from "./(protected)/landing/page";
 import MainLayout from "@/components/layout/mainLayout"
 
 export const metadata = {
