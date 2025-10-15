@@ -1,27 +1,112 @@
 'use client'
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import DropdownMenu from "@/components/input/DropdownMenu"
+import SuccessBttn from "@/components/buttons/SuccessBttn"
+import RedCancelIcon from "@/components/icons/RedCancelIcon"
+import AddIcon from "@/components/icons/AddIcon"
 
-export default function WijzigenTab({ user, onUpdateUser, loading }) {
-  const allOptions = ["Beheerder", "MP’er"]
+export default function WijzigenTab({ user, roles = [], onUpdateUser, loading }) {
+  // roles prop is array of role objects: [{ name: 'role_A' }, ...] or { role } depending on your API.
+  // Normalize to string list (try `name` then `role`)
+  const allRoles = useMemo(
+    () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
+    [roles]
+  )
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
-  const [selected, setSelected] = useState(allOptions[0])
+  const [updatedRoles, setUpdatedRoles] = useState([]) // current roles being edited
+  const [selected, setSelected] = useState("") // value shown in dropdown
   const [isSaving, setIsSaving] = useState(false)
 
-  // ✅ Prefill form when user changes
+  // Initialize updatedRoles from incoming `user` (defensive about types)
   useEffect(() => {
-    if (user) {
-      const [first, last] = (user.Naam || "").split(" ")
-      setFirstName(first || "")
-      setLastName(last || "")
-      setEmail(user.Email || "")
-      setSelected(user.Rol === "Beheerder" ? "Beheerder" : "MP’er")
+    if (!user) {
+      setUpdatedRoles([])
+      setFirstName("")
+      setLastName("")
+      setEmail("")
+      setSelected("")
+      return
     }
+
+    const [first, ...rest] = (user.Naam || "").split(" ")
+    const last = rest.join(" ")
+
+    setFirstName(first || "")
+    setLastName(last || "")
+    setEmail(user.Email || "")
+
+    // normalize user.Rol to array of strings
+    let userRoles = []
+    if (Array.isArray(user.Rol)) {
+      userRoles = user.Rol.filter(Boolean).map((r) => String(r))
+    } else if (user.Rol) {
+      userRoles = [String(user.Rol)]
+    }
+    setUpdatedRoles(userRoles)
+    // reset selected — we will set a sensible default below
+    setSelected("")
   }, [user])
 
+  // Compute available roles = allRoles minus updatedRoles
+  const availableRoles = useMemo(() => {
+    const setAssigned = new Set(updatedRoles)
+    return allRoles.filter((r) => !setAssigned.has(r))
+  }, [allRoles, updatedRoles])
+
+  // Auto-select a default only when we don't already have a valid selection.
+  // We do NOT override a user-chosen selected value.
+  useEffect(() => {
+    if (!selected) {
+      // prefer first unassigned role
+      if (availableRoles.length > 0) {
+        setSelected(availableRoles[0])
+      } else {
+        // fallback: if no available roles, clear selection
+        setSelected("")
+      }
+    } else {
+      // If selected is present but no longer valid (e.g. removed from availableRoles),
+      // keep it only if it's still a valid option. Otherwise pick the first available.
+      const stillValid = availableRoles.includes(selected)
+      if (!stillValid) {
+        if (availableRoles.length > 0) setSelected(availableRoles[0])
+        else setSelected("")
+      }
+    }
+    // We intentionally include `selected` so if selected is changed elsewhere we don't
+    // immediately overwrite it.
+  }, [availableRoles, selected])
+
+  // Remove a role from assigned list
+  const handleRemoveRole = (role) => {
+    setUpdatedRoles((prev) => {
+      const next = prev.filter((r) => r !== role)
+      return next
+    })
+
+    // If nothing selected, set the removed role as selected (makes it easy to re-add),
+    // otherwise keep selection as-is. This is optional UX — adjust if you prefer.
+    if (!selected) setSelected(role)
+  }
+
+  // Add selected role into assigned list
+  const handleAddRole = () => {
+    if (!selected) return
+    // Protect against duplicates (shouldn't happen because dropdown shows only available)
+    setUpdatedRoles((prev) => {
+      if (prev.includes(selected)) return prev
+      return [...prev, selected]
+    })
+
+    // compute next selection (next available role after adding)
+    const nextAvailable = availableRoles.filter((r) => r !== selected)
+    setSelected(nextAvailable.length > 0 ? nextAvailable[0] : "")
+  }
+
+  // Save handler - sends assigned_roles in payload
   const handleSave = async () => {
     if (!user) return
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
@@ -31,18 +116,15 @@ export default function WijzigenTab({ user, onUpdateUser, loading }) {
 
     setIsSaving(true)
     try {
-      const updatedUser = {
+      const payload = {
         id: user.id,
         name: `${firstName} ${lastName}`.trim(),
         email: email.trim(),
-        company_role: selected === "Beheerder" ? "company_admin" : "company_user",
+        assigned_roles: updatedRoles, // backend expects this field
       }
-      await onUpdateUser(updatedUser)
-      alert("Gebruiker succesvol bijgewerkt!")
-      setFirstName("")
-      setLastName("")
-      setEmail("")
 
+      await onUpdateUser(payload)
+      alert("Gebruiker succesvol bijgewerkt!")
     } catch (err) {
       console.error("Update failed:", err)
       alert("Fout bij het bijwerken van de gebruiker.")
@@ -51,8 +133,9 @@ export default function WijzigenTab({ user, onUpdateUser, loading }) {
     }
   }
 
-  if (!user)
+  if (!user) {
     return <div className="text-gray-500">Geen gebruiker geselecteerd om te wijzigen.</div>
+  }
 
   return (
     <div className="flex flex-col w-full gap-11">
@@ -81,10 +164,51 @@ export default function WijzigenTab({ user, onUpdateUser, loading }) {
           </div>
         </div>
 
-        {/* Role */}
-        <span className="mb-2 font-montserrat text-[16px]">Rol</span>
-        <div className="w-1/3">
-          <DropdownMenu value={selected} onChange={setSelected} allOptions={allOptions} />
+        {/* Roles section */}
+        <div className="flex flex-col gap-2">
+          <span className="font-montserrat text-[16px]">Rol(len)</span>
+
+          <div className="flex flex-wrap gap-3 mt-2">
+            {updatedRoles.length > 0 ? (
+              updatedRoles.map((r, i) => (
+                <div key={r + i} className="flex items-center gap-2">
+                  <SuccessBttn text={r} />
+                  <button
+                    onClick={() => handleRemoveRole(r)}
+                    aria-label={`Remove ${r}`}
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <RedCancelIcon />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 italic">Geen rollen toegewezen</div>
+            )}
+          </div>
+
+          {/* Add new role */}
+          <div className="flex gap-2 mt-4 items-center">
+            <div className="w-1/3">
+              <DropdownMenu
+                value={selected}
+                onChange={setSelected}
+                // show available roles, but if none available show an empty array (disabled add)
+                allOptions={availableRoles}
+                // NOTE: if DropdownMenu expects a placeholder when allOptions empty,
+                // it should handle empty array gracefully.
+              />
+            </div>
+
+            <button
+              onClick={handleAddRole}
+              aria-label="Add role"
+              className={`hover:opacity-80 transition-opacity ${availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
+              disabled={availableRoles.length === 0}
+            >
+              <AddIcon />
+            </button>
+          </div>
         </div>
 
         {/* Email + Reset Password */}

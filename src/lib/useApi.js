@@ -239,6 +239,16 @@ export function useApi() {
     [withAuth]
   );
 
+  const assignRole = useCallback(
+    (user_id, role_name) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/roles/assign`, { user_id, role_name }, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     askQuestion,
     uploadDocument,
@@ -261,6 +271,7 @@ export function useApi() {
     getRoles,
     addOrUpdateRole,
     deleteRole,
+    assignRole,
 
     assignModules,
 

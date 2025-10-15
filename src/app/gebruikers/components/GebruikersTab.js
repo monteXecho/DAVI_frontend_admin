@@ -23,10 +23,6 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
   const filteredData = useMemo(() => {
     let data = users;
 
-    if (selected2 === "Filter op Beheerder") {
-      data = data.filter((user) => user.Rol === "Beheerder");
-    }
-
     if (searchQuery.trim()) {
       data = data.filter(
         (user) =>
@@ -38,14 +34,13 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
     return data;
   }, [users, selected2, searchQuery]);
 
-  // 🧾 Dynamic title
   const titleText =
     selected2 === "Filter op Beheerder"
       ? `${filteredData.length} gebruiker${filteredData.length !== 1 ? "s" : ""} met de rol “Beheerder”`
       : `${filteredData.length} gebruikers`;
 
   const allOptions1 = ["Bulkacties", "Option 1", "Option 2"];
-  const allOptions2 = ["Filter op rol", "Filter op Beheerder"];
+  const allOptions2 = ["Filter op rol"];
 
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
@@ -111,7 +106,7 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
           {filteredData.map((user) => (
             <tr
               key={user.id}
-              className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2"
+              className="h-fit min-h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2 py-1"
             >
               <td className="flex gap-5 w-3/8 items-center font-montserrat font-normal text-[16px] leading-6 text-black">
                 <CheckBox toggle={false} color="#23BD92" />
@@ -121,7 +116,9 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
                 {user.Email}
               </td>
               <td className="w-1/8 font-montserrat font-normal text-[16px] leading-6 text-black">
-                {user.Rol}
+                  {user.Rol.map((r, i) => (
+                    <div key={i}>{r}</div>
+                  ))}
               </td>
               <td className="w-1/8 flex justify-end items-center gap-3">
                 <button onClick={() => onEditUser && onEditUser(user)}>
@@ -137,7 +134,6 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
         </tbody>
       </table>
 
-      {/* 🗑 Delete Modal */}
       {isDeleteModalOpen && selectedUser && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"

@@ -1,27 +1,24 @@
-'use client';
+'use client'
 
-import { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import AddButton from '@/components/buttons/AddButton';
-import CheckBox from '@/components/buttons/CheckBox';
-import SearchBox from '@/components/input/SearchBox';
-import DropdownMenu from '@/components/input/DropdownMenu';
-import DownArrow from '@/components/icons/DownArrowIcon';
-import EditIcon from '@/components/icons/EditIcon';
-import RedCancelIcon from '@/components/icons/RedCancelIcon';
+import { useState } from 'react'
+import PropTypes from 'prop-types'
+import AddButton from '@/components/buttons/AddButton'
+import CheckBox from '@/components/buttons/CheckBox'
+import SearchBox from '@/components/input/SearchBox'
+import DropdownMenu from '@/components/input/DropdownMenu'
+import DownArrow from '@/components/icons/DownArrowIcon'
+import EditIcon from '@/components/icons/EditIcon'
+import RedCancelIcon from '@/components/icons/RedCancelIcon'
 
-export default function AlleRollenTab({ admin_counts, user_counts, admin_docs, user_docs }) {
-  const allOptions = ['Bulkacties', 'Option 1', 'Option 2', 'Option 3'];
-  const [selected, setSelected] = useState(allOptions[0]);
+export default function AlleRollenTab({ roles = [], refreshRoles, onDeleteRole }) {
+  const allOptions = ['Bulkacties', 'Option 1', 'Option 2', 'Option 3']
+  const [ selected, setSelected ] = useState(allOptions[0])
+  const [ search, setSearch ] = useState('')
 
-  // Derived data (memoized for clarity & performance)
-  const RolData = useMemo(
-    () => [
-      { rol: 'Beheerder', gebruikers: admin_counts, documenten: admin_docs },
-      { rol: 'PM’er', gebruikers: user_counts, documenten: user_docs },
-    ],
-    [admin_counts, user_counts, admin_docs, user_docs]
-  );
+  // Filter roles by search
+  const filteredRoles = roles.filter((r) =>
+    r.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div className="flex flex-col w-full">
@@ -33,14 +30,18 @@ export default function AlleRollenTab({ admin_counts, user_counts, admin_docs, u
           </div>
 
           <div className="w-1/3">
-            <SearchBox placeholderText="Zoek gebruiker..." />
+            <SearchBox
+              placeholderText="Zoek rol..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </div>
 
         <AddButton onClick={() => {}} text="Toevoegen" />
       </div>
 
-      {/* Data Table */}
+      {/* Roles Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead className="bg-[#F9FBFA]">
@@ -64,41 +65,43 @@ export default function AlleRollenTab({ admin_counts, user_counts, admin_docs, u
                   <DownArrow />
                 </div>
               </th>
-              <th className="px-4 py-2 w-[52px]"></th>
+              <th className="px-4 py-2 w-[52px]" />
             </tr>
           </thead>
 
           <tbody>
-            {RolData.map(({ rol, gebruikers, documenten }) => (
+            {filteredRoles.map((role) => (
               <tr
-                key={rol}
+                key={role.name}
                 className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
               >
                 <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                   <div className="flex items-center gap-3">
                     <CheckBox toggle={false} color="#23BD92" />
-                    {rol}
+                    {role.name}
                   </div>
                 </td>
 
                 <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                  {gebruikers}
+                  {role.user_count ?? 0}
                 </td>
 
                 <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                  {documenten}
+                  {role.document_count ?? 0}
                 </td>
 
                 <td className="px-4 py-2 flex justify-end gap-3">
                   <button
-                    aria-label={`Edit ${rol}`}
+                    aria-label={`Edit ${role.name}`}
                     className="hover:opacity-80 transition-opacity"
+                    onClick={() => console.log('Edit', role.name)}
                   >
                     <EditIcon />
                   </button>
                   <button
-                    aria-label={`Delete ${rol}`}
+                    aria-label={`Delete ${role.name}`}
                     className="hover:opacity-80 transition-opacity"
+                    onClick={async () => await onDeleteRole(role.name)}
                   >
                     <RedCancelIcon />
                   </button>
@@ -107,15 +110,18 @@ export default function AlleRollenTab({ admin_counts, user_counts, admin_docs, u
             ))}
           </tbody>
         </table>
+
+        {filteredRoles.length === 0 && (
+          <div className="p-6 text-center text-gray-500 font-montserrat">
+            Geen rollen gevonden.
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
 
-// ✅ Prop validation (if not using TypeScript)
 AlleRollenTab.propTypes = {
-  admin_counts: PropTypes.number,
-  user_counts: PropTypes.number,
-  admin_docs: PropTypes.number,
-  user_docs: PropTypes.number,
-};
+  roles: PropTypes.array,
+  refreshRoles: PropTypes.func,
+}
