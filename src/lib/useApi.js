@@ -46,6 +46,22 @@ export function useApi() {
     [withAuth]
   );
 
+  const uploadDocumentForRole = useCallback(
+    (roleName, folderPath, formData ) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/roles/upload/${roleName}/${folderPath}`, formData, createAuthHeaders(token, {
+            'Content-Type': 'multipart/form-data',
+          }))
+          .then((res) => ({ success: true, data: res.data }))
+          .catch((err) => {
+            console.error('[useApi] Upload failed:', err);
+            return { success: false };
+          })
+      ),
+    [withAuth]
+  );
+
   const uploadDocument = useCallback(
     (formData, uploadType) =>
       withAuth((token) =>
@@ -252,6 +268,7 @@ export function useApi() {
   return {
     askQuestion,
     uploadDocument,
+    uploadDocumentForRole,
 
     getCompanies,
     createCompany,

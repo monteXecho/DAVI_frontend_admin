@@ -6,7 +6,7 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 
-export default function WijzigenTab({ roles, onUpdateRole, onDeleteRole }) {
+export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRole }) {
   const [roleNames, setRoleNames] = useState([])
   const [selected, setSelected] = useState("")
   const [folders, setFolders] = useState(["/beleid"])
@@ -52,7 +52,7 @@ export default function WijzigenTab({ roles, onUpdateRole, onDeleteRole }) {
     try {
       setSaving(true)
       const cleanFolders = folders.map(f => f.trim()).filter(Boolean)
-      await onUpdateRole(selected, cleanFolders)
+      await onAddOrUpdateRole(selected, cleanFolders)
       alert(`Rol "${selected}" is bijgewerkt.`)
     } catch (err) {
       console.error("Error updating role:", err)
