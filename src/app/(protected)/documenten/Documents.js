@@ -16,85 +16,104 @@ const tabsConfig = [
   { label: 'Komt voor in map', component: GekoppeldDocumentTab },
 ]
 
-export default function Documents () {
-    const [ activeIndex, setActiveIndex ] = useState(0)
-    const [ roles, setRoles ] = useState([])
-    const [ documents, setDocuments ] = useState([])
-    const { getRoles, uploadDocumentForRole, getAdminDocuments } = useApi()
+export default function Documents() {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [roles, setRoles] = useState([])
+  const [documents, setDocuments] = useState(null)
+  const [selectedUsers, setSelectedUsers] = useState([]) 
+  const [selectedDocName, setSelectedDocName] = useState("") 
+  const [ loading, setLoading ] = useState(true)
 
-    const ActiveComponent = tabsConfig[activeIndex].component
+  const { getRoles, uploadDocumentForRole, getAdminDocuments } = useApi()
+  const ActiveComponent = tabsConfig[activeIndex].component
 
-    const fetchRoles = useCallback(async () => {
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const [rolesRes, docsRes] = await Promise.all([
+          getRoles(),
+          getAdminDocuments()
+        ])
+        if (rolesRes?.roles) setRoles(rolesRes.roles)
+        if (docsRes?.data) setDocuments(docsRes.data)
+      } catch (err) {
+        console.error("❌ Initialization failed:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    init()
+  }, [getRoles, getAdminDocuments])
+
+  const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
     try {
-        const res = await getRoles()
-        if (res?.roles) {
-        setRoles(res.roles)
-        }
+      const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
+      return res
     } catch (err) {
-        console.error("❌ Failed to fetch roles:", err)
+      console.error("❌ Failed to upload doc:", err)
     }
-    }, [getRoles])
+  }
 
-    const fetchDocuments = useCallback(async () => {
-        try {
-            const res = await getAdminDocuments()
-            if (res?.data) {
-                setDocuments(res.data)
-                console.log("____DOCUMENTS____: ", res.data)
-            }
-        } catch (err) {
-            console.error("❌ Failed to fetch roles:", err)
-        }
-    }, [getAdminDocuments])
+  const handleShowUsers = (users, docName) => {
+    setSelectedUsers(users)
+    setSelectedDocName(docName)
+    setActiveIndex(2) 
+  }
 
-    useEffect(() => {
-        fetchRoles()
-    }, [fetchRoles])
+  const handleUploadTab = () => setActiveIndex(1)
 
-    useEffect(() => {
-        fetchDocuments()
-    }, [fetchDocuments])
+  return (
+    <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
+      <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl">
+        Documenten
+      </div>
 
-    const hanldeUploadDocument = async ( selectedRole, selectedFolder, formData ) => {
-        try {
-            const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
-            return res
-        } catch (err) {
-            console.error("❌ Failed to upload documnt for Role:", err)
-        }
-    }
-
-    return (
-        <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
-           <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl leading-[100%] tracking-[0]">
-                Documenten
-            </div>
-
-            <div className="flex flex-col w-full">
-                <div className="flex flex-col w-full">
-                    <div className="pl-24 flex gap-2">
-                        {tabsConfig.map((tab, index) => {
-                            const isActive = activeIndex === index
-                            return (
-                            <button
-                                key={tab.label}
-                                onClick={() => setActiveIndex(index)}
-                                className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
-                                ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
-                                w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
-                                `}
-                            >
-                                {tab.label}
-                            </button>
-                            )
-                        })}
-                    </div>
-                    <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
-                </div>
-                <div className="w-full px-[102px] py-[46px]">
-                    <ActiveComponent roles={roles} documents={documents} onUploadDocument={hanldeUploadDocument}/>
-                </div>
-            </div>
+      <div className="flex flex-col w-full">
+        {/* Tabs Header */}
+        <div className="pl-24 flex gap-2">
+          {tabsConfig.map((tab, index) => {
+            const isActive = activeIndex === index
+            return (
+              <button
+                key={tab.label}
+                onClick={() => setActiveIndex(index)}
+                className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all relative
+                  ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
+                  w-fit px-4 py-1 font-montserrat font-semibold text-[12px]
+                `}
+              >
+                {loading && isActive ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>
+                  </span>
+                ) : (
+                  tab.label
+                )}
+              </button>
+            )
+          })}
         </div>
-    )
+
+        {/* Active Tab Content */}
+        <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
+        <div className="w-full px-[102px] py-[46px]">
+          {loading ? (
+            <div className="flex justify-center items-center h-[200px]">
+              <span className="animate-spin rounded-full h-10 w-10 border-4 border-b-[#23BD92] border-gray-200"></span>
+            </div>
+          ) : (
+            <ActiveComponent
+              roles={roles}
+              documents={documents}
+              onUploadDocument={handleUploadDocument}
+              onUploadTab={handleUploadTab}
+              onShowUsers={handleShowUsers} 
+              selectedUsers={selectedUsers} 
+              selectedDocName={selectedDocName}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import PropTypes from 'prop-types'
 import AddButton from '@/components/buttons/AddButton'
 import CheckBox from '@/components/buttons/CheckBox'
 import SearchBox from '@/components/input/SearchBox'
@@ -90,21 +89,23 @@ export default function AlleRollenTab({ roles = [], onDeleteRole }) {
                   {role.document_count ?? 0}
                 </td>
 
-                <td className="px-4 py-2 flex justify-end gap-3">
-                  <button
-                    aria-label={`Edit ${role.name}`}
-                    className="hover:opacity-80 transition-opacity"
-                    onClick={() => console.log('Edit', role.name)}
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    aria-label={`Delete ${role.name}`}
-                    className="hover:opacity-80 transition-opacity"
-                    onClick={async () => await onDeleteRole(role.name)}
-                  >
-                    <RedCancelIcon />
-                  </button>
+                <td className="px-4 py-2 h-full">
+                  <div className='flex items-center gap-3'>
+                    <button
+                      aria-label={`Edit ${role.name}`}
+                      className="hover:opacity-80 transition-opacity"
+                      onClick={() => console.log('Edit', role.name)}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      aria-label={`Delete ${role.name}`}
+                      className="hover:opacity-80 transition-opacity"
+                      onClick={async () => await onDeleteRole(role.name)}
+                    >
+                      <RedCancelIcon />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

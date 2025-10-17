@@ -16,6 +16,8 @@ export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
   const { getRoles, addOrUpdateRole, deleteRole } = useApi()
   const [roles, setRoles] = useState([])
+  const [ loading, setLoading ] = useState(true)
+  
 
   const ActiveComponent = tabsConfig[activeIndex].component
 
@@ -27,6 +29,8 @@ export default function Rollen() {
       }
     } catch (err) {
       console.error("❌ Failed to fetch roles:", err)
+    } finally {
+       setLoading(false)
     }
   }, [getRoles])
 
@@ -73,7 +77,13 @@ export default function Rollen() {
                     w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
                   `}
                 >
-                  {tab.label}
+                {loading && isActive ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></span>
+                  </span>
+                ) : (
+                  tab.label
+                )}
                 </button>
               )
             })}
@@ -82,8 +92,15 @@ export default function Rollen() {
         </div>
 
         {/* Active Tab */}
+        <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
         <div className="w-full px-[102px] py-[46px]">
+          {loading ? (
+            <div className="flex justify-center items-center h-[200px]">
+              <span className="animate-spin rounded-full h-10 w-10 border-4 border-b-[#23BD92] border-gray-200"></span>
+            </div>
+            ) : (
           <ActiveComponent roles={roles} refreshRoles={fetchRoles} onDeleteRole={handleDeleteRole} onAddOrUpdateRole={handleAddOrUpdateRole} />
+          )}
         </div>
       </div>
     </div>

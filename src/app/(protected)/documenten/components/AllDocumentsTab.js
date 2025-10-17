@@ -1,30 +1,31 @@
 'use client'
-
 import { useEffect, useState } from "react"
+import Image from "next/image"
+
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
-import EditIcon from "@/components/icons/EditIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import DownArrow from "@/components/icons/DownArrowIcon"
+import GreenFolderIcon from "@/components/icons/GreenFolderIcon"
+import RollenItem from "@/assets/rollen_item.png"
+import GebruikersItem from "@/assets/gebruikers_item.png"
 
-export default function AllDocumentsTab({ documents = {} }) {
+export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUsers, onShowRoles }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [selectedRole, setSelectedRole] = useState("")
   const allOptions2 = ["Bulkacties", "Verwijderen", "Downloaden"]
   const [selected2, setSelected2] = useState(allOptions2[0])
 
-  // --- Initialize roles when documents change ---
   useEffect(() => {
     const roles = Object.keys(documents || {})
     setAllOptions1(roles)
     if (roles.length > 0 && !selectedRole) {
-      setSelectedRole(roles[0]) // Auto-select first role
+      setSelectedRole(roles[0])
     }
   }, [documents])
 
-  // --- Helper: flatten folders/docs for selected role ---
   const getDocumentsForRole = (role) => {
     if (!documents[role]) return []
     return documents[role].folders.flatMap(folder =>
@@ -38,26 +39,20 @@ export default function AllDocumentsTab({ documents = {} }) {
     )
   }
 
-  const filteredDocuments = selectedRole ? getDocumentsForRole(selectedRole) : []
+  const filteredDocuments = getDocumentsForRole(selectedRole)
 
   return (
     <div className="flex flex-col w-full">
-      {/* Role Filter */}
       <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
         <div className="w-3/10">
-          {allOptions1.length > 0 ? (
-            <DropdownMenu
-              value={selectedRole}
-              onChange={setSelectedRole}
-              allOptions={allOptions1}
-            />
-          ) : (
-            <div className="text-gray-500 text-sm">Geen rollen beschikbaar</div>
-          )}
+          <DropdownMenu
+            value={selectedRole}
+            onChange={setSelectedRole}
+            allOptions={allOptions1}
+          />
         </div>
       </div>
 
-      {/* Bulk Actions + Search */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
@@ -71,63 +66,71 @@ export default function AllDocumentsTab({ documents = {} }) {
             <SearchBox placeholderText="Zoek document..." />
           </div>
         </div>
-        <AddButton onClick={() => {}} text="Toevoegen" />
+        <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
       </div>
-
-      {/* Table */}
-      <table className="w-full border-separate border-spacing-0 border border-transparent">
-        <thead className="bg-[#F9FBFA]">
-          <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
-            <th className="flex items-center gap-5 w-3/9 font-montserrat font-bold text-[16px] leading-6 text-black">
-              <CheckBox toggle={false} color="#23BD92" />
-              <span>Map</span>
-              <DownArrow />
-            </th>
-            <th className="flex items-center gap-5 w-6/9 font-montserrat font-bold text-[16px] leading-6 text-black">
-              Bestand
-              <DownArrow />
-            </th>
-            <th className="w-[52px] px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredDocuments.length === 0 ? (
-            <tr className="flex items-center justify-center h-[80px] w-full text-gray-500">
-              <td colSpan="3" className="text-center w-full">
-                {!selectedRole
-                  ? "Selecteer een rol om documenten te bekijken"
-                  : "Geen documenten gevonden"}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+            <thead className="bg-[#F9FBFA]">
+                <tr className="h-[51px] border-b border-[#C5BEBE]">
+                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                    <div className="flex items-center gap-3">
+                        <CheckBox toggle={false} color="#23BD92" />
+                        <span>Map</span>
+                        <DownArrow />
+                    </div>
+                </th>
+                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                    <div className="flex items-center gap-3">
+                        Bestand
+                        <DownArrow />
+                    </div>
+                </th>
+                <th className="w-[52px] px-4 py-2"></th>
             </tr>
-          ) : (
-            filteredDocuments.map((doc, i) => (
-              <tr
-                key={i}
-                className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]"
-              >
-                <td className="flex gap-5 w-3/9 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                  <CheckBox toggle={false} color="#23BD92" />
-                  {doc.folder}
-                </td>
-                <td className="w-6/9 font-montserrat font-normal text-[16px] leading-6 text-black px-4 py-2">
-                  <a
-                    href={doc.path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#0077CC] hover:underline"
-                  >
-                    {doc.file}
-                  </a>
-                </td>
-                <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                  <EditIcon />
-                  <RedCancelIcon />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+
+            <tbody>
+            {filteredDocuments.map((doc, i) => (
+                <tr
+                    key={i}
+                    className="w-full items-center h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                >
+                    <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                        <div className="flex items-center gap-3">
+                            <CheckBox toggle={false} color="#23BD92" />
+                            {doc.folder}
+                        </div>
+                    </td>
+                    <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                        {doc.file}
+                    </td>
+                    <td className="px-4 py-2 h-full">
+                        <div className="flex h-full items-center gap-3">
+                            <div
+                                className="relative w-[19px] h-[20px] cursor-pointer"
+                                onClick={() => onShowUsers(doc.assigned_to, doc.file)}
+                            >
+                                <Image src={GebruikersItem} alt="GebruikersItem" />
+                                <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay hover:scale-110 transition"></div>
+                            </div>
+
+                            <div 
+                                className="relative w-[25px] h-[27px] cursor-pointer"
+                                onClick={() => onShowRoles(doc.file)}
+                            >
+                                <Image src={RollenItem} alt="RollenItem" />
+                                <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
+                            </div>
+
+                            <GreenFolderIcon />
+                            <RedCancelIcon />
+                        </div>
+                    </td>
+                </tr>
+              ))}
+            </tbody>
+        </table>
+      </div>
     </div>
   )
 }
