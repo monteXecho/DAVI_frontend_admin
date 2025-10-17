@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 
 import AlleDocumentenTab from "./components/AllDocumentsTab"
 import UsersTab from "./components/UsersTab"

@@ -26,7 +26,8 @@
     "react-modal-image": "^2.6.0",
     "react-pdf": "^10.0.1",
     "react-toastify": "^11.0.5",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
