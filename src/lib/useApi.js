@@ -174,6 +174,16 @@ export function useApi() {
     }
   }, []);
 
+  const getAdminDocuments = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/documents', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   // -------- company users -------------
   const getUsers = useCallback(
     () =>
@@ -277,6 +287,7 @@ export function useApi() {
     getCompanyAdmins,
     addCompanyAdmin,
     deleteCompanyAdmin,
+    getAdminDocuments,
 
     getUsers,
     addUser,

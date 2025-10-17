@@ -19,7 +19,8 @@ const tabsConfig = [
 export default function Documents () {
     const [ activeIndex, setActiveIndex ] = useState(0)
     const [ roles, setRoles ] = useState([])
-    const { getRoles, uploadDocumentForRole } = useApi()
+    const [ documents, setDocuments ] = useState([])
+    const { getRoles, uploadDocumentForRole, getAdminDocuments } = useApi()
 
     const ActiveComponent = tabsConfig[activeIndex].component
 
@@ -34,9 +35,25 @@ export default function Documents () {
     }
     }, [getRoles])
 
+    const fetchDocuments = useCallback(async () => {
+        try {
+            const res = await getAdminDocuments()
+            if (res?.data) {
+                setDocuments(res.data)
+                console.log("____DOCUMENTS____: ", res.data)
+            }
+        } catch (err) {
+            console.error("❌ Failed to fetch roles:", err)
+        }
+    }, [getAdminDocuments])
+
     useEffect(() => {
         fetchRoles()
     }, [fetchRoles])
+
+    useEffect(() => {
+        fetchDocuments()
+    }, [fetchDocuments])
 
     const hanldeUploadDocument = async ( selectedRole, selectedFolder, formData ) => {
         try {
@@ -75,7 +92,7 @@ export default function Documents () {
                     <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
                 </div>
                 <div className="w-full px-[102px] py-[46px]">
-                    <ActiveComponent roles={roles} onUploadDocument={hanldeUploadDocument}/>
+                    <ActiveComponent roles={roles} documents={documents} onUploadDocument={hanldeUploadDocument}/>
                 </div>
             </div>
         </div>
