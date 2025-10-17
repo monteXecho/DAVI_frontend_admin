@@ -40,7 +40,8 @@ export default function Documents () {
 
     const hanldeUploadDocument = async ( selectedRole, selectedFolder, formData ) => {
         try {
-            await uploadDocumentForRole(selectedRole, selectedFolder, formData)
+            const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
+            return res
         } catch (err) {
             console.error("❌ Failed to upload documnt for Role:", err)
         }

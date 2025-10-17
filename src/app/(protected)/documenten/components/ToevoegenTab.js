@@ -102,7 +102,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   return (
     <div className="flex flex-col gap-11 w-full justify-between">
       <div className="flex w-full gap-5">
-        <div className="flex flex-col w-1/2">
+        <div className="flex flex-col w-1/3">
           <span className="mb-2 font-montserrat text-[16px]">Kies een rol</span>
           <DropdownMenu
             value={selectedRole}
@@ -111,7 +111,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
           />
         </div>
 
-        <div className="flex flex-col w-1/2">
+        <div className="flex flex-col w-1/3">
           <span className="mb-2 font-montserrat text-[16px]">Kies een map</span>
           <DropdownMenu
             value={selectedFolder}

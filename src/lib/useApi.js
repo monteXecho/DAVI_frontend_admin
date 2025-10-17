@@ -40,7 +40,7 @@ export function useApi() {
     (question) =>
       withAuth((token) =>
         apiClient
-          .post('/ask.run', {question}, createAuthHeaders(token))
+          .post('/ask/run', {question}, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -53,7 +53,7 @@ export function useApi() {
           .post(`/company-admin/roles/upload/${roleName}/${folderPath}`, formData, createAuthHeaders(token, {
             'Content-Type': 'multipart/form-data',
           }))
-          .then((res) => ({ success: true, data: res.data }))
+          .then((res) => ({ success: true }))
           .catch((err) => {
             console.error('[useApi] Upload failed:', err);
             return { success: false };
