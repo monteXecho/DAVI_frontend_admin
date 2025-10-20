@@ -71,18 +71,15 @@ export default function RegisterPage() {
       <div className="md:w-2/7 w-full flex flex-col justify-center gap-6">
         <div>
           <h1 className="text-6xl font-extrabold text-[#00b37e]">DAVI</h1>
-          <p className="text-lg font-bold text-gray-700 mt-2">
-            Jouw AI-agent in de kinderopvang.
-          </p>
         </div>
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             name="fullName"
             value={form.fullName}
             onChange={handleChange}
             placeholder="Voor- en achternaam"
-            className="h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
+            className="w-full h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
             required
           />
           <input
@@ -91,7 +88,7 @@ export default function RegisterPage() {
             value={form.email}
             onChange={handleChange}
             placeholder="E-mailadres"
-            className="h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
+            className="w-full h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
             required
           />
           <input
@@ -99,7 +96,7 @@ export default function RegisterPage() {
             value={form.username}
             onChange={handleChange}
             placeholder="Gebruikersnaam"
-            className="h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
+            className="w-full h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
             required
           />
           <input
@@ -108,7 +105,7 @@ export default function RegisterPage() {
             value={form.password}
             onChange={handleChange}
             placeholder="Wachtwoord"
-            className="h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
+            className="w-full h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
             required
           />
           <input
@@ -117,7 +114,7 @@ export default function RegisterPage() {
             value={form.passwordConfirm}
             onChange={handleChange}
             placeholder="Wachtwoord herhalen"
-            className="h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
+            className="w-full h-14 px-4 border-2 border-[#23BD92] rounded-lg text-gray-700"
             required
           />
           <button
@@ -135,9 +132,9 @@ export default function RegisterPage() {
           <hr className="flex-1 border-gray-300" />
         </div>
 
-        <p className="text-sm">
+        <p className="text-md">
           Heb je al een account?{" "}
-          <a href={keycloakLoginUrl} className="text-[#0077cc] font-medium">
+          <a href={keycloakLoginUrl} className="text-[#0077cc] text-lg">
             Log hier in
           </a>
         </p>
@@ -145,15 +142,7 @@ export default function RegisterPage() {
 
       {/* Right Image Side */}
       <div className="flex flex-col items-center gap-8">
-        <div className="px-4">
-          <h2 className="font-bold text-lg mb-2">Probeer DAVI 14 dagen gratis!</h2>
-          <p className="text-gray-700">
-            24/7 alle antwoorden, allround assistent en <br />
-            coaching op zak? Bestel dan de <span className="font-bold text-[#0077cc]">DAVI PLUS</span> of <br />
-            <span className="font-bold text-[#0077cc]">DAVI COACHING</span> voor al je medewerkers.
-          </p>
-        </div>
-        <Image src={LogoImage} alt="Logo" className="w-80 h-80 object-cover shadow-lg rounded-full"/>
+        <Image src={LogoImage} alt="Logo" className="w-[400px] h-[400px] object-cover shadow-lg rounded-full"/>
       </div>
 
       {/* Toast notifications */}
