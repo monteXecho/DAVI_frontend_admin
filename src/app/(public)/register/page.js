@@ -142,7 +142,7 @@ export default function RegisterPage() {
 
       {/* Right Image Side */}
       <div className="flex flex-col items-center gap-8">
-        <Image src={LogoImage} alt="Logo" className="w-[400px] h-[400px] object-cover shadow-lg rounded-full"/>
+        <Image src={LogoImage} alt="Logo" className="w-[400px] h-[340px] sm:h-[400px] object-cover shadow-lg rounded-full"/>
       </div>
 
       {/* Toast notifications */}

@@ -147,7 +147,7 @@ export default function LeftSidebar() {
         </div>
       </div>
 
-      <div className="w-fit">
+      <div className="w-full pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
         <MenuButton
           key="Afmelden"
           text="Afmelden"
