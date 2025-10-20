@@ -14,7 +14,7 @@ const initialModules = [
 
 export default function MakenTab({ onAddOrUpdateRole }) {
   const [roleName, setRoleName] = useState("")
-  const [folders, setFolders] = useState(["/beleid", "/kwaliteit/bkr"])
+  const [folders, setFolders] = useState(["/beleid", "/kwaliteit"])
   const [modules, setModules] = useState(initialModules)
   const [loading, setLoading] = useState(false)
 

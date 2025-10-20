@@ -12,7 +12,7 @@ import GreenFolderIcon from "@/components/icons/GreenFolderIcon"
 import RollenItem from "@/assets/rollen_item.png"
 import GebruikersItem from "@/assets/gebruikers_item.png"
 
-export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUsers, onShowRoles }) {
+export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUsers, onShowRoles, onShowFolders }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [selectedRole, setSelectedRole] = useState("")
   const allOptions2 = ["Bulkacties", "Verwijderen", "Downloaden"]
@@ -39,6 +39,33 @@ export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUse
       }))
     )
   }
+
+  const getAllFoldersForFile = (fileName) => {
+    const folders = [];
+
+    Object.values(documents || {}).forEach((role) => {
+      role.folders.forEach((folder) => {
+        const hasFile = folder.documents.some((doc) => doc.file_name === fileName);
+        if (hasFile) folders.push(folder.name);
+      });
+    });
+
+    return folders;
+  };
+
+  const getAllRolesForFile = (fileName) => {
+    const roles = [];
+
+    Object.entries(documents || {}).forEach(([roleName, roleData]) => {
+      const found = roleData.folders.some((folder) =>
+        folder.documents.some((doc) => doc.file_name === fileName)
+      );
+      if (found) roles.push(roleName);
+    });
+
+    return roles;
+  };
+
 
   const filteredDocuments = getDocumentsForRole(selectedRole)
 
@@ -124,13 +151,20 @@ export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUse
 
                       <div
                         className="relative w-[25px] h-[27px] cursor-pointer"
-                        onClick={() => onShowRoles(doc.file)}
+                        onClick={() => {
+                          const allRoles = getAllRolesForFile(doc.file);
+                          onShowRoles(doc.file, allRoles);
+                        }}
                       >
                         <Image src={RollenItem} alt="RollenItem" />
                         <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
                       </div>
-
-                      <GreenFolderIcon />
+                      <button className="cursor-pointer" onClick={() => {
+                          const allFolders = getAllFoldersForFile(doc.file);
+                          onShowFolders(doc.file, allFolders);
+                        }}>
+                        <GreenFolderIcon />
+                      </button>
                       <RedCancelIcon />
                     </div>
                   </td>

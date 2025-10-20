@@ -5,6 +5,7 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import UploadBttn from '@/components/buttons/UploadBttn'
 import UploadingBttn from '@/components/buttons/UploadingBttn'
 import SuccessBttn from '@/components/buttons/SuccessBttn'
+import { ToastContainer, toast } from 'react-toastify';
 
 const UploadStates = {
   IDLE: 'idle',
@@ -70,6 +71,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
       if (result?.success) {
         setUploadStatus(UploadStates.SUCCESS)
       } else {
+        toast.warn(`${result.message}`)
         console.error("Upload failed or response invalid:", result)
         setUploadStatus(UploadStates.IDLE)
         setUploadedFileName("")
@@ -130,6 +132,8 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
       />
 
       {renderUploadSection()}
+      
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   )
 }

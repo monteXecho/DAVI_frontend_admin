@@ -47,20 +47,38 @@ export function useApi() {
   );
 
   const uploadDocumentForRole = useCallback(
-    (roleName, folderPath, formData ) =>
+    (roleName, folderPath, formData) =>
       withAuth((token) =>
         apiClient
-          .post(`/company-admin/roles/upload/${roleName}/${folderPath}`, formData, createAuthHeaders(token, {
-            'Content-Type': 'multipart/form-data',
-          }))
-          .then((res) => ({ success: true }))
+          .post(
+            `/company-admin/roles/upload/${roleName}/${folderPath}`,
+            formData,
+            createAuthHeaders(token, {
+              'Content-Type': 'multipart/form-data',
+            })
+          )
+          .then((res) => ({ success: true, message: 'File uploaded successfully' }))
           .catch((err) => {
             console.error('[useApi] Upload failed:', err);
-            return { success: false };
+
+            const status = err.response?.status;
+            const detail = err.response?.data?.detail;
+
+            if (status === 409) {
+              // Conflict → file already exists
+              return { success: false, message: detail || 'That file already exists!' };
+            }
+
+            if (status === 404) {
+              return { success: false, message: 'Target folder not found' };
+            }
+
+            return { success: false, message: 'Upload failed. Please try again.' };
           })
       ),
     [withAuth]
   );
+
 
   const uploadDocument = useCallback(
     (formData, uploadType) =>

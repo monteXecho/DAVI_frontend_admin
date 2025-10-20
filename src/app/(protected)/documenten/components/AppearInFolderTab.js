@@ -9,26 +9,14 @@ import DownArrow from "@/components/icons/DownArrowIcon";
 import DropdownMenu from "@/components/input/DropdownMenu";
 import SelectedData from "@/components/input/SelectedData";
 
-const FolderData = [
-    {
-        Map: 'kwaliteit/veiligheid',
-    },{
-        Map: 'kwaliteit/pedagogiek',
-    },{
-        Map: 'kwaliteit/binnenruimte',
-    }
-]
-
-export default function AppearInFolderTab() {
-  const SelectedDoc = "kwaliteit-veiligheid-2025.pdf"; 
-
+export default function AppearInFolderTab({ selectedDocName, selectedFolders }) {
   const allOptions = ["Bulkacties", "Option 01", "Option 02", "Option 03"]; 
   const [selected, setSelected] = useState(allOptions[0]); 
 
   return (
     <div className="flex flex-col w-full">
         <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
-            <SelectedData SelectedData={SelectedDoc} />
+            <SelectedData SelectedData={selectedDocName} />
         </div>
 
         <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
@@ -57,11 +45,11 @@ export default function AppearInFolderTab() {
                 </tr>
             </thead>
             <tbody>
-                {FolderData.map(({Map}, i) => (
+                {selectedFolders.map((folder, i) => (
                     <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
                         <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                             <CheckBox toggle={false} color='#23BD92' />  
-                            {Map}
+                            {folder}
                         </td>
                         <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
                             <EditIcon />

@@ -17,11 +17,13 @@ const tabsConfig = [
 ]
 
 export default function Documents() {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [roles, setRoles] = useState([])
-  const [documents, setDocuments] = useState(null)
-  const [selectedUsers, setSelectedUsers] = useState([]) 
-  const [selectedDocName, setSelectedDocName] = useState("") 
+  const [ activeIndex, setActiveIndex ] = useState(0)
+  const [ roles, setRoles ] = useState([])
+  const [ documents, setDocuments ] = useState(null)
+  const [ selectedUsers, setSelectedUsers ] = useState([]) 
+  const [ selectedRoles, setSelectedRoles ] = useState([])
+  const [ selectedFolders, setSelectedFolders ] = useState([])
+  const [ selectedDocName, setSelectedDocName ] = useState("") 
   const [ loading, setLoading ] = useState(true)
 
   const { getRoles, uploadDocumentForRole, getAdminDocuments } = useApi()
@@ -58,6 +60,18 @@ export default function Documents() {
     setSelectedUsers(users)
     setSelectedDocName(docName)
     setActiveIndex(2) 
+  }
+
+  const handleShowRoles = (fileName, roles) => {
+    setSelectedRoles(roles)
+    setSelectedDocName(fileName)
+    setActiveIndex(3)
+  }
+
+  const handleShowFolders = (fileName, folders) => {
+    setSelectedFolders(folders)
+    setSelectedDocName(fileName)
+    setActiveIndex(4)
   }
 
   const handleUploadTab = () => setActiveIndex(1)
@@ -108,8 +122,12 @@ export default function Documents() {
               onUploadDocument={handleUploadDocument}
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 
+              onShowRoles={handleShowRoles}
+              onShowFolders={handleShowFolders}
               selectedUsers={selectedUsers} 
               selectedDocName={selectedDocName}
+              selectedRoles={selectedRoles}
+              selectedFolders={selectedFolders}
             />
           )}
         </div>

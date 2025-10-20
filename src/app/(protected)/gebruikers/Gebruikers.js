@@ -12,8 +12,8 @@ const tabsConfig = [
   { label: 'Gebruikers', component: GebruikersTab },
   { label: 'Maken', component: MakenTab },
   { label: 'Wijzigen', component: WijzigenTab },
-  { label: 'Gekoppeld aan document', component: GekoppeldDocumentTab },
-  { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
+  // { label: 'Gekoppeld aan document', component: GekoppeldDocumentTab },
+  // { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
 ]
 
 export default function Gebruikers() {
