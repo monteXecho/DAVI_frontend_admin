@@ -10,13 +10,12 @@ const keycloak_server = process.env.NEXT_PUBLIC_KEYCLOAK_URL
 
 export default keycloak;
  
-export const keycloakLoginUrl =
-  `${keycloak_server}/realms/DAVI/protocol/openid-connect/auth` +
-  "?client_id=frontend" +
-  "&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fdocumentchat" +
+export const keycloakLoginUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/${process.env.NEXT_PUBLIC_KEYCLOAK_REALM}/protocol/openid-connect/auth` +
+  `?client_id=${process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}` +
+  `&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_KEYCLOAK_REDIRECT_URI)}` +
   "&response_type=code" +
   "&scope=openid" +
-  "&response_mode=fragment"
+  "&response_mode=fragment";
 
 // helper to check if the user has at least one of the given roles
 export const hasRole = (keycloak, roles = []) => {
