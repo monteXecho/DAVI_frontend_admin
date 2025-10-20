@@ -16,7 +16,7 @@ import InstellingenItem from "@/assets/instellingen_item.png";
 import CompanyItem from "@/assets/company_item.png";
 
 export default function LeftSidebar() {
-  const [activeTab, setActiveTab] = useState(null);
+  const [activeTab, setActiveTab] = useState('Documentenchat');
   const router = useRouter();
   const pathname = usePathname();
   const { keycloak } = useKeycloak();
@@ -45,6 +45,7 @@ export default function LeftSidebar() {
 
   useEffect(() => {
     const routeToTab = {
+      "/": "Documentenchat",
       "/documentchat": "Documentenchat",
       "/GGD": "GGD Checks",
       "/compagnies": "Compagnies",

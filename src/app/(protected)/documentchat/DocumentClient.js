@@ -102,17 +102,6 @@ export default function DocumentClient() {
   return (
     <ProtectedLayout>
       <div className="w-full h-full flex flex-col gap-[50px] lg:py-[143px] lg:px-[97px] px-[25px] py-[22px] overflow-scroll scrollbar-hide">
-        <section className="flex flex-col gap-[31px]">
-          <h1 className="text-[#342222] font-montserrat font-extrabold text-3xl leading-none">
-            Documenten Robin!
-          </h1>
-          <p className="text-black font-montserrat font-normal text-[16px] leading-6">
-            Hallo Robin! Hier vind je alle bedrijfs- en algemene documenten.
-            <br />
-            Je kunt direct een vraag stellen, of een eigen document uploaden voor analyse.
-          </p>
-        </section>
-
         <section className="flex flex-col gap-[52px]">
           <input
             type="file"
