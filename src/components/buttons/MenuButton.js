@@ -13,7 +13,13 @@ export default function MenuButton({ text, image, isActive, onClick }) {
         ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA]'}
       `}
     >
-      <Image src={image} alt="photo" className="w-[32px] h-[32px] object-cover" />
+      <Image 
+        src={image} 
+        alt="photo" 
+        width={32}
+        height={32}
+        className="w-[32px] h-[32px] object-contain"
+      />
       <span>
         {text}
       </span>
