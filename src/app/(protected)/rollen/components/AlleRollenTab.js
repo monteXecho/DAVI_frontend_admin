@@ -9,7 +9,7 @@ import DownArrow from '@/components/icons/DownArrowIcon'
 import EditIcon from '@/components/icons/EditIcon'
 import RedCancelIcon from '@/components/icons/RedCancelIcon'
 
-export default function AlleRollenTab({ roles = [], onDeleteRole }) {
+export default function AlleRollenTab({ roles = [], onDeleteRole, onMoveToMaken }) {
   const allOptions = ['Bulkacties', 'Option 1', 'Option 2', 'Option 3']
   const [ selected, setSelected ] = useState(allOptions[0])
   const [ search, setSearch ] = useState('')
@@ -37,7 +37,7 @@ export default function AlleRollenTab({ roles = [], onDeleteRole }) {
           </div>
         </div>
 
-        <AddButton onClick={() => {}} text="Toevoegen" />
+        <AddButton onClick={() => onMoveToMaken()} text="Toevoegen" />
       </div>
 
       {/* Roles Table */}

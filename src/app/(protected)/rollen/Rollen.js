@@ -99,7 +99,13 @@ export default function Rollen() {
               <span className="animate-spin rounded-full h-10 w-10 border-4 border-b-[#23BD92] border-gray-200"></span>
             </div>
             ) : (
-          <ActiveComponent roles={roles} refreshRoles={fetchRoles} onDeleteRole={handleDeleteRole} onAddOrUpdateRole={handleAddOrUpdateRole} />
+          <ActiveComponent 
+            roles={roles} 
+            refreshRoles={fetchRoles} 
+            onDeleteRole={handleDeleteRole} 
+            onAddOrUpdateRole={handleAddOrUpdateRole}
+            onMoveToMaken={() => {setActiveIndex(1)}}
+          />
           )}
         </div>
       </div>
