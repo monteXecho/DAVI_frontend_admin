@@ -93,7 +93,6 @@ export default function Gebruikers() {
     setSelectedUser(user)
     setActiveIndex(2) // "Wijzigen" tab
   }
-
   const ActiveComponent = tabsConfig[activeIndex].component
 
   return (
@@ -148,6 +147,7 @@ export default function Gebruikers() {
                 onUpdateUser={handleUpdateUser}
                 onDeleteUser={handleDeleteUser}
                 onAssignRole={handleAssignRole}
+                onMoveToMaken={() => setActiveIndex(1)}
                 user={selectedUser}
               />
           )}

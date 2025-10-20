@@ -11,7 +11,7 @@ import DeleteUserModal from "./modals/DeleteUserModal";
 
 import { useState, useMemo } from "react";
 
-export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) {
+export default function GebruikersTab({ users = [], onEditUser, onDeleteUser, onMoveToMaken }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -59,7 +59,7 @@ export default function GebruikersTab({ users = [], onEditUser, onDeleteUser }) 
         <button className="w-[127px] h-[40px] border-[2px] border-[#23BD92] rounded-[8px] font-bold text-[16px] leading-[100%] text-[#23BD92]">
           Bulk import
         </button>
-        <AddButton onClick={() => {}} text="Toevoegen" />
+        <AddButton onClick={() => onMoveToMaken()} text="Toevoegen" />
       </div>
 
       {/* Filters */}
