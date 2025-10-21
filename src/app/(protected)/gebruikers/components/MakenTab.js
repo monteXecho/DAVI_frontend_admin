@@ -66,22 +66,6 @@ export default function MakenTab({ onAddUser }) {
             onChange={(e) => setEmail(e.target.value)}
             className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
-          <div className="flex gap-3 items-center">
-            <CheckBox
-              toggle={sendInvite}
-              color="#000"
-              onClick={() => setSendInvite(!sendInvite)}
-            />
-            <div className="relative">
-              <span className="font-montserrat font-normal text-[16px] leading-normal">
-                Stuur uitnodiging
-              </span>
-              <span className="w-[300px] absolute right-[-180px] top-9 font-montserrat font-normal text-[16px] leading-normal">
-                De gebruiker zal gevraagd worden om <br />
-                een sterk wachtwoord te bedenken.
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
