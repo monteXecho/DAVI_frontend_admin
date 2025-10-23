@@ -4,26 +4,23 @@ import { useApi } from "@/lib/useApi"
 
 import GebruikersTab from "./components/GebruikersTab"
 import MakenTab from "./components/MakenTab"
-import GekoppeldDocumentTab from "./components/GekoppeldDocumentTab"
-import GekoppeldMapTab from "./components/GekoppeldMapTab"
 import WijzigenTab from "./components/WijzigenTab"
 
 const tabsConfig = [
   { label: 'Gebruikers', component: GebruikersTab },
   { label: 'Maken', component: MakenTab },
   { label: 'Wijzigen', component: WijzigenTab },
-  // { label: 'Gekoppeld aan document', component: GekoppeldDocumentTab },
-  // { label: 'Gekoppeld aan map', component: GekoppeldMapTab },
 ]
 
 export default function Gebruikers() {
-  const { getUsers, addUser, updateUser, deleteUser, assignRole, getRoles } = useApi()
+  const { getUsers, addUser, updateUser, deleteUsers, assignRole, getRoles, uploadUsersFile, sendResetPassword } = useApi()
 
   const [ activeIndex, setActiveIndex ] = useState(0)
   const [ users, setUsers ] = useState([])
   const [ allRoles, setAllRoles ] = useState([])
   const [ selectedUser, setSelectedUser ] = useState(null)
   const [ loading, setLoading ] = useState(true)
+  const [ uploadLoading, setUploadLoading ] = useState(false)
 
   function formatUser(u) {
     return {
@@ -73,26 +70,68 @@ export default function Gebruikers() {
   }
 
   const handleAssignRole = async (role) => {
-    await assignRole(roles)
+    await assignRole(role)
     await refreshUsers()
   }
 
-  const handleDeleteUser = async (id) => {
-    await deleteUser(id)
-    setUsers((prev) => prev.filter((u) => u.id !== id))
+  const handleDeleteUsers = async (ids) => {
+    await deleteUsers(ids)
+    setUsers(prev => prev.filter(u => !ids.includes(u.id)))
+  }
+
+  // ✅ Handle bulk import file upload
+  const handleBulkImport = async (file) => {
+    if (!file) return
+
+    setUploadLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const result = await uploadUsersFile(formData)
+      
+      if (result.success) {
+        // Refresh the users list after successful upload
+        await refreshUsers()
+        return { success: true, data: result.data }
+      } else {
+        return { success: false, message: result.message }
+      }
+    } catch (error) {
+      console.error('Bulk import error:', error)
+      return { 
+        success: false, 
+        message: 'An unexpected error occurred during upload.' 
+      }
+    } finally {
+      setUploadLoading(false)
+    }
   }
 
   const refreshUsers = async () => {
-    const res = await getUsers()
-    const formatted =
-      res.members?.map(formatUser) || []
-    setUsers(formatted)
+    try {
+      const res = await getUsers()
+      const formatted = res.members?.map(formatUser) || []
+      setUsers(formatted)
+    } catch (err) {
+      console.error("Failed to refresh users:", err)
+    }
   }
 
   const handleEditUser = (user) => {
     setSelectedUser(user)
     setActiveIndex(2) // "Wijzigen" tab
   }
+
+  const handleResetPass = async (email) => {
+    try {
+      await sendResetPassword(email)
+      alert("Success to send reset password request!")
+    }catch (err) {
+      console.error("Failed to request send:", err)
+    }
+  }
+
   const ActiveComponent = tabsConfig[activeIndex].component
 
   return (
@@ -145,10 +184,13 @@ export default function Gebruikers() {
                 onEditUser={handleEditUser}
                 onAddUser={handleAddUser}
                 onUpdateUser={handleUpdateUser}
-                onDeleteUser={handleDeleteUser}
+                onDeleteUsers={handleDeleteUsers}
                 onAssignRole={handleAssignRole}
                 onMoveToMaken={() => setActiveIndex(1)}
                 user={selectedUser}
+                onBulkImport={handleBulkImport} 
+                uploadLoading={uploadLoading} 
+                onResetPass={handleResetPass}
               />
           )}
         </div>

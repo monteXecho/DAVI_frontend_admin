@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation"
 import { usePathname } from 'next/navigation' 
 
 import ChatItem from '@/assets/chat_item.png'
-import BKRItem from '@/assets/BKR_item.png'
 import VGCItem from '@/assets/VGC_item.png'
-import uursItem from '@/assets/uurs_item.png'
 import FooterItem from "../FooterItem"
 
 export default function Footer () {
@@ -18,9 +16,7 @@ export default function Footer () {
   useEffect(() => {
     const routeToTab = {
       '/documentchat': 'Chat',
-      '/bkr': 'BKR',
-      '/vgc': 'VGC',
-      '/3-uurs': '3-uurs'
+      '/ggd': 'GGD',
     }
 
     const tab = routeToTab[pathname] || null 
@@ -31,13 +27,9 @@ export default function Footer () {
     setActiveTab(label)
     if (label === 'Chat') {
       router.push('/documentchat')
-    } else if (label === 'BKR') {
-      router.push('/bkr')
-    } else if (label === 'VGC') {
-      router.push('/vgc')
-    } else if (label === '3-uurs') {
-      router.push('/3-uurs')
-    }
+    } else if (label === 'GGD Checks') {
+      router.push('/GGD')
+    } 
   }
 
   const footerItems = [
@@ -51,28 +43,12 @@ export default function Footer () {
     },
     {
       image: VGCItem,
-      text: 'VGC',
-      route: '/vgc',
+      text: 'GGD Checks',
+      route: '/GGD',
       width: '43px',
       height: '43px',
       gap: '3',
-    },
-    {
-      image: BKRItem,
-      text: 'BKR',
-      route: '/bkr',
-      width: '42px',
-      height: '44px',
-      gap: '3',
-    },
-    {
-      image: uursItem,
-      text: '3-uurs',
-      route: '/3-uurs',
-      width: '43px',
-      height: '43px',
-      gap: '3',
-    },
+    }
   ]
 
   return (

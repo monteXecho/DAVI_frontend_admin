@@ -14,11 +14,11 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getRoles, addOrUpdateRole, deleteRole } = useApi()
+  const { getRoles, addOrUpdateRole, deleteRoles } = useApi()
   const [roles, setRoles] = useState([])
-  const [ loading, setLoading ] = useState(true)
+  const [selectedRole, setSelectedRole] = useState(null) // Add selected role state
+  const [loading, setLoading] = useState(true)
   
-
   const ActiveComponent = tabsConfig[activeIndex].component
 
   const fetchRoles = useCallback(async () => {
@@ -30,7 +30,7 @@ export default function Rollen() {
     } catch (err) {
       console.error("❌ Failed to fetch roles:", err)
     } finally {
-       setLoading(false)
+      setLoading(false)
     }
   }, [getRoles])
 
@@ -38,23 +38,30 @@ export default function Rollen() {
     fetchRoles()
   }, [fetchRoles])
 
- const handleDeleteRole = async (role_name) => {
-  try {
-    await deleteRole(role_name)
-    await fetchRoles()
-  } catch (err) {
-    console.error("❌ Failed to delete role:", err)
+  const handleDeleteRoles = async (role_names) => {
+    try {
+      // role_names can be either a string (single role) or array (multiple roles)
+      await deleteRoles(Array.isArray(role_names) ? role_names : [role_names])
+      await fetchRoles()
+    } catch (err) {
+      console.error("❌ Failed to delete role(s):", err)
+    }
   }
- }
 
- const handleAddOrUpdateRole = async (role_name, folders) => {
-  try {
-    await addOrUpdateRole(role_name, folders)
-    await fetchRoles()
-  } catch (err) {
-    console.log("Failed to update role.", err)
+  const handleAddOrUpdateRole = async (role_name, folders) => {
+    try {
+      await addOrUpdateRole(role_name, folders)
+      await fetchRoles()
+    } catch (err) {
+      console.log("Failed to update role.", err)
+    }
   }
- }
+
+  // Add edit role handler
+  const handleEditRole = (role) => {
+    setSelectedRole(role)
+    setActiveIndex(2) // Navigate to Wijzigen tab
+  }
   
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
@@ -102,9 +109,11 @@ export default function Rollen() {
           <ActiveComponent 
             roles={roles} 
             refreshRoles={fetchRoles} 
-            onDeleteRole={handleDeleteRole} 
+            onDeleteRoles={handleDeleteRoles} 
             onAddOrUpdateRole={handleAddOrUpdateRole}
             onMoveToMaken={() => {setActiveIndex(1)}}
+            onEditRole={handleEditRole} // Pass edit handler
+            selectedRole={selectedRole} // Pass selected role
           />
           )}
         </div>

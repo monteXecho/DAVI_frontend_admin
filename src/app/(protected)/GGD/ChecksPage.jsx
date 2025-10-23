@@ -277,7 +277,7 @@ export default function ChecksPage() {
   }, []);
 
   return (
-    <div className="w-full flex flex-col gap-3 p-4 max-w-[980px] mx-auto">
+    <div className="w-full flex flex-col gap-3 p-4 sm:p-15 max-w-[980px] mx-auto">
       <div className="w-full flex flex-col gap-3 min-h-[50vh]">
         <h2 className="text-2xl font-bold">Check documenten</h2>
         <p className="my-4 text-gray-800">Wat wil je checken?</p>
@@ -314,7 +314,7 @@ export default function ChecksPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
             <DateInput
               title={"Van"}
               date={checkDate}

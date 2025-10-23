@@ -79,6 +79,19 @@ export function useApi() {
     [withAuth]
   );
 
+  const deleteDocuments = useCallback(
+    (documentsToDelete) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/documents/delete`, { documents: documentsToDelete }, createAuthHeaders(token))
+          .then((res) => ({ success: true, data: res.data }))
+          .catch((err) => {
+            console.error('[useApi] Delete documents failed:', err);
+            return { success: false };
+          })
+      ),
+    [withAuth]
+  );
 
   const uploadDocument = useCallback(
     (formData, uploadType) =>
@@ -202,6 +215,48 @@ export function useApi() {
     [withAuth]
   );
 
+  const uploadUsersFile = useCallback(
+    (formData) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            `/company-admin/users/upload`,
+            formData,
+            createAuthHeaders(token, {
+              'Content-Type': 'multipart/form-data',
+            })
+          )
+          .then((res) => ({ success: true, data: res.data }))
+          .catch((err) => {
+            console.error('[useApi] Upload users file failed:', err);
+            const detail = err.response?.data?.detail;
+            return { 
+              success: false, 
+              message: detail || 'Failed to upload users file. Please try again.' 
+            };
+          })
+      ),
+    [withAuth]
+  );
+
+  const sendResetPassword = useCallback(
+    (email) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/users/reset-password`, { email }, createAuthHeaders(token))
+          .then((res) => ({ success: true}))
+          .catch((err) => {
+            console.error('[useApi] Reset password request sending failed:', err);
+            const detail = err.response?.data?.detail;
+            return { 
+              success: false, 
+              message: detail || 'Failed to send password reset request. Please try again.' 
+            };
+          })
+      ),
+    [withAuth]
+  );
+
   // -------- company users -------------
   const getUsers = useCallback(
     () =>
@@ -227,17 +282,17 @@ export function useApi() {
     (payload) =>
       withAuth((token) =>
         apiClient
-          .put(`/company-admin/users/${payload.id}`, payload, createAuthHeaders(token))
+          .put(`/company-admin/users/${payload.id}`, { payload }, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
   );
 
-  const deleteUser = useCallback(
-    (userId) =>
+  const deleteUsers = useCallback(
+    (user_ids) =>
       withAuth((token) =>
         apiClient
-          .delete(`/company-admin/users/${userId}`, createAuthHeaders(token))
+          .delete(`/company-admin/users?user_ids=${user_ids.join(',')}`, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -265,21 +320,33 @@ export function useApi() {
 
   const addOrUpdateRole = useCallback(
     (role_name, folders) =>
-      withAuth((token) =>
+      withAuth((token) => {
+        console.log('Sending role_name:', role_name);
+        console.log('Sending folders:', folders);
+
         apiClient
           .post(`/company-admin/roles`, { role_name, folders }, createAuthHeaders(token))
           .then((res) => res.data)
+      }
       ),
     [withAuth]
   );
 
-  const deleteRole = useCallback(
-    (role_name) =>
-      withAuth((token) =>
-        apiClient
-          .delete(`/company-admin/roles/${role_name}`, createAuthHeaders(token))
+  const deleteRoles = useCallback(
+    (role_names) =>
+      withAuth((token) => {
+        console.log('Sending role_names:', role_names); // Debug log
+        return apiClient
+          .post(`/company-admin/roles/delete`, 
+            { role_names }, 
+            createAuthHeaders(token)
+          )
           .then((res) => res.data)
-      ),
+          .catch((err) => {
+            console.error('[useApi] Delete roles failed:', err.response?.data || err);
+            throw err;
+          })
+      }),
     [withAuth]
   );
 
@@ -297,6 +364,7 @@ export function useApi() {
     askQuestion,
     uploadDocument,
     uploadDocumentForRole,
+    deleteDocuments,
 
     getCompanies,
     createCompany,
@@ -306,17 +374,19 @@ export function useApi() {
     addCompanyAdmin,
     deleteCompanyAdmin,
     getAdminDocuments,
+    sendResetPassword,
 
     getUsers,
     addUser,
     updateUser,
-    deleteUser,
+    deleteUsers,
+    uploadUsersFile,
 
     getCompanyStats,
 
     getRoles,
     addOrUpdateRole,
-    deleteRole,
+    deleteRoles,
     assignRole,
 
     assignModules,

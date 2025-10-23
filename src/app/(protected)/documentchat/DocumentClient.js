@@ -10,8 +10,6 @@ import UploadBttn from '@/components/buttons/UploadBttn';
 import UploadingBttn from '@/components/buttons/UploadingBttn';
 import SuccessBttn from '@/components/buttons/SuccessBttn';
      
-import { hasRole } from '@/lib/keycloak';
-
 const UploadStates = {
   IDLE: 'idle',
   UPLOADING: 'uploading',
@@ -19,9 +17,6 @@ const UploadStates = {
 };
 
 export default function DocumentClient() {
-  const { keycloak } = useKeycloak();
-  const isAdmin = hasRole(keycloak, ['super_admin', 'company_admin'])
-
   const { askQuestion, uploadDocument, loading: apiLoading, error } = useApi();
 
   const [response, setResponse] = useState('');
@@ -77,8 +72,6 @@ export default function DocumentClient() {
   };
 
   const renderUploadSection = () => {
-    if (!isAdmin) return null;
-
     switch (uploadStatus) {
       case UploadStates.IDLE:
         return <UploadBttn onClick={handleUploadClick} text='Upload document' />

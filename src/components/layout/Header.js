@@ -1,8 +1,6 @@
 'use client'
 
 import { useRouter } from "next/navigation"
-import Image from "next/image"
-import userPhoto from '@/assets/user_photo.jpg'
 
 export default function Header () {
     const router = useRouter()
@@ -13,9 +11,6 @@ export default function Header () {
                 onClick={() => {router.push('/');}}
             >
             DAVI
-            </div>
-            <div className="w-10 h-10 rounded-full border-2 border-[#23BD92] overflow-hidden">
-                <Image src={userPhoto} alt="photo" className="w-full h-full object-cover" />
             </div>
         </div>
     )

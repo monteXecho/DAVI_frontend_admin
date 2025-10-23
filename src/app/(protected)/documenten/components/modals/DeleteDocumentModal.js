@@ -1,8 +1,7 @@
 import { X } from "lucide-react";
 
-export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple }) {
-  // For single user deletion
-  const singleUser = !isMultiple && users?.[0];
+export default function DeleteDocumentModal({ documents, onConfirm, onClose, isMultiple }) {
+  const singleDocument = !isMultiple && documents?.[0];
   
   return (
     <div className="relative w-[350px] h-[350px] bg-white shadow-md rounded-2xl flex flex-col items-center justify-center gap-10">
@@ -19,34 +18,37 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
       </div>
 
       {isMultiple ? (
-        // Multiple users deletion
         <div className="text-center text-[18px] leading-6 text-black px-6">
           <p className="mb-4">
             Weet je zeker dat je <br />
-            <span className="font-semibold">{users.length} gebruikers</span>
+            <span className="font-semibold">{documents.length} document{documents.length !== 1 ? 'en' : ''}</span>
             <br />
             wil verwijderen?
           </p>
           <div className="max-h-20 overflow-y-auto text-sm mt-2">
-            {users.slice(0, 5).map((user, index) => (
-              <div key={user.id} className="truncate">
-                • {user.Naam} ({user.Email})
+            {documents.slice(0, 5).map((doc, index) => (
+              <div key={index} className="truncate">
+                • {doc.file}
               </div>
             ))}
-            {users.length > 5 && (
+            {documents.length > 5 && (
               <div className="text-gray-500">
-                ... en {users.length - 5} meer
+                ... en {documents.length - 5} meer
               </div>
             )}
           </div>
         </div>
       ) : (
-        // Single user deletion
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je <br />
-          <span className="font-semibold">{singleUser?.Naam}</span> / <br />
-          <span className="font-semibold">{singleUser?.Email}</span>
+          <span className="font-semibold">{singleDocument?.file}</span>
           <br />
+          {singleDocument?.folder && (
+            <>
+              uit map <span className="font-semibold">{singleDocument.folder}</span>
+              <br />
+            </>
+          )}
           wil verwijderen?
         </p>
       )}
@@ -55,7 +57,7 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
         onClick={onConfirm}
         className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-[196px] h-10 flex items-center justify-center"
       >
-        {isMultiple ? `Verwijder ${users.length} gebruikers` : 'Verwijder gebruiker'}
+        {isMultiple ? `Verwijder ${documents.length} documenten` : 'Verwijder document'}
       </button>
     </div>
   );

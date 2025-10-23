@@ -6,10 +6,10 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 
-export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRole }) {
+export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, selectedRole }) { // Add selectedRole prop
   const [roleNames, setRoleNames] = useState([])
   const [selected, setSelected] = useState("")
-  const [folders, setFolders] = useState(["/beleid"])
+  const [folders, setFolders] = useState([""])
   const [modules, setModules] = useState([
     { name: "Documentenchat", enabled: true },
     { name: "Vaste gezichten criterium", enabled: false },
@@ -23,13 +23,30 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRole }) 
 
   const allEnabled = useMemo(() => modules.every(m => m.enabled), [modules])
 
+  // Initialize with selected role if provided
   useEffect(() => {
     const roleList = roles?.map(r => r.name) || []
     setRoleNames(roleList)
-    if (roleList.length > 0 && !selected) {
+    
+    if (selectedRole) {
+      // If a role was selected for editing, set it and load its data
+      setSelected(selectedRole.name)
+      setFolders(selectedRole.folders || [""])
+    } else if (roleList.length > 0 && !selected) {
+      // Otherwise use the first role as default
       setSelected(roleList[0])
     }
-  }, [roles]) 
+  }, [roles, selectedRole]) // Add selectedRole to dependencies
+
+  // Load folder data when selected role changes
+  useEffect(() => {
+    if (selected && roles.length > 0) {
+      const currentRole = roles.find(r => r.name === selected)
+      if (currentRole) {
+        setFolders(currentRole.folders?.length > 0 ? currentRole.folders : [""])
+      }
+    }
+  }, [selected, roles])
 
   // --- Folder management ---
   const addFolder = () => setFolders(prev => [...prev, ""])
@@ -69,7 +86,7 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRole }) 
 
     try {
       setLoading(true)
-      await onDeleteRole(selected)
+      await onDeleteRoles(selected)
       alert(`Rol "${selected}" is verwijderd.`)
       setRoleNames(prev => prev.filter(r => r !== selected))
       setSelected(prev => (roleNames.length > 1 ? roleNames.find(r => r !== prev) || "" : ""))

@@ -26,18 +26,27 @@ export default function Documents() {
   const [ selectedDocName, setSelectedDocName ] = useState("") 
   const [ loading, setLoading ] = useState(true)
 
-  const { getRoles, uploadDocumentForRole, getAdminDocuments } = useApi()
+  const { getRoles, uploadDocumentForRole, getAdminDocuments, deleteDocuments } = useApi()
   const ActiveComponent = tabsConfig[activeIndex].component
+
+  // Function to refresh all data
+  const refreshData = async () => {
+    try {
+      const [rolesRes, docsRes] = await Promise.all([
+        getRoles(),
+        getAdminDocuments()
+      ])
+      if (rolesRes?.roles) setRoles(rolesRes.roles)
+      if (docsRes?.data) setDocuments(docsRes.data)
+    } catch (err) {
+      console.error("❌ Failed to refresh data:", err)
+    }
+  }
 
   useEffect(() => {
     const init = async () => {
       try {
-        const [rolesRes, docsRes] = await Promise.all([
-          getRoles(),
-          getAdminDocuments()
-        ])
-        if (rolesRes?.roles) setRoles(rolesRes.roles)
-        if (docsRes?.data) setDocuments(docsRes.data)
+        await refreshData();
       } catch (err) {
         console.error("❌ Initialization failed:", err)
       } finally {
@@ -50,6 +59,11 @@ export default function Documents() {
   const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
     try {
       const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
+
+      if (res?.success) {
+        await refreshData(); // Refresh after upload
+      }
+
       return res
     } catch (err) {
       console.error("❌ Failed to upload doc:", err)
@@ -72,6 +86,20 @@ export default function Documents() {
     setSelectedFolders(folders)
     setSelectedDocName(fileName)
     setActiveIndex(4)
+  }
+
+  const handleDeleteDocuments = async (documentsToDelete) => {
+    try {
+      const res = await deleteDocuments(documentsToDelete)
+      console.log("________res:____________", res)
+      if (res?.success) {
+        await refreshData(); // Refresh after deletion
+        return res;
+      }
+    } catch (err) {
+      console.error("❌ Failed to delete documents:", err)
+      throw err; // Re-throw to handle in child components
+    }
   }
 
   const handleUploadTab = () => setActiveIndex(1)
@@ -124,10 +152,10 @@ export default function Documents() {
               onShowUsers={handleShowUsers} 
               onShowRoles={handleShowRoles}
               onShowFolders={handleShowFolders}
+              onDeleteDocuments={handleDeleteDocuments}
               selectedUsers={selectedUsers} 
               selectedDocName={selectedDocName}
               selectedRoles={selectedRoles}
-              selectedFolders={selectedFolders}
             />
           )}
         </div>
