@@ -247,6 +247,9 @@ export function useApi() {
           .then((res) => ({ success: true}))
           .catch((err) => {
             console.error('[useApi] Reset password request sending failed:', err);
+            const status = err.response?.status;
+            if(status === 404)
+              return { success: false, message: 'User not registered!' }
             const detail = err.response?.data?.detail;
             return { 
               success: false, 

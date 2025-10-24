@@ -125,8 +125,10 @@ export default function Gebruikers() {
 
   const handleResetPass = async (email) => {
     try {
-      await sendResetPassword(email)
-      alert("Success to send reset password request!")
+      const res = await sendResetPassword(email)
+      if(res.success)
+        alert("Success to send reset password request!")
+      else alert(`${res.message}`)
     }catch (err) {
       console.error("Failed to request send:", err)
     }
