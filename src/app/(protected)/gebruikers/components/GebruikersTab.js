@@ -236,7 +236,7 @@ export default function GebruikersTab({
           {filteredData.map((user) => (
             <tr
               key={user.id}
-              className="h-fit min-h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2 py-1"
+              className="h-fit min-h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px] px-2 py-1"
             >
               <td className="flex gap-5 w-3/8 items-center font-montserrat font-normal text-[16px] leading-6 text-black">
                 <CheckBox 

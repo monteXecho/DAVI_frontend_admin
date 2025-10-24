@@ -104,7 +104,7 @@ export default function GekoppeldDocumentTab() {
             </thead>
             <tbody>
                 {GekoppeldDocumentData.map(({Map, Bestand}, i) => (
-                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
+                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
                         <td className="flex gap-5 w-3/9 items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                             <CheckBox toggle={false} color='#23BD92' />   
                             {Map}

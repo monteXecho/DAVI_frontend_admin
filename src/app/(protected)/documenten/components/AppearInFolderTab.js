@@ -214,7 +214,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
           </thead>
           <tbody>
               {filteredFolders.map((folder, i) => (
-                  <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
+                  <tr key={i} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
                       <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                           <CheckBox 
                             toggle={selectedFoldersSet.has(folder)} 
