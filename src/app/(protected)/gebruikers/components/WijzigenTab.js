@@ -88,10 +88,6 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
   const handleSave = async () => {
     if (!user) return
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      alert("Vul alle verplichte velden in.")
-      return
-    }
 
     setIsSaving(true)
     try {
@@ -101,7 +97,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
         email: email.trim(),
         assigned_roles: updatedRoles,
       }
-
+      
       await onUpdateUser(payload)
       alert("Gebruiker succesvol bijgewerkt!")
     } catch (err) {

@@ -282,7 +282,7 @@ export function useApi() {
     (payload) =>
       withAuth((token) =>
         apiClient
-          .put(`/company-admin/users/${payload.id}`, { payload }, createAuthHeaders(token))
+          .put(`/company-admin/users/${payload.id}`, payload, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]

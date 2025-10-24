@@ -175,7 +175,7 @@ export default function RegisterPage() {
           {/* Brand */}
           <h1 className="text-[64px] font-bold text-[#00b37e] mb-0 leading-none">DAVI</h1>
           
-          {/* Spacing like the HTML version */}
+          {/* Spacing like the HTML version */}~
           <div className="mb-6"></div>
 
           <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
