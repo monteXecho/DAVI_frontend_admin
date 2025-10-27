@@ -173,7 +173,7 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
               </th>
               <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
                 <div className="flex items-center gap-3">
-                  Folders
+                  Mappen
                   <DownArrow />
                 </div>
               </th>

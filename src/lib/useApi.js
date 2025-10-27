@@ -272,10 +272,10 @@ export function useApi() {
   );
 
   const addUser = useCallback(
-    (email, company_role) =>
+    (email, company_role, assigned_role) =>
       withAuth((token) =>
         apiClient
-          .post('/company-admin/users', { email, company_role }, createAuthHeaders(token))
+          .post('/company-admin/users', { email, company_role, assigned_role }, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]

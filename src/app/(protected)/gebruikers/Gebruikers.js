@@ -59,8 +59,8 @@ export default function Gebruikers() {
   }, [getUsers])
 
   // ✅ Parent-managed CRUD actions
-  const handleAddUser = async (email, role) => {
-    await addUser(email, role)
+  const handleAddUser = async (email, role, assigend_role) => {
+    await addUser(email, role, assigend_role)
     await refreshUsers()
   }
 

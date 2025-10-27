@@ -1,16 +1,22 @@
 'use client'
-import { useState } from "react"
-import CheckBox from "@/components/buttons/CheckBox"
+import { useState, useMemo } from "react"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
-export default function MakenTab({ onAddUser }) {
-  const allOptions = ["Beheerder", "MP’er"]
+export default function MakenTab({ roles = [], onAddUser }) {
+  const allRoles = useMemo(
+    () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
+    [roles]
+  )
+
+  const allOptions = useMemo(
+    () => ["Beheerder", ...allRoles],
+    [allRoles]
+)
 
   const [selected, setSelected] = useState(allOptions[0])
   const [email, setEmail] = useState("")
-  const [sendInvite, setSendInvite] = useState(true)
   const [loading, setLoading] = useState(false)
 
   const handleSave = async () => {
@@ -19,12 +25,14 @@ export default function MakenTab({ onAddUser }) {
       return
     }
 
-    const company_role = selected === "Beheerder" ? "company_admin" : "company_user"
+    const isBeheerder = selected === "Beheerder"
+    const company_role = isBeheerder ? "company_admin" : "company_user"
+    const assigned_role = isBeheerder ? null : selected // only send if not beheerder
 
     try {
       setLoading(true)
       if (onAddUser) {
-        await onAddUser(email.trim(), company_role)
+        await onAddUser(email.trim(), company_role, assigned_role)
       }
 
       toast.success(`Gebruiker toegevoegd als ${selected}`)
@@ -32,7 +40,6 @@ export default function MakenTab({ onAddUser }) {
       // reset form
       setEmail("")
       setSelected(allOptions[0])
-      setSendInvite(true)
     } catch (err) {
       console.error("Failed to add user:", err)
       toast.error("Er is een fout opgetreden bij het toevoegen van de gebruiker.")
@@ -81,17 +88,7 @@ export default function MakenTab({ onAddUser }) {
         {loading ? "Opslaan..." : "Opslaan"}
       </button>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer position="top-right" />
     </div>
   )
 }

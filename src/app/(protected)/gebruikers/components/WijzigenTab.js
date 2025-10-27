@@ -10,9 +10,8 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
   )
-
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
+  
+  const [ name, setName ] = useState("")
   const [email, setEmail] = useState("")
   const [updatedRoles, setUpdatedRoles] = useState([]) 
   const [selected, setSelected] = useState("") 
@@ -21,18 +20,13 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
   useEffect(() => {
     if (!user) {
       setUpdatedRoles([])
-      setFirstName("")
-      setLastName("")
+      setName("")
       setEmail("")
       setSelected("")
       return
     }
 
-    const [first, ...rest] = (user.Naam || "").split(" ")
-    const last = rest.join(" ")
-
-    setFirstName(first || "")
-    setLastName(last || "")
+    setName(user.Naam)
     setEmail(user.Email || "")
 
     let userRoles = []
@@ -93,7 +87,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
     try {
       const payload = {
         id: user.id,
-        name: `${firstName} ${lastName}`.trim(),
+        name: name.trim(),
         email: email.trim(),
         assigned_roles: updatedRoles,
       }
@@ -118,22 +112,12 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
         {/* Name fields */}
         <div className="flex w-2/3 gap-4">
           <div className="flex flex-col w-1/2">
-            <span className="mb-2 font-montserrat text-[16px]">Voornaam</span>
+            <span className="mb-2 font-montserrat text-[16px]">Voor- en achternaam</span>
             <input
               type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Carsten"
-              className="mb-5 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
-            />
-          </div>
-          <div className="flex flex-col w-1/2">
-            <span className="mb-2 font-montserrat text-[16px]">Achternaam</span>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Altena"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Carsten Altena"
               className="mb-5 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
             />
           </div>

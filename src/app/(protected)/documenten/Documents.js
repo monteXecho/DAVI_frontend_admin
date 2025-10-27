@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 import AlleDocumentenTab from "./components/AllDocumentsTab"
 import UsersTab from "./components/UsersTab"
@@ -29,8 +29,7 @@ export default function Documents() {
   const { getRoles, uploadDocumentForRole, getAdminDocuments, deleteDocuments } = useApi()
   const ActiveComponent = tabsConfig[activeIndex].component
 
-  // Function to refresh all data
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     try {
       const [rolesRes, docsRes] = await Promise.all([
         getRoles(),
@@ -41,12 +40,12 @@ export default function Documents() {
     } catch (err) {
       console.error("❌ Failed to refresh data:", err)
     }
-  }
+  }, [getRoles, getAdminDocuments]) 
 
   useEffect(() => {
     const init = async () => {
       try {
-        await refreshData();
+        await refreshData()
       } catch (err) {
         console.error("❌ Initialization failed:", err)
       } finally {
@@ -54,7 +53,8 @@ export default function Documents() {
       }
     }
     init()
-  }, [getRoles, getAdminDocuments])
+  }, [refreshData])  
+
 
   const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
     try {

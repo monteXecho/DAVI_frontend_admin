@@ -69,7 +69,7 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {filteredUsers.length} gebruiker{filteredUsers.length !== 1 ? 's' : ''} toegewezen aan "{selectedDocName}"
+        {filteredUsers.length} gebruiker{filteredUsers.length !== 1 ? 's' : ''} toegewezen aan &quot;{selectedDocName}&quot;
         {selectedUsersSet.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedUsersSet.size} geselecteerd)

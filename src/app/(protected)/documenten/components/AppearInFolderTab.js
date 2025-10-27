@@ -162,7 +162,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {filteredFolders.length} map{filteredFolders.length !== 1 ? 'pen' : ''} waar "{selectedDocName}" in voorkomt
+        {filteredFolders.length} map{filteredFolders.length !== 1 ? 'pen' : ''} waar &quot;{selectedDocName}&quot; in voorkomt
         {selectedFoldersSet.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedFoldersSet.size} geselecteerd)

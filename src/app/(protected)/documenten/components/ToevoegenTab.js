@@ -23,16 +23,18 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
   const fileInputRef = useRef(null)
 
-  // --- initialize roles ---
+  // --- initialize roles ONLY on mount or roles change ---
   useEffect(() => {
     const roleList = roles.map(r => r.name)
     setRoleNames(roleList)
-    if (roleList.length > 0 && !selectedRole) {
+
+    // only auto-select default once
+    if (!selectedRole && roleList.length > 0) {
       setSelectedRole(roleList[0])
     }
-  }, [roles])
+  }, [roles])  // ✅ correct — no need for selectedRole
 
-  // --- update folders when selected role changes ---
+  // --- react WHEN selectedRole changes ---
   useEffect(() => {
     if (!selectedRole) {
       setFolders([])
@@ -42,9 +44,10 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
     const roleData = roles.find(r => r.name === selectedRole)
     const folderList = roleData?.folders || []
+
     setFolders(folderList)
-    setSelectedFolder(folderList.length > 0 ? folderList[0] : "")
-  }, [selectedRole, roles])
+    setSelectedFolder(folderList[0] || "")
+  }, [selectedRole, roles]) // ✅ correct
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()

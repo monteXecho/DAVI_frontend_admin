@@ -124,7 +124,7 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
 
         {/* --- Folders section --- */}
         <span className="mb-2 font-montserrat text-[16px]">
-          Toegang tot map/document
+          Toegang tot mappen
         </span>
 
         {folders.map((folder, index) => (

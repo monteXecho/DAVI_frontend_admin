@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import Image from "next/image"
 
 import AddButton from "@/components/buttons/AddButton"
@@ -24,20 +24,14 @@ export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUse
   const [deleteMode, setDeleteMode] = useState("single") // 'single' or 'bulk'
 
   useEffect(() => {
-    const roles = Object.keys(documents || {})
-    setAllOptions1(["Alle Rollen", ...roles])
+    setAllOptions1(["Alle Rollen", ...Object.keys(documents || {})])
   }, [documents])
 
-  const getAllDocuments = () => {
+  const getAllDocuments = useCallback(() => {
     if (!documents) return []
-    
-    const allDocs = [];
-    
-    // Iterate through each role
+    const allDocs = []
     Object.entries(documents).forEach(([roleName, roleData]) => {
-      // Iterate through each folder in the role
       roleData.folders.forEach(folder => {
-        // Iterate through each document in the folder
         folder.documents.forEach(doc => {
           allDocs.push({
             id: `${roleName}-${folder.name}-${doc.file_name}`,
@@ -46,16 +40,15 @@ export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUse
             path: doc.path,
             uploaded_at: doc.uploaded_at,
             assigned_to: doc.assigned_to,
-            role: roleName // Directly use the current role name
-          });
-        });
-      });
-    });
-    
-    return allDocs;
-  }
+            role: roleName
+          })
+        })
+      })
+    })
+    return allDocs
+  }, [documents])
 
-  const getDocumentsForRole = (role) => {
+  const getDocumentsForRole = useCallback((role) => {
     if (!documents || !documents[role]) return []
     return documents[role].folders.flatMap(folder =>
       folder.documents.map(doc => ({
@@ -68,130 +61,95 @@ export default function AllDocumentsTab({ documents = {}, onUploadTab, onShowUse
         role: role
       }))
     )
-  }
+  }, [documents])
 
-  const getAllFoldersForFile = (fileName) => {
-    const folders = [];
-    Object.values(documents || {}).forEach((role) => {
-      role.folders.forEach((folder) => {
-        const hasFile = folder.documents.some((doc) => doc.file_name === fileName);
-        if (hasFile) folders.push(folder.name);
-      });
-    });
-    return folders;
-  };
+  const getAllFoldersForFile = useCallback((fileName) => {
+    const folders = []
+    Object.values(documents || {}).forEach(role => {
+      role.folders.forEach(folder => {
+        const hasFile = folder.documents.some(doc => doc.file_name === fileName)
+        if (hasFile) folders.push(folder.name)
+      })
+    })
+    return folders
+  }, [documents])
 
-  const getAllRolesForFile = (fileName) => {
-    const roles = [];
+  const getAllRolesForFile = useCallback((fileName) => {
+    const roles = []
     Object.entries(documents || {}).forEach(([roleName, roleData]) => {
-      const found = roleData.folders.some((folder) =>
-        folder.documents.some((doc) => doc.file_name === fileName)
-      );
-      if (found) roles.push(roleName);
-    });
-    return roles;
-  };
+      if (roleData.folders.some(folder => folder.documents.some(doc => doc.file_name === fileName))) {
+        roles.push(roleName)
+      }
+    })
+    return roles
+  }, [documents])
 
-  // Get filtered documents based on selected role and search query
   const filteredDocuments = useMemo(() => {
-    let docs = selectedRole === "Alle Rollen" 
-      ? getAllDocuments() 
-      : getDocumentsForRole(selectedRole)
+    let docs = selectedRole === "Alle Rollen" ? getAllDocuments() : getDocumentsForRole(selectedRole)
+    if (searchQuery.trim()) docs = docs.filter(doc => doc.file.toLowerCase().includes(searchQuery.toLowerCase()))
+    return docs
+  }, [getAllDocuments, getDocumentsForRole, selectedRole, searchQuery])
 
-    if (searchQuery.trim()) {
-      const search = searchQuery.toLowerCase();
-      docs = docs.filter((doc) => 
-        doc.file.toLowerCase().includes(search)
-      );
-    }
-
-    return docs;
-  }, [documents, selectedRole, searchQuery])
-
-  // Handle individual checkbox selection
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
-      const newSelected = new Set(prev);
-      if (isSelected) {
-        newSelected.add(docId);
-      } else {
-        newSelected.delete(docId);
-      }
-      return newSelected;
-    });
-  };
+      const newSelected = new Set(prev)
+      isSelected ? newSelected.add(docId) : newSelected.delete(docId)
+      return newSelected
+    })
+  }
 
-  // Handle select all checkbox
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      // Select all filtered documents
-      const allFilteredDocIds = new Set(filteredDocuments.map(doc => doc.id));
-      setSelectedDocuments(allFilteredDocIds);
+      setSelectedDocuments(new Set(filteredDocuments.map(doc => doc.id)))
     } else {
-      // Deselect all
-      setSelectedDocuments(new Set());
+      setSelectedDocuments(new Set())
     }
-  };
+  }
 
-  // Check if all filtered documents are selected
-  const allSelected = filteredDocuments.length > 0 && filteredDocuments.every(doc => selectedDocuments.has(doc.id));
+  const allSelected = filteredDocuments.length > 0 && filteredDocuments.every(doc => selectedDocuments.has(doc.id))
+  const someSelected = filteredDocuments.some(doc => selectedDocuments.has(doc.id)) && !allSelected
 
-  // Check if some filtered documents are selected
-  const someSelected = filteredDocuments.some(doc => selectedDocuments.has(doc.id)) && !allSelected;
-
-  // Handle bulk action selection
   const handleBulkAction = (action) => {
-    setSelectedBulkAction(action);
-    
+    setSelectedBulkAction(action)
     if (action === "Verwijderen") {
       if (selectedDocuments.size > 0) {
-        setDeleteMode("bulk");
-        setIsDeleteModalOpen(true);
+        setDeleteMode("bulk")
+        setIsDeleteModalOpen(true)
       } else {
-        // Show message if no documents are selected
-        alert("Selecteer eerst documenten om te verwijderen.");
-        setSelectedBulkAction("Bulkacties"); // Reset to default
+        alert("Selecteer eerst documenten om te verwijderen.")
+        setSelectedBulkAction("Bulkacties")
       }
     }
-  };
+  }
 
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteDocuments && selectedDocuments.size > 0) {
-        // Get selected documents with their file names and roles
-        const docsToDelete = getSelectedDocumentsData();
-        
-        // Create array of objects containing file name and role for each document
-        const documentsToDelete = docsToDelete.map(doc => ({
+        const docsToDelete = getSelectedDocumentsData().map(doc => ({
           fileName: doc.file,
           role: doc.role,
-          path: doc.path // Include path if needed
-        }));
-        
-        await onDeleteDocuments(documentsToDelete);
-        setSelectedDocuments(new Set()); // Clear selection after deletion
+          path: doc.path
+        }))
+        await onDeleteDocuments(docsToDelete)
+        setSelectedDocuments(new Set())
       }
     } catch (err) {
-      console.error("Failed to delete documents:", err);
-      alert("Failed to delete documents. Please try again.");
+      alert("Failed to delete documents. Please try again.")
     } finally {
-      setIsDeleteModalOpen(false);
-      setSelectedBulkAction("Bulkacties"); // Reset bulk action after deletion
+      setIsDeleteModalOpen(false)
+      setSelectedBulkAction("Bulkacties")
     }
-  };
+  }
 
   const handleDeleteClick = (doc) => {
-    setSelectedDocuments(new Set([doc.id])); // Select only this document
-    setDeleteMode("single");
-    setIsDeleteModalOpen(true);
-  };
+    setSelectedDocuments(new Set([doc.id]))
+    setDeleteMode("single")
+    setIsDeleteModalOpen(true)
+  }
 
-  // Get selected documents data for display in modal
-  const getSelectedDocumentsData = () => {
-    return Array.from(selectedDocuments).map(docId => 
-      filteredDocuments.find(doc => doc.id === docId)
-    ).filter(Boolean);
-  };
+  const getSelectedDocumentsData = () =>
+    Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
+
 
   return (
     <div className="flex flex-col w-full">

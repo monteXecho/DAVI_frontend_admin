@@ -20,7 +20,7 @@ export default function DeleteDocumentFromFoldersModal({ folders, documentName, 
         <div className="text-center text-[18px] leading-6 text-black px-6">
           <p className="mb-4">
             Weet je zeker dat je <br />
-            <span className="font-semibold">"{documentName}"</span>
+            <span className="font-semibold">&quot;{documentName}&quot;</span>
             <br />
             wil verwijderen uit <span className="font-semibold">{folders.length} mappen</span>?
           </p>
@@ -40,10 +40,10 @@ export default function DeleteDocumentFromFoldersModal({ folders, documentName, 
       ) : (
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je <br />
-          <span className="font-semibold">"{documentName}"</span>
+          <span className="font-semibold">&quot;{documentName}&quot;</span>
           <br />
           wil verwijderen uit map<br />
-          <span className="font-semibold">"{folders[0]}"</span>?
+          <span className="font-semibold">&quot;{folders[0]}&quot;</span>?
         </p>
       )}
 
