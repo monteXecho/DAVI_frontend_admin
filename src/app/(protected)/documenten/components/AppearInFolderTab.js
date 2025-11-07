@@ -5,10 +5,11 @@ import CheckBox from "@/components/buttons/CheckBox";
 import EditIcon from "@/components/icons/EditIcon";
 import SearchBox from "@/components/input/SearchBox";
 import RedCancelIcon from "@/components/icons/RedCancelIcon";
-import DownArrow from "@/components/icons/DownArrowIcon";
 import DropdownMenu from "@/components/input/DropdownMenu";
 import SelectedData from "@/components/input/SelectedData";
 import DeleteDocumentFromFoldersModal from "./modals/DeleteDocumentFromFoldersModal";
+import SortableHeader from "@/components/SortableHeader";
+import { useSortableData } from "@/lib/useSortableData";
 
 export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
   const allOptions = ["Bulkacties", "Verwijder uit map"];
@@ -16,10 +17,9 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedFoldersSet, setSelectedFoldersSet] = useState(new Set());
-  const [deleteMode, setDeleteMode] = useState("single"); // 'single' or 'bulk'
+  const [deleteMode, setDeleteMode] = useState("single");
 
-  // ✅ Derive current folders uniquely using role + folder name
-  const currentFolders = useMemo(() => {
+  const currentFoldersData = useMemo(() => {
     const folders = [];
 
     if (!documents || !selectedDocName) return folders;
@@ -29,9 +29,11 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
         roleData.folders.forEach((folder) => {
           if (folder.documents?.some(doc => doc.file_name === selectedDocName)) {
             folders.push({
-              key: `${roleName}::${folder.name}`,
+              id: `${roleName}::${folder.name}`, 
               name: folder.name,
-              role: roleName
+              role: roleName,
+              displayName: folder.name,
+              roleName: roleName
             });
           }
         });
@@ -41,36 +43,38 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
     return folders;
   }, [documents, selectedDocName]);
 
-  // ✅ Filter folders by search query
-  const filteredFolders = useMemo(() => {
-    return currentFolders.filter((folder) =>
-      folder.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [currentFolders, searchQuery]);
+  const { items: sortedFolders, requestSort, sortConfig } = useSortableData(currentFoldersData)
 
-  // ✅ Handle folder selection
-  const handleFolderSelect = (folder, isSelected) => {
+  const filteredFolders = useMemo(() => {
+    if (!searchQuery.trim()) return sortedFolders;
+
+    const lowerSearch = searchQuery.toLowerCase();
+    return sortedFolders.filter((folder) =>
+      folder.name.toLowerCase().includes(lowerSearch) ||
+      folder.role.toLowerCase().includes(lowerSearch)
+    );
+  }, [sortedFolders, searchQuery]);
+
+  const handleFolderSelect = (folderId, isSelected) => {
     setSelectedFoldersSet(prev => {
       const newSelected = new Set(prev);
-      if (isSelected) newSelected.add(folder.key);
-      else newSelected.delete(folder.key);
+      if (isSelected) newSelected.add(folderId);
+      else newSelected.delete(folderId);
       return newSelected;
     });
   };
 
-  // ✅ Handle select all
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      setSelectedFoldersSet(new Set(filteredFolders.map(f => f.key)));
+      setSelectedFoldersSet(new Set(filteredFolders.map(f => f.id)));
     } else {
       setSelectedFoldersSet(new Set());
     }
   };
 
-  const allSelected = filteredFolders.length > 0 && filteredFolders.every(f => selectedFoldersSet.has(f.key));
-  const someSelected = filteredFolders.some(f => selectedFoldersSet.has(f.key)) && !allSelected;
+  const allSelected = filteredFolders.length > 0 && filteredFolders.every(f => selectedFoldersSet.has(f.id));
+  const someSelected = filteredFolders.some(f => selectedFoldersSet.has(f.id)) && !allSelected;
 
-  // ✅ Handle bulk actions
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action);
 
@@ -85,14 +89,13 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
     }
   };
 
-  // ✅ Handle confirm delete (single or bulk)
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteDocuments && selectedFoldersSet.size > 0) {
         const documentsToDelete = [];
 
-        Array.from(selectedFoldersSet).forEach(folderKey => {
-          const [roleName, folderName] = folderKey.split("::");
+        Array.from(selectedFoldersSet).forEach(folderId => {
+          const [roleName, folderName] = folderId.split("::");
           const documentEntry = findDocumentEntry(selectedDocName, folderName, roleName);
           if (documentEntry) {
             documentsToDelete.push(documentEntry);
@@ -113,7 +116,6 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
     }
   };
 
-  // ✅ Find document by role + folder name
   const findDocumentEntry = (fileName, folderName, roleFilter = null) => {
     if (!documents) return null;
 
@@ -137,19 +139,18 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
   };
 
   const handleDeleteClick = (folder) => {
-    setSelectedFoldersSet(new Set([folder.key]));
+    setSelectedFoldersSet(new Set([folder.id]));
     setDeleteMode("single");
     setIsDeleteModalOpen(true);
   };
 
   const getSelectedFoldersData = () => {
-    return Array.from(selectedFoldersSet).map(key => {
-      const [roleName, folderName] = key.split("::");
-      return { key, role: roleName, name: folderName };
+    return Array.from(selectedFoldersSet).map(id => {
+      const [roleName, folderName] = id.split("::");
+      return { id, role: roleName, name: folderName };
     });
   };
 
-  // ✅ Get folder name for single delete (fix for the error)
   const getSingleFolderName = () => {
     const folders = getSelectedFoldersData();
     return folders.length > 0 ? folders[0].name : "";
@@ -167,11 +168,13 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
         )}
       </div>
 
-      <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
+      {/* Selected Document */}
+      <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
         <SelectedData SelectedData={selectedDocName} />
       </div>
 
-      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
+      {/* Action Bar */}
+      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
             <DropdownMenu
@@ -193,50 +196,84 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
         <AddButton onClick={() => {}} text="Voeg toe aan map" />
       </div>
 
-      <table className="w-full border-separate border-spacing-0 border border-transparent">
-        <thead className="bg-[#F9FBFA]">
-          <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
-            <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
-              <CheckBox
-                toggle={allSelected}
-                indeterminate={someSelected}
-                onChange={handleSelectAll}
-                color='#23BD92'
-              />
-              <span>Map</span>
-              <DownArrow />
-            </th>
-            <th className="w-[52px] px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredFolders.map((folder) => (
-            <tr key={folder.key} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
-              <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                <CheckBox
-                  toggle={selectedFoldersSet.has(folder.key)}
-                  onChange={(isSelected) => handleFolderSelect(folder, isSelected)}
-                  color='#23BD92'
-                />
-                {folder.name}
-                <span className="text-gray-500 text-sm">({folder.role})</span>
-              </td>
-              <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                <EditIcon />
-                <button onClick={() => handleDeleteClick(folder)}>
-                  <RedCancelIcon />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Folders Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead className="bg-[#F9FBFA]">
+            <tr className="h-[51px] border-b border-[#C5BEBE]">
+              <SortableHeader 
+                sortKey="name" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                className="px-2 py-2"
+              >
+                <div className="flex items-center gap-5">
+                  <CheckBox
+                    toggle={allSelected}
+                    indeterminate={someSelected}
+                    onChange={handleSelectAll}
+                    color='#23BD92'
+                  />
+                  Map
+                </div>
+              </SortableHeader>
 
-      {filteredFolders.length === 0 && (
-        <div className="p-6 text-center text-gray-500 font-montserrat">
-          {searchQuery ? 'Geen mappen gevonden voor deze zoekopdracht.' : 'Geen mappen gevonden.'}
-        </div>
-      )}
+              <th className="w-[120px] px-4 py-2 font-montserrat font-bold text-[16px] leading-6 text-black text-center">
+                Acties
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredFolders.length === 0 ? (
+              <tr>
+                <td colSpan="2" className="px-4 py-6 text-center text-gray-500 font-montserrat">
+                  {searchQuery ? 'Geen mappen gevonden voor deze zoekopdracht.' : 'Geen mappen gevonden.'}
+                </td>
+              </tr>
+            ) : (
+              filteredFolders.map((folder) => (
+                <tr 
+                  key={folder.id} 
+                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                >
+                  <td className="px-2 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
+                    <div className="flex items-center gap-5">
+                      <CheckBox
+                        toggle={selectedFoldersSet.has(folder.id)}
+                        onChange={(isSelected) => handleFolderSelect(folder.id, isSelected)}
+                        color='#23BD92'
+                      />
+                      <div className="flex gap-3 items-center">
+                        <span>{folder.name}</span>
+                        <span className="text-gray-500 text-sm">({folder.role})</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-2">
+                    <div className="flex justify-center items-center gap-3">
+                      <button 
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Edit ${folder.name}`}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(folder)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Remove from ${folder.name}`}
+                      >
+                        <RedCancelIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (

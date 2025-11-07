@@ -5,32 +5,33 @@ import AddButton from '@/components/buttons/AddButton'
 import CheckBox from '@/components/buttons/CheckBox'
 import SearchBox from '@/components/input/SearchBox'
 import DropdownMenu from '@/components/input/DropdownMenu'
-import DownArrow from '@/components/icons/DownArrowIcon'
 import EditIcon from '@/components/icons/EditIcon'
 import RedCancelIcon from '@/components/icons/RedCancelIcon'
 import DeleteRoleModal from './modals/DeleteRoleModal'
+import SortableHeader from '@/components/SortableHeader'
+import { useSortableData } from '@/lib/useSortableData'
 
-export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole }) { // Add onEditRole prop
+export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole }) {
   const allOptions = ['Bulkacties', 'Verwijderen']
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0])
   const [search, setSearch] = useState('')
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedRoles, setSelectedRoles] = useState(new Set())
-  const [deleteMode, setDeleteMode] = useState('single') // 'single' or 'bulk'
+  const [deleteMode, setDeleteMode] = useState('single')
 
-  // Filter roles by search (matches role name or folder names)
+  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(roles)
+
   const filteredRoles = useMemo(() => {
     const lowerSearch = search.toLowerCase()
-    return roles.filter((r) => {
+    return sortedRoles.filter((r) => {
       const matchName = r.name.toLowerCase().includes(lowerSearch)
       const matchFolder = r.folders?.some(folder =>
         folder.toLowerCase().includes(lowerSearch)
       )
       return matchName || matchFolder
     })
-  }, [roles, search])
+  }, [sortedRoles, search])
 
-  // Handle individual checkbox selection
   const handleRoleSelect = (roleName, isSelected) => {
     setSelectedRoles(prev => {
       const newSelected = new Set(prev)
@@ -43,25 +44,19 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     })
   }
 
-  // Handle select all checkbox
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      // Select all filtered roles
       const allFilteredRoleNames = new Set(filteredRoles.map(role => role.name))
       setSelectedRoles(allFilteredRoleNames)
     } else {
-      // Deselect all
       setSelectedRoles(new Set())
     }
   }
 
-  // Check if all filtered roles are selected
   const allSelected = filteredRoles.length > 0 && filteredRoles.every(role => selectedRoles.has(role.name))
 
-  // Check if some filtered roles are selected
   const someSelected = filteredRoles.some(role => selectedRoles.has(role.name)) && !allSelected
 
-  // Handle bulk action selection
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action)
     
@@ -70,9 +65,8 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
         setDeleteMode('bulk')
         setIsDeleteModalOpen(true)
       } else {
-        // Show message if no roles are selected
         alert('Selecteer eerst rollen om te verwijderen.')
-        setSelectedBulkAction('Bulkacties') // Reset to default
+        setSelectedBulkAction('Bulkacties')
       }
     }
   }
@@ -81,31 +75,29 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     try {
       if (onDeleteRoles && selectedRoles.size > 0) {
         await onDeleteRoles(Array.from(selectedRoles))
-        setSelectedRoles(new Set()) // Clear selection after deletion
+        setSelectedRoles(new Set())
       }
     } catch (err) {
       console.error('Failed to delete roles:', err)
       alert('Failed to delete roles. Please try again.')
     } finally {
       setIsDeleteModalOpen(false)
-      setSelectedBulkAction('Bulkacties') // Reset bulk action after deletion
+      setSelectedBulkAction('Bulkacties')
     }
   }
 
   const handleDeleteClick = (role) => {
-    setSelectedRoles(new Set([role.name])) // Select only this role
+    setSelectedRoles(new Set([role.name]))
     setDeleteMode('single')
     setIsDeleteModalOpen(true)
   }
 
-  // Handle edit click - navigate to edit tab
   const handleEditClick = (role) => {
     if (onEditRole) {
       onEditRole(role)
     }
   }
 
-  // Get selected roles data for display in modal
   const getSelectedRolesData = () => {
     return Array.from(selectedRoles).map(roleName => 
       roles.find(role => role.name === roleName)
@@ -152,7 +144,11 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
         <table className="w-full border-collapse text-left">
           <thead className="bg-[#F9FBFA]">
             <tr className="h-[51px] border-b border-[#C5BEBE]">
-              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+              <SortableHeader 
+                sortKey="name" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+              >
                 <div className="flex items-center gap-3">
                   <CheckBox 
                     toggle={allSelected} 
@@ -160,28 +156,34 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                     onChange={handleSelectAll}
                     color="#23BD92" 
                   />
-                  <span>Rol</span>
-                  <DownArrow />
+                  Rol
                 </div>
-              </th>
-              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                <div className="flex items-center gap-3">
-                  Gebruikers
-                  <DownArrow />
-                </div>
-              </th>
-              <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                <div className="flex items-center gap-3">
-                  Documenten
-                  <DownArrow />
-                </div>
-              </th>
+              </SortableHeader>
+
+              <SortableHeader 
+                sortKey="user_count" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                align="center"
+              >
+                Gebruikers
+              </SortableHeader>
+
+              <SortableHeader 
+                sortKey="document_count" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                align="center"
+              >
+                Documenten
+              </SortableHeader>
+
               <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
                 <div className="flex items-center gap-3">
                   Mappen
-                  <DownArrow />
                 </div>
               </th>
+
               <th className="px-4 py-2 w-[52px]" />
             </tr>
           </thead>
@@ -203,11 +205,11 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                   </div>
                 </td>
 
-                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal text-center">
                   {role.user_count ?? 0}
                 </td>
 
-                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal text-center">
                   {role.document_count ?? 0}
                 </td>
 
@@ -222,7 +224,7 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                     <button
                       aria-label={`Edit ${role.name}`}
                       className="hover:opacity-80 transition-opacity"
-                      onClick={() => handleEditClick(role)} // Use the new handler
+                      onClick={() => handleEditClick(role)}
                     >
                       <EditIcon />
                     </button>

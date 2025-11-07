@@ -13,8 +13,8 @@ export default function DeleteCompany({ onClose, selectedCompany, onDelete }) {
 
     try {
       setIsConfirm(true);
-      if (onDelete) onDelete(selectedCompany.id); // Update parent
-      onClose(); // Close modal
+      if (onDelete) onDelete(selectedCompany.id); 
+      onClose(); 
     } catch (err) {
       console.error("Delete company failed:", err);
     }

@@ -27,7 +27,7 @@ export default function MakenTab({ roles = [], onAddUser }) {
 
     const isBeheerder = selected === "Beheerder"
     const company_role = isBeheerder ? "company_admin" : "company_user"
-    const assigned_role = isBeheerder ? "" : selected // only send if not beheerder
+    const assigned_role = isBeheerder ? "" : selected 
 
     try {
       setLoading(true)
@@ -37,7 +37,6 @@ export default function MakenTab({ roles = [], onAddUser }) {
 
       toast.success(`Gebruiker toegevoegd als ${selected}`)
 
-      // reset form
       setEmail("")
       setSelected(allOptions[0])
     } catch (err) {

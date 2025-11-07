@@ -54,7 +54,6 @@ export default function Rollen() {
 
   const handleDeleteRoles = async (role_names) => {
     try {
-      // role_names can be either a string (single role) or array (multiple roles)
       await deleteRoles(Array.isArray(role_names) ? role_names : [role_names])
       await fetchRoles()
     } catch (err) {
@@ -71,10 +70,9 @@ export default function Rollen() {
     }
   }
 
-  // Add edit role handler
   const handleEditRole = (role) => {
     setSelectedRole(role)
-    setActiveIndex(2) // Navigate to Wijzigen tab
+    setActiveIndex(2) 
   }
   
   return (
@@ -127,8 +125,8 @@ export default function Rollen() {
             onDeleteRoles={handleDeleteRoles} 
             onAddOrUpdateRole={handleAddOrUpdateRole}
             onMoveToMaken={() => {setActiveIndex(1)}}
-            onEditRole={handleEditRole} // Pass edit handler
-            selectedRole={selectedRole} // Pass selected role
+            onEditRole={handleEditRole} 
+            selectedRole={selectedRole} 
           />
           )}
         </div>

@@ -16,7 +16,6 @@ export default function ProgressBarPolling({
     let mounted = true;
 
     const fetchStatus = async () => {
-      // cancel any in-flight request
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;

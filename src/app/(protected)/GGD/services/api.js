@@ -16,7 +16,6 @@ async function request(path, options = {}) {
     if (!response.ok) {
       const text = await response.text().catch(() => "");
       const errorMessage = text || `Request failed: ${response.status}`;
-      // alert(`Error: ${errorMessage}`);
       throw new Error(errorMessage);
     }
 

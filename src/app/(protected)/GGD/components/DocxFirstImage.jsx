@@ -12,7 +12,7 @@ export default function DocxFirstImage({ fileKey }) {
     try {
       const data = getFirstImageOfDoc(fileKey);
       console.log(getFirstImageOfDoc);
-      setImgSrc(data.data_url); // already a data URL, just plug into <img>
+      setImgSrc(data.data_url); 
     } catch (e) {
       setError(e.message);
     }

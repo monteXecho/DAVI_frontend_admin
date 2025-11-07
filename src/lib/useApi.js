@@ -7,19 +7,19 @@ export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('authError', { 
-            detail: { status: error.response.status }
-          }));
-        }
-      }
-      return Promise.reject(error);
-    }
-  );
+  // apiClient.interceptors.response.use(
+  //   (response) => response,
+  //   (error) => {
+  //     if (error.response?.status === 401 || error.response?.status === 403) {
+  //       if (typeof window !== 'undefined') {
+  //         window.dispatchEvent(new CustomEvent('authError', { 
+  //           detail: { status: error.response.status }
+  //         }));
+  //       }
+  //     }
+  //     return Promise.reject(error);
+  //   }
+  // );
 
   const getToken = useCallback(async () => {
     if (!keycloak?.authenticated) {
@@ -79,7 +79,6 @@ export function useApi() {
             const detail = err.response?.data?.detail;
 
             if (status === 409) {
-              // Conflict → file already exists
               return { success: false, message: detail || 'That file already exists!' };
             }
 
@@ -200,7 +199,6 @@ export function useApi() {
       const payload = {
         fullName: user.fullName,
         email: user.email,
-        // username: user.username,
         password: user.password,
       };
       
@@ -362,7 +360,7 @@ export function useApi() {
   const deleteRoles = useCallback(
     (role_names) =>
       withAuth((token) => {
-        console.log('Sending role_names:', role_names); // Debug log
+        console.log('Sending role_names:', role_names); 
         return apiClient
           .post(`/company-admin/roles/delete`, 
             { role_names }, 

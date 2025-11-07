@@ -6,7 +6,7 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 
-export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, selectedRole }) { // Add selectedRole prop
+export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, selectedRole }) {
   const [roleNames, setRoleNames] = useState([])
   const [selected, setSelected] = useState("")
   const [folders, setFolders] = useState([""])
@@ -21,22 +21,18 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
 
   const allEnabled = useMemo(() => modules.every(m => m.enabled), [modules])
 
-  // Initialize with selected role if provided
   useEffect(() => {
     const roleList = roles?.map(r => r.name) || []
     setRoleNames(roleList)
     
     if (selectedRole) {
-      // If a role was selected for editing, set it and load its data
       setSelected(selectedRole.name)
       setFolders(selectedRole.folders || [""])
     } else if (roleList.length > 0 && !selected) {
-      // Otherwise use the first role as default
       setSelected(roleList[0])
     }
-  }, [roles, selectedRole]) // Add selectedRole to dependencies
+  }, [roles, selectedRole]) 
 
-  // Load folder data when selected role changes
   useEffect(() => {
     if (selected && roles.length > 0) {
       const currentRole = roles.find(r => r.name === selected)
@@ -46,18 +42,15 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
     }
   }, [selected, roles])
 
-  // --- Folder management ---
   const addFolder = () => setFolders(prev => [...prev, ""])
   const removeFolder = (index) => setFolders(prev => prev.filter((_, i) => i !== index))
   const updateFolder = (index, value) =>
     setFolders(prev => prev.map((f, i) => (i === index ? value : f)))
 
-  // --- Toggle management ---
   const toggleAll = (val) => setModules(prev => prev.map(m => ({ ...m, enabled: val })))
   const toggleOne = (index, val) =>
     setModules(prev => prev.map((m, i) => (i === index ? { ...m, enabled: val } : m)))
 
-  // --- Save updated role ---
   const handleSave = async () => {
     if (!selected) {
       setError("Selecteer eerst een rol.")
@@ -77,7 +70,6 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
     }
   }
 
-  // --- Delete role ---
   const handleDeleteRole = async () => {
     if (!selected) return alert("Geen rol geselecteerd.")
     if (!confirm(`Weet je zeker dat je de rol "${selected}" wilt verwijderen?`)) return
@@ -101,7 +93,7 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
       {/* --- Role selection --- */}
       <div className="flex flex-col w-full">
         <span className="mb-2 font-montserrat text-[16px]">Rolnaam</span>
-        <div className="flex gap-[14px] items-center mb-5">
+        <div className="flex gap-3.5 items-center mb-5">
           <div className="w-1/3">
             {loading ? (
               <div className="text-gray-500 text-sm">Laden...</div>

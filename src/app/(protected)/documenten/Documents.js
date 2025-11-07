@@ -62,7 +62,7 @@ export default function Documents() {
       const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
 
       if (res?.success) {
-        await refreshData(); // Refresh after upload
+        await refreshData();
       }
 
       return res
@@ -74,19 +74,19 @@ export default function Documents() {
   const handleShowUsers = (users, docName) => {
     setSelectedUsers(users)
     setSelectedDocName(docName)
-    setActiveIndex(2) // UsersTab index
+    setActiveIndex(2) 
   }
 
   const handleShowRoles = (fileName, roles) => {
     setSelectedRoles(roles)
     setSelectedDocName(fileName)
-    setActiveIndex(3) // AppearInRoleTab index
+    setActiveIndex(3)
   }
 
   const handleShowFolders = (fileName, folders) => {
     setSelectedFolders(folders)
     setSelectedDocName(fileName)
-    setActiveIndex(4) // AppearInFolderTab index
+    setActiveIndex(4) 
   }
 
   const handleDeleteDocuments = async (documentsToDelete) => {
@@ -94,12 +94,12 @@ export default function Documents() {
       const res = await deleteDocuments(documentsToDelete)
       console.log("________res:____________", res)
       if (res?.success) {
-        await refreshData(); // Refresh after deletion
+        await refreshData(); 
         return res;
       }
     } catch (err) {
       console.error("❌ Failed to delete documents:", err)
-      throw err; // Re-throw to handle in child components
+      throw err; 
     }
   }
 
@@ -110,7 +110,6 @@ export default function Documents() {
     if (tab.selectable) {
       setActiveIndex(index)
     }
-    // Do nothing if tab is not selectable
   }
 
   return (
@@ -120,7 +119,6 @@ export default function Documents() {
       </div>
 
       <div className="flex flex-col w-full">
-        {/* Tabs Header - All tabs visible but non-selectable ones are disabled */}
         <div className="pl-24 flex gap-2">
           {tabsConfig.map((tab, index) => {
             const isActive = activeIndex === index
@@ -132,7 +130,7 @@ export default function Documents() {
                 onClick={() => handleTabClick(index)}
                 disabled={!isSelectable}
                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all relative
-                  ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
+                  ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
                   ${isSelectable 
                     ? 'cursor-pointer hover:bg-gray-100' 
                     : 'cursor-not-allowed opacity-60'

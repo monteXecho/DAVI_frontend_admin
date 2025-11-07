@@ -5,10 +5,11 @@ import CheckBox from "@/components/buttons/CheckBox";
 import EditIcon from "@/components/icons/EditIcon";
 import SearchBox from "@/components/input/SearchBox";
 import RedCancelIcon from "@/components/icons/RedCancelIcon";
-import DownArrow from "@/components/icons/DownArrowIcon";
 import DropdownMenu from "@/components/input/DropdownMenu";
 import SelectedData from "@/components/input/SelectedData";
 import DeleteDocumentFromRolesModal from "./modals/DeleteDocumentFromRolesModal";
+import SortableHeader from "@/components/SortableHeader";
+import { useSortableData } from "@/lib/useSortableData";
 
 export default function AppearInRoleTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
   const allOptions = ["Bulkacties", "Verwijderen"]; 
@@ -16,68 +17,66 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRolesSet, setSelectedRolesSet] = useState(new Set());
-  const [deleteMode, setDeleteMode] = useState("single"); // 'single' or 'bulk'
+  const [deleteMode, setDeleteMode] = useState("single");
 
-  // Derive current roles from documents instead of using static selectedRoles prop
-  const currentRoles = useMemo(() => {
+  const currentRolesData = useMemo(() => {
     const roles = [];
     
     if (!documents || !selectedDocName) return roles;
 
-    // Search through all roles to find where this document exists
     Object.entries(documents).forEach(([roleName, roleData]) => {
       if (roleData && roleData.folders) {
         const hasDocument = roleData.folders.some(folder => 
           folder.documents && folder.documents.some(doc => doc.file_name === selectedDocName)
         );
         if (hasDocument) {
-          roles.push(roleName);
+          roles.push({
+            id: roleName, 
+            name: roleName,
+          });
         }
       }
     });
     
     return roles;
-  }, [documents, selectedDocName]); // Recalculate when documents or selectedDocName changes
+  }, [documents, selectedDocName]);
 
-  // Filter roles by search
+  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(currentRolesData)
+
   const filteredRoles = useMemo(() => {
-    return currentRoles.filter((role) =>
-      role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [currentRoles, searchQuery]);
+    if (!searchQuery.trim()) return sortedRoles;
 
-  // Handle individual checkbox selection
-  const handleRoleSelect = (roleName, isSelected) => {
+    const lowerSearch = searchQuery.toLowerCase();
+    return sortedRoles.filter((role) =>
+      role.name.toLowerCase().includes(lowerSearch)
+    );
+  }, [sortedRoles, searchQuery]);
+
+  const handleRoleSelect = (roleId, isSelected) => {
     setSelectedRolesSet(prev => {
       const newSelected = new Set(prev);
       if (isSelected) {
-        newSelected.add(roleName);
+        newSelected.add(roleId);
       } else {
-        newSelected.delete(roleName);
+        newSelected.delete(roleId);
       }
       return newSelected;
     });
   };
 
-  // Handle select all checkbox
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      // Select all filtered roles
-      const allFilteredRoleNames = new Set(filteredRoles);
-      setSelectedRolesSet(allFilteredRoleNames);
+      const allFilteredRoleIds = new Set(filteredRoles.map(role => role.id));
+      setSelectedRolesSet(allFilteredRoleIds);
     } else {
-      // Deselect all
       setSelectedRolesSet(new Set());
     }
   };
 
-  // Check if all filtered roles are selected
-  const allSelected = filteredRoles.length > 0 && filteredRoles.every(role => selectedRolesSet.has(role));
+  const allSelected = filteredRoles.length > 0 && filteredRoles.every(role => selectedRolesSet.has(role.id));
 
-  // Check if some filtered roles are selected
-  const someSelected = filteredRoles.some(role => selectedRolesSet.has(role)) && !allSelected;
+  const someSelected = filteredRoles.some(role => selectedRolesSet.has(role.id)) && !allSelected;
 
-  // Handle bulk action selection
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action);
     
@@ -86,9 +85,8 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
         setDeleteMode("bulk");
         setIsDeleteModalOpen(true);
       } else {
-        // Show message if no roles are selected
         alert("Selecteer eerst rollen om het document uit te verwijderen.");
-        setSelectedBulkAction("Bulkacties"); // Reset to default
+        setSelectedBulkAction("Bulkacties");
       }
     }
   };
@@ -96,19 +94,16 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteDocuments && selectedRolesSet.size > 0) {
-        // Create document entries for each selected role
         const documentsToDelete = [];
         
-        // For each selected role, find all document entries across all folders
-        Array.from(selectedRolesSet).forEach(role => {
-          // Find all document entries for this role
-          const documentEntries = findDocumentEntriesForRole(selectedDocName, role);
+        Array.from(selectedRolesSet).forEach(roleName => {
+          const documentEntries = findDocumentEntriesForRole(selectedDocName, roleName);
           documentsToDelete.push(...documentEntries);
         });
         
         if (documentsToDelete.length > 0) {
           await onDeleteDocuments(documentsToDelete);
-          setSelectedRolesSet(new Set()); // Clear selection after deletion
+          setSelectedRolesSet(new Set());
         }
       }
     } catch (err) {
@@ -116,17 +111,15 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
       alert("Failed to remove document from roles. Please try again.");
     } finally {
       setIsDeleteModalOpen(false);
-      setSelectedBulkAction("Bulkacties"); // Reset bulk action after deletion
+      setSelectedBulkAction("Bulkacties");
     }
   };
 
-  // Helper function to find all document entries for a specific role
   const findDocumentEntriesForRole = (fileName, roleName) => {
     const entries = [];
     
     if (!documents || !documents[roleName]) return entries;
 
-    // Search through all folders in the role to find the document
     const roleData = documents[roleName];
     if (roleData.folders) {
       roleData.folders.forEach(folder => {
@@ -145,14 +138,15 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   };
 
   const handleDeleteClick = (role) => {
-    setSelectedRolesSet(new Set([role])); // Select only this role
+    setSelectedRolesSet(new Set([role.id]));
     setDeleteMode("single");
     setIsDeleteModalOpen(true);
   };
 
-  // Get selected roles data for display in modal
   const getSelectedRolesData = () => {
-    return Array.from(selectedRolesSet);
+    return Array.from(selectedRolesSet).map(roleName => 
+      filteredRoles.find(role => role.id === roleName)?.name || roleName
+    );
   };
 
   return (
@@ -167,75 +161,109 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
         )}
       </div>
 
-      <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
-          <SelectedData SelectedData={selectedDocName} />
+      {/* Selected Document */}
+      <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
+        <SelectedData SelectedData={selectedDocName} />
       </div>
 
-      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
-          <div className="flex w-2/3 gap-4 items-center">
-              <div className="w-4/9">
-                  <DropdownMenu 
-                    value={selectedBulkAction} 
-                    onChange={handleBulkAction} 
-                    allOptions={allOptions} 
-                  />
-              </div>
-
-              <div className="w-4/9">
-                  <SearchBox 
-                    placeholderText='Zoek rol...' 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-              </div>
+      {/* Action Bar */}
+      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
+        <div className="flex w-2/3 gap-4 items-center">
+          <div className="w-4/9">
+            <DropdownMenu 
+              value={selectedBulkAction} 
+              onChange={handleBulkAction} 
+              allOptions={allOptions} 
+            />
           </div>
 
-          <AddButton onClick={() => {}} text="Voeg toe aan rol" />
+          <div className="w-4/9">
+            <SearchBox 
+              placeholderText='Zoek rol...' 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <AddButton onClick={() => {}} text="Voeg toe aan rol" />
       </div>        
 
-      <table className="w-full border-separate border-spacing-0 border border-transparent">
-          <thead className="bg-[#F9FBFA]">                
-              <tr className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px] w-full px-2">
-                  <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
+      {/* Roles Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead className="bg-[#F9FBFA]">
+            <tr className="h-[51px] border-b border-[#C5BEBE]">
+              <SortableHeader 
+                sortKey="name" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                className="px-2 py-2"
+              >
+                <div className="flex items-center gap-5">
+                  <CheckBox 
+                    toggle={allSelected} 
+                    indeterminate={someSelected}
+                    onChange={handleSelectAll}
+                    color='#23BD92' 
+                  />  
+                  Rol
+                </div>
+              </SortableHeader>
+
+              <th className="w-[120px] px-4 py-2 font-montserrat font-bold text-[16px] leading-6 text-black text-center">
+                Acties
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredRoles.length === 0 ? (
+              <tr>
+                <td colSpan="2" className="px-4 py-6 text-center text-gray-500 font-montserrat">
+                  {searchQuery ? 'Geen rollen gevonden voor deze zoekopdracht.' : 'Geen rollen gevonden.'}
+                </td>
+              </tr>
+            ) : (
+              filteredRoles.map((role) => (
+                <tr 
+                  key={role.id} 
+                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                >
+                  <td className="px-2 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
+                    <div className="flex items-center gap-5">
                       <CheckBox 
-                        toggle={allSelected} 
-                        indeterminate={someSelected}
-                        onChange={handleSelectAll}
+                        toggle={selectedRolesSet.has(role.id)} 
+                        onChange={(isSelected) => handleRoleSelect(role.id, isSelected)}
                         color='#23BD92' 
                       />  
-                      <span>Rol</span>
-                      <DownArrow />
-                  </th>
-                  <th className="w-[52px] px-4 py-2"></th>
-              </tr>
-          </thead>
-          <tbody>
-              {filteredRoles.map((role, i) => (
-                  <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
-                      <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                          <CheckBox 
-                            toggle={selectedRolesSet.has(role)} 
-                            onChange={(isSelected) => handleRoleSelect(role, isSelected)}
-                            color='#23BD92' 
-                          />  
-                          {role}
-                      </td>
-                      <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                          <EditIcon />
-                          <button onClick={() => handleDeleteClick(role)}>
-                            <RedCancelIcon />
-                          </button>
-                      </td>
-                  </tr>
-              ))}
-          </tbody>
-      </table>
+                      {role.name}
+                    </div>
+                  </td>
 
-      {filteredRoles.length === 0 && (
-        <div className="p-6 text-center text-gray-500 font-montserrat">
-          {searchQuery ? 'Geen rollen gevonden voor deze zoekopdracht.' : 'Geen rollen gevonden.'}
-        </div>
-      )}
+                  <td className="px-4 py-2">
+                    <div className="flex justify-center items-center gap-3">
+                      <button 
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Edit ${role.name}`}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(role)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Remove from ${role.name}`}
+                      >
+                        <RedCancelIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (

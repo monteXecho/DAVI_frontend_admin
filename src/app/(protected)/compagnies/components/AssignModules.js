@@ -8,10 +8,9 @@ export default function AssignModules({ modules, onAssign }) {
   console.log('____SELECTED MODULE___', modules)
 
   useEffect(() => {
-    // Ensure modules always have a desc field
     const withDesc = (modules || []).map(m => ({
       ...m,
-      desc: m.desc ?? m.name // fallback if desc not provided
+      desc: m.desc ?? m.name 
     }));
     setLocalModules(withDesc);
   }, [modules]);

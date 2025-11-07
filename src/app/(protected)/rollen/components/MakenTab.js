@@ -18,19 +18,17 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
   const [loading, setLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-  // ✅ Load modules from backend user data
   useEffect(() => {
     if (user?.modules) {
       const userModules = Object.entries(user.modules).map(([name, val]) => ({
         name,
-        enabled: Boolean(val.enabled),      // ensure it's a boolean
-        locked: !val.enabled,              // lock if disabled from backend
+        enabled: Boolean(val.enabled),     
+        locked: !val.enabled,              
       }))
       setModules(userModules)
     }
   }, [user])
 
-  // ✅ Calculate if all unlocked modules are enabled
   const allEnabled = useMemo(() => {
     const editable = modules.filter((m) => !m.locked)
     return editable.length > 0 && editable.every((m) => m.enabled)

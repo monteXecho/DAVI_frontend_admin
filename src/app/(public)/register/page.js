@@ -22,8 +22,8 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState({
     email: "",
-    emailExists: "", // For duplicate email
-    emailNotFound: "", // New error for email not found in DB
+    emailExists: "",
+    emailNotFound: "", 
     passwordConfirm: "",
   });
 
@@ -35,7 +35,6 @@ export default function RegisterPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Validation functions
   const validateEmail = (email) => {
     if (email.length === 0) return "";
     
@@ -53,14 +52,12 @@ export default function RegisterPage() {
     return "";
   };
 
-  // Validate on form submission and when fields are touched
   useEffect(() => {
     if (submitted || touched.email || touched.passwordConfirm) {
       setErrors(prev => ({
         ...prev,
         email: validateEmail(form.email),
         passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm),
-        // Clear email errors when user starts typing again
         emailExists: prev.emailExists && form.email !== prev.lastEmail ? "" : prev.emailExists,
         emailNotFound: prev.emailNotFound && form.email !== prev.lastEmail ? "" : prev.emailNotFound
       }));
@@ -71,7 +68,6 @@ export default function RegisterPage() {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
 
-    // Clear email errors when user starts typing
     if (name === 'email' && (errors.emailExists || errors.emailNotFound)) {
       setErrors(prev => ({
         ...prev,
@@ -80,7 +76,6 @@ export default function RegisterPage() {
       }));
     }
 
-    // Only validate immediately if the field has been touched before
     if (touched[name]) {
       setErrors(prev => ({
         ...prev,
@@ -96,7 +91,6 @@ export default function RegisterPage() {
     const { name } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
 
-    // Validate the blurred field
     setErrors(prev => ({
       ...prev,
       [name]: 
@@ -110,18 +104,16 @@ export default function RegisterPage() {
     e.preventDefault();
     setSubmitted(true);
 
-    // Validate all fields on submit
     const emailError = validateEmail(form.email);
     const passwordConfirmError = validatePasswordConfirm(form.password, form.passwordConfirm);
 
     setErrors({
       email: emailError,
-      emailExists: "", // Reset email errors on new submission
+      emailExists: "", 
       emailNotFound: "",
       passwordConfirm: passwordConfirmError,
     });
 
-    // Check if there are any validation errors
     if (emailError || passwordConfirmError) {
       return;
     }
@@ -134,7 +126,6 @@ export default function RegisterPage() {
       if (!res.ok) {
         const errorMsg = res.data?.detail || "Registration failed. Please try again.";
         
-        // Check if it's a duplicate email error
         if (res.data.message === "Duplicate" || errorMsg.toLowerCase().includes("already exists") || errorMsg.toLowerCase().includes("duplicate")) {
           setErrors(prev => ({
             ...prev,
@@ -143,7 +134,6 @@ export default function RegisterPage() {
           return;
         }
         
-        // Check if email not found in database
         if (errorMsg.toLowerCase().includes("email not found") || errorMsg.toLowerCase().includes("not found")) {
           setErrors(prev => ({
             ...prev,
@@ -152,19 +142,16 @@ export default function RegisterPage() {
           return;
         }
         
-        // For other errors, show toast
         toast.error(errorMsg);
         return;
       }
 
-      // Registration successful - show success UI instead of toast
       setLoggedin(true);
       setForm({ fullName: "", email: "", password: "", passwordConfirm: "" });
 
     } catch (err) {
       console.error("Registration error:", err);
       
-      // Handle specific error cases from the backend
       if (err.response?.data?.detail?.toLowerCase().includes("email not found") || 
           err.response?.data?.detail?.toLowerCase().includes("not found")) {
         setErrors(prev => ({
@@ -186,7 +173,6 @@ export default function RegisterPage() {
   const showEmailError = (touched.email || submitted) && (errors.email || errors.emailExists || errors.emailNotFound);
   const showPasswordError = (touched.passwordConfirm || submitted) && errors.passwordConfirm;
 
-  // Determine which email error message to show
   const getEmailErrorMessage = () => {
     if (errors.emailNotFound) return errors.emailNotFound;
     if (errors.emailExists) return errors.emailExists;
@@ -194,7 +180,6 @@ export default function RegisterPage() {
     return "";
   };
 
-  // Check if form is valid for submit button
   const isFormValid = !errors.email && !errors.emailExists && !errors.emailNotFound && !errors.passwordConfirm && 
                      form.email.length > 0 && validateEmail(form.email) === "" &&
                      form.password === form.passwordConfirm;

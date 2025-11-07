@@ -119,7 +119,7 @@ export default function LeftSidebar() {
             ))}
           </div>
 
-          <div className="w-full h-1px bg-[#C5BEBE]"></div>
+          <div className="w-full h-px bg-[#C5BEBE]"></div>
 
           <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
             {isSuperAdmin && (
@@ -131,7 +131,7 @@ export default function LeftSidebar() {
               />
             )}
 
-            {isCompanyAdmin &&
+            {(isSuperAdmin || isCompanyAdmin) &&
               ["Rollen", "Gebruikers", "Documenten", "Instellingen"].map(
                 (label) => (
                   <MenuButton

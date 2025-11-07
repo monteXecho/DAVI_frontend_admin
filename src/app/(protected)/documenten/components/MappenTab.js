@@ -6,12 +6,13 @@ import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
-import DownArrow from "@/components/icons/DownArrowIcon"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
+import SortableHeader from "@/components/SortableHeader"
+import { useSortableData } from "@/lib/useSortableData"
 
 export default function MappenTab({ 
   documents = {}, 
-  roles = [], // Receive roles from parent
+  roles = [],
   onUploadTab, 
   onDeleteDocuments 
 }) {
@@ -26,19 +27,15 @@ export default function MappenTab({
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single") 
 
-  // Use roles prop to populate role dropdown
   useEffect(() => {
     const roleNames = roles.map(role => role.name || role)
     setAllOptions1(["Alle Rollen", ...roleNames])
   }, [roles])
 
-  // Update folder dropdown based on selected role
   useEffect(() => {
     if (selectedRole === "Alle Rollen") {
-      // Only show "Alle Mappen" when viewing all roles
       setAllOptions2(["Alle Mappen"])
     } else if (documents && documents[selectedRole]) {
-      // Get folders for selected role
       const roleFolders = documents[selectedRole].folders?.map(folder => folder.name) || []
       setAllOptions2(["Alle Mappen", ...roleFolders])
     } else {
@@ -46,7 +43,6 @@ export default function MappenTab({
     }
   }, [selectedRole, documents]);
 
-  // Reset folder selection when role changes
   useEffect(() => {
     setSelectedFolder("Alle Mappen");
   }, [selectedRole]);
@@ -106,28 +102,7 @@ export default function MappenTab({
     }) || []
   }, [documents])
 
-  const getAllFoldersForFile = useCallback((fileName) => {
-    const folders = []
-    Object.values(documents || {}).forEach(role => {
-      role.folders?.forEach(folder => {
-        const hasFile = folder.documents?.some(doc => doc.file_name === fileName)
-        if (hasFile) folders.push(folder.name)
-      })
-    })
-    return folders
-  }, [documents])
-
-  const getAllRolesForFile = useCallback((fileName) => {
-    const roles = []
-    Object.entries(documents || {}).forEach(([roleName, roleData]) => {
-      if (roleData.folders?.some(folder => folder.documents?.some(doc => doc.file_name === fileName))) {
-        roles.push(roleName)
-      }
-    })
-    return roles
-  }, [documents])
-
-  const filteredDocuments = useMemo(() => {
+  const baseDocuments = useMemo(() => {
     let docs = []
     
     if (selectedRole === "Alle Rollen") {
@@ -138,19 +113,27 @@ export default function MappenTab({
         : getDocumentsForRoleAndFolder(selectedRole, selectedFolder)
     }
     
-    if (searchQuery.trim()) {
-      docs = docs.filter(doc => doc.file.toLowerCase().includes(searchQuery.toLowerCase()))
-    }
-    
     return docs
   }, [
     getAllDocuments, 
     getDocumentsForRole, 
     getDocumentsForRoleAndFolder, 
     selectedRole, 
-    selectedFolder, 
-    searchQuery
+    selectedFolder
   ])
+
+  const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
+
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) return sortedDocuments
+    
+    const lowerSearch = searchQuery.toLowerCase()
+    return sortedDocuments.filter(doc => 
+      doc.file.toLowerCase().includes(lowerSearch) ||
+      doc.folder.toLowerCase().includes(lowerSearch) ||
+      doc.role.toLowerCase().includes(lowerSearch)
+    )
+  }, [sortedDocuments, searchQuery])
 
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
@@ -212,7 +195,6 @@ export default function MappenTab({
   const getSelectedDocumentsData = () =>
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
-  // Generate header text based on selections
   const getHeaderText = () => {
     if (selectedRole === "Alle Rollen" && selectedFolder === "Alle Mappen") {
       return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
@@ -237,7 +219,8 @@ export default function MappenTab({
         )}
       </div>
 
-      <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
+      {/* Filters */}
+      <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
         <div className="w-3/10">
           <DropdownMenu
             value={selectedRole}
@@ -256,7 +239,8 @@ export default function MappenTab({
         </div>
       </div>
 
-      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
+      {/* Action Bar */}
+      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
             <DropdownMenu
@@ -276,9 +260,9 @@ export default function MappenTab({
         <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
       </div>
 
-      {/* Check if there are no documents or if documents for the selected role/folder are empty */}
+      {/* Documents Table */}
       {filteredDocuments.length === 0 ? (
-        <div className="text-center py-4 text-gray-500">
+        <div className="text-center py-4 text-gray-500 font-montserrat">
           {selectedRole === "Alle Rollen" && selectedFolder === "Alle Mappen" 
             ? "Er zijn geen documenten beschikbaar."
             : selectedRole === "Alle Rollen"
@@ -293,7 +277,12 @@ export default function MappenTab({
           <table className="w-full border-collapse text-left">
             <thead className="bg-[#F9FBFA]">
               <tr className="h-[51px] border-b border-[#C5BEBE]">
-                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <SortableHeader 
+                  sortKey="folder" 
+                  onSort={requestSort} 
+                  currentSort={sortConfig}
+                  className="px-4 py-2"
+                >
                   <div className="flex items-center gap-3">
                     <CheckBox 
                       toggle={allSelected} 
@@ -301,25 +290,30 @@ export default function MappenTab({
                       onChange={handleSelectAll}
                       color="#23BD92" 
                     />
-                    <span>Map</span>
-                    <DownArrow />
+                    Map
                   </div>
+                </SortableHeader>
+
+                <SortableHeader 
+                  sortKey="file" 
+                  onSort={requestSort} 
+                  currentSort={sortConfig}
+                  className="px-4 py-2"
+                >
+                  Document
+                </SortableHeader>
+
+                <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
+                  Acties
                 </th>
-                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                  <div className="flex items-center gap-3">
-                    Document
-                    <DownArrow />
-                  </div>
-                </th>
-                <th className="w-[52px] px-4 py-2"></th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredDocuments.map((doc, i) => (
+              {filteredDocuments.map((doc) => (
                 <tr
                   key={doc.id}
-                  className="w-full items-center h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
                 >
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     <div className="flex items-center gap-3">
@@ -331,14 +325,18 @@ export default function MappenTab({
                       {doc.folder}
                     </div>
                   </td>
+
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     {doc.file}
                   </td>
-                  <td className="px-4 py-2 h-full">
-                    <div className="flex h-full items-center gap-3">
+
+                  <td className="px-4 py-2">
+                    <div className="flex justify-center items-center">
                       <button 
-                        title="Verwijder"
                         onClick={() => handleDeleteClick(doc)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Delete ${doc.file}`}
+                        title="Verwijder"
                       >
                         <RedCancelIcon />
                       </button>

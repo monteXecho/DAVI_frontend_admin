@@ -1,10 +1,11 @@
 'use client'
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
-import DownArrow from "@/components/icons/DownArrowIcon"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import SearchBox from "@/components/input/SearchBox"
 import SelectedData from "@/components/input/SelectedData"
+import SortableHeader from "@/components/SortableHeader"
+import { useSortableData } from "@/lib/useSortableData"
 import { useState, useEffect, useMemo } from "react"
 
 export default function UsersTab({ selectedUsers = [], selectedDocName }) {
@@ -18,17 +19,26 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
     setUsers(selectedUsers)
   }, [selectedUsers])
 
-  // Filter users by search query
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return users
+  const preparedUsers = useMemo(() => {
+    return users.map(user => ({
+      ...user,
+      id: user.id || user.email,
+      name: user.name || '',
+      email: user.email || ''
+    }))
+  }, [users])
 
-    return users.filter(user =>
+  const { items: sortedUsers, requestSort, sortConfig } = useSortableData(preparedUsers)
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return sortedUsers
+
+    return sortedUsers.filter(user =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  }, [users, searchQuery])
+  }, [sortedUsers, searchQuery])
 
-  // Handle individual checkbox selection
   const handleUserSelect = (userId, isSelected) => {
     setSelectedUsersSet(prev => {
       const newSelected = new Set(prev)
@@ -41,26 +51,21 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
     })
   }
 
-  // Handle select all checkbox
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      // Select all filtered users
-      const allFilteredUserIds = new Set(filteredUsers.map(user => user.id || user.email))
+      const allFilteredUserIds = new Set(filteredUsers.map(user => user.id))
       setSelectedUsersSet(allFilteredUserIds)
     } else {
-      // Deselect all
       setSelectedUsersSet(new Set())
     }
   }
 
-  // Check if all filtered users are selected
   const allSelected = filteredUsers.length > 0 && filteredUsers.every(user => 
-    selectedUsersSet.has(user.id || user.email)
+    selectedUsersSet.has(user.id)
   )
 
-  // Check if some filtered users are selected
   const someSelected = filteredUsers.some(user => 
-    selectedUsersSet.has(user.id || user.email)
+    selectedUsersSet.has(user.id)
   ) && !allSelected
 
   return (
@@ -75,12 +80,14 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
         )}
       </div>
 
+      {/* Selected Document */}
       <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
         <div className="w-9/10">
           <SelectedData SelectedData={selectedDocName || "Geen document geselecteerd"} />
         </div>
       </div>
 
+      {/* Action Bar */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
@@ -97,58 +104,82 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
         <AddButton onClick={() => {}} text="Voeg gebruiker toe" />
       </div>
 
-      <table className="w-full border-separate border-spacing-0 border border-transparent">
-        <thead className="bg-[#F9FBFA]">
-          <tr className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px] w-full px-2">
-            <th className="flex items-center gap-5 w-3/9 font-montserrat font-bold text-[16px] text-black">
-              <CheckBox 
-                toggle={allSelected} 
-                indeterminate={someSelected}
-                onChange={handleSelectAll}
-                color="#23BD92" 
-              />
-              <span>Naam</span>
-              <DownArrow />
-            </th>
-            <th className="flex items-center gap-5 w-6/9 font-montserrat font-bold text-[16px] text-black">
-              E-mail
-              <DownArrow />
-            </th>
-            <th className="w-[52px] px-4 py-2"></th>
-          </tr>
-        </thead>
+      {/* Users Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead className="bg-[#F9FBFA]">
+            <tr className="h-[51px] border-b border-[#C5BEBE]">
+              <SortableHeader 
+                sortKey="name" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                className="px-2 py-2"
+              >
+                <div className="flex items-center gap-5">
+                  <CheckBox 
+                    toggle={allSelected} 
+                    indeterminate={someSelected}
+                    onChange={handleSelectAll}
+                    color="#23BD92" 
+                  />
+                  Naam
+                </div>
+              </SortableHeader>
 
-        <tbody>
-          {filteredUsers.length === 0 ? (
-            <tr className="flex items-center justify-center h-[80px] w-full text-gray-500">
-              <td colSpan="3" className="text-center w-full">
-                {searchQuery ? 'Geen gebruikers gevonden voor deze zoekopdracht.' : 'Geen gebruikers toegewezen'}
-              </td>
+              <SortableHeader 
+                sortKey="email" 
+                onSort={requestSort} 
+                currentSort={sortConfig}
+                className="px-2 py-2"
+              >
+                E-mail
+              </SortableHeader>
+
+              <th className="w-[52px] px-4 py-2"></th>
             </tr>
-          ) : (
-            filteredUsers.map((user, i) => {
-              const userId = user.id || user.email // Use email as fallback ID
-              const isSelected = selectedUsersSet.has(userId)
-              
-              return (
-                <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
-                  <td className="flex gap-5 w-3/9 items-center font-montserrat text-[16px] px-2 py-2">
-                    <CheckBox 
-                      toggle={isSelected} 
-                      onChange={(isSelected) => handleUserSelect(userId, isSelected)}
-                      color="#23BD92" 
-                    />
-                    {user.name}
-                  </td>
-                  <td className="w-6/9 font-montserrat text-[16px] px-4 py-2">
-                    {user.email}
-                  </td>
-                </tr>
-              )
-            })
-          )}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="3" className="px-4 py-6 text-center text-gray-500 font-montserrat">
+                  {searchQuery ? 'Geen gebruikers gevonden voor deze zoekopdracht.' : 'Geen gebruikers toegewezen'}
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => {
+                const isSelected = selectedUsersSet.has(user.id)
+                
+                return (
+                  <tr 
+                    key={user.id} 
+                    className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                  >
+                    <td className="px-2 py-2 font-montserrat text-[16px] text-black font-normal">
+                      <div className="flex items-center gap-5">
+                        <CheckBox 
+                          toggle={isSelected} 
+                          onChange={(isSelected) => handleUserSelect(user.id, isSelected)}
+                          color="#23BD92" 
+                        />
+                        {user.name}
+                      </div>
+                    </td>
+                    
+                    <td className="px-2 py-2 font-montserrat text-[16px] text-black font-normal">
+                      {user.email}
+                    </td>
+                    
+                    <td className="px-4 py-2">
+                      {/* Empty cell for alignment - can be used for actions later */}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

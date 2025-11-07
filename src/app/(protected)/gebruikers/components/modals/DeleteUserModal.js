@@ -1,7 +1,6 @@
 import { X } from "lucide-react";
 
 export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple }) {
-  // For single user deletion
   const singleUser = !isMultiple && users?.[0];
   
   return (
@@ -19,7 +18,6 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
       </div>
 
       {isMultiple ? (
-        // Multiple users deletion
         <div className="text-center text-[18px] leading-6 text-black px-6">
           <p className="mb-4">
             Weet je zeker dat je <br />
@@ -41,7 +39,6 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
           </div>
         </div>
       ) : (
-        // Single user deletion
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je <br />
           <span className="font-semibold">{singleUser?.Naam}</span> / <br />

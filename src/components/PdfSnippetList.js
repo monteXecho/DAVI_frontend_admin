@@ -40,7 +40,7 @@ const PdfSnippetList = ({ documents }) => {
                         </svg>
                     }
 
-                    <div className="font-montserrat font-normal text-[15px] leading-[1.5] tracking-normal">
+                    <div className="font-montserrat font-normal text-[15px] leading-normal tracking-normal">
                       {file}
                     </div>
                   </div>

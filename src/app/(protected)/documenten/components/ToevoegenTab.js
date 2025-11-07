@@ -23,13 +23,11 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const [uploadedFileName, setUploadedFileName] = useState("")
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE)
   
-  // Array to store multiple role-folder combinations
   const [uploadTargets, setUploadTargets] = useState([])
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0)
 
   const fileInputRef = useRef(null)
 
-  // Initialize roles
   useEffect(() => {
     const roleList = roles.map(r => r.name)
     setRoleNames(roleList)
@@ -39,7 +37,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     }
   }, [roles])
 
-  // Update folders when selected role changes
   useEffect(() => {
     if (!selectedRole) {
       setFolders([])
@@ -54,7 +51,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     setSelectedFolder(folderList[0] || "")
   }, [selectedRole, roles])
 
-  // Add current role-folder combination to upload targets
   const handleAddUploadTarget = () => {
     if (!selectedRole || !selectedFolder) {
       toast.warn("Please select both a role and a folder.")
@@ -76,7 +72,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     ])
   }
 
-  // Remove role-folder combination from upload targets
   const handleRemoveUploadTarget = (index) => {
     setUploadTargets(prev => prev.filter((_, i) => i !== index))
   }
@@ -102,7 +97,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     setUploadStatus(UploadStates.UPLOADING)
     setCurrentUploadIndex(0)
 
-    // Upload to all targets sequentially
     await uploadToAllTargets(file)
   }
 
@@ -119,12 +113,10 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
         if (!result?.success) {
           toast.warn(`Failed to upload to ${target.role}/${target.folder}: ${result?.message || 'Unknown error'}`)
-          // Continue with other uploads even if one fails
         }
       } catch (err) {
         console.error(`Upload error for ${target.role}/${target.folder}:`, err)
         toast.warn(`Failed to upload to ${target.role}/${target.folder}`)
-        // Continue with other uploads even if one fails
       }
     }
 

@@ -86,7 +86,6 @@ export const downloadPDF = (dateStr, data) => {
     return;
   }
 
-  // Build a unified column set so all tables align
   const columns = days.reduce((acc, d) => {
     d.slices.forEach((row) => {
       Object.keys(row).forEach((k) => {
@@ -107,7 +106,7 @@ export const downloadPDF = (dateStr, data) => {
   const margin = 40;
 
   days.forEach((d, idx) => {
-    if (idx > 0) doc.addPage(); // new page per day prevents overlap
+    if (idx > 0) doc.addPage(); 
 
     const title = `Compliance check ${d.day}`;
     doc.setFontSize(14);
@@ -125,10 +124,6 @@ export const downloadPDF = (dateStr, data) => {
       tableWidth: "auto",
       pageBreak: "auto",
     });
-
-    // If you need the Y position after the table, read it from doc.lastAutoTable:
-    // const finalY = doc.lastAutoTable?.finalY ?? (margin + 10);
-    // (Not needed when you add a new page per day.)
   });
 
   doc.save(`${dateStr}.pdf`);

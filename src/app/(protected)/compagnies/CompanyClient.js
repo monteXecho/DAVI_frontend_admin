@@ -18,7 +18,6 @@ const fetchCompanies = useCallback(async () => {
 
     setCompanies(list);
 
-    // Keep selected company if still exists, otherwise fallback
     if (list.length > 0) {
       const stillExists = list.some(c => c.id === selectedCompanyId);
       setSelectedCompanyId(stillExists ? selectedCompanyId : list[0].id);
@@ -27,7 +26,6 @@ const fetchCompanies = useCallback(async () => {
       setSelectedAdminId(null);
     }
 
-    // Keep selected admin if still exists, otherwise fallback
     if (selectedCompanyId) {
       const company = list.find(c => c.id === selectedCompanyId);
       if (company) {
@@ -51,28 +49,17 @@ const fetchCompanies = useCallback(async () => {
   const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
   const selectedAdmin = selectedCompany?.admins.find((a) => a.id === selectedAdminId);
 
-  // useEffect(() => {
-  //   if (selectedCompany && selectedCompany.admins.length > 0) {
-  //     setSelectedAdminId(selectedCompany.admins[0].id);
-  //   } else {
-  //     setSelectedAdminId(null);
-  //   }
-  // }, [selectedCompanyId, companies]);
-
   if (error) {
     return <div className="p-5 text-red-600">Failed to load companies.</div>;
   }
 
   const handleDeleteCompany = async (companyId) => {
-    // const originalCompanies = [...companies];
-    // setCompanies(prev => prev.filter(c => c.id !== companyId));
 
     try {
       await deleteCompany(companyId);
       await fetchCompanies();
     } catch (err) {
       console.error("Delete failed, restoring list:", err);
-      // setCompanies(originalCompanies);
     }
   };
 
@@ -82,7 +69,6 @@ const fetchCompanies = useCallback(async () => {
       await fetchCompanies();
     } catch (err) {
       console.error("Create failed, restoring list:", err);
-      // setCompanies(originalCompanies);
     }
   }
 
@@ -92,7 +78,6 @@ const fetchCompanies = useCallback(async () => {
       await fetchCompanies();
     } catch (err) {
       console.error("Add failed, restoring list:", err);
-      // setCompanies(originalCompanies);
     }    
   }
 
@@ -102,7 +87,6 @@ const fetchCompanies = useCallback(async () => {
       await fetchCompanies();
     } catch (err) {
       console.error("Delete failed, restoring list:", err);
-      // setCompanies(originalCompanies);
     }    
   }  
 
@@ -113,7 +97,6 @@ const fetchCompanies = useCallback(async () => {
       window.alert("Success!")
     } catch (err) {
       console.error("Delete failed, restoring list:", err);
-      // setCompanies(originalCompanies);
     }    
   }  
 

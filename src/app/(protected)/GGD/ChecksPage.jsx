@@ -67,7 +67,6 @@ const UploadSection = memo(function UploadSection({ title, kind, format }) {
   );
 
   async function handleDelete() {
-    // await removeFile(file.objectKey);
     onRemoved(kind, file.objectKey);
   }
 

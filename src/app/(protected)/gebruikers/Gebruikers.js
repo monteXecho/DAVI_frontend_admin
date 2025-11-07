@@ -29,11 +29,10 @@ export default function Gebruikers() {
       Email: u.email || "—",
       Rol: Array.isArray(u.roles)
         ? u.roles
-        : [u.role], // fallback
+        : [u.role], 
     }
   }
 
-  // ✅ Fetch users safely after auth is ready
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -58,7 +57,6 @@ export default function Gebruikers() {
     loadUsers()
   }, [getUsers])
 
-  // ✅ Parent-managed CRUD actions
   const handleAddUser = async (email, role, assigend_role) => {
     await addUser(email, role, assigend_role)
     await refreshUsers()
@@ -79,7 +77,6 @@ export default function Gebruikers() {
     setUsers(prev => prev.filter(u => !ids.includes(u.id)))
   }
 
-  // ✅ Handle bulk import file upload
   const handleBulkImport = async (file) => {
     if (!file) return
 
@@ -91,7 +88,6 @@ export default function Gebruikers() {
       const result = await uploadUsersFile(formData)
       
       if (result.success) {
-        // Refresh the users list after successful upload
         await refreshUsers()
         return { success: true, data: result.data }
       } else {
@@ -120,7 +116,7 @@ export default function Gebruikers() {
 
   const handleEditUser = (user) => {
     setSelectedUser(user)
-    setActiveIndex(2) // "Wijzigen" tab
+    setActiveIndex(2) 
   }
 
   const handleResetPass = async (email) => {

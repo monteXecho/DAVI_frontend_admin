@@ -7,15 +7,16 @@ import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
-import DownArrow from "@/components/icons/DownArrowIcon"
 import GreenFolderIcon from "@/components/icons/GreenFolderIcon"
 import RollenItem from "@/assets/rollen_item.png"
 import GebruikersItem from "@/assets/gebruikers_item.png"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
+import SortableHeader from "@/components/SortableHeader"
+import { useSortableData } from "@/lib/useSortableData"
 
 export default function AllDocumentsTab({ 
   documents = {}, 
-  roles = [], // Receive roles from parent
+  roles = [],
   onUploadTab, 
   onShowUsers, 
   onShowRoles, 
@@ -29,11 +30,10 @@ export default function AllDocumentsTab({
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
-  const [deleteMode, setDeleteMode] = useState("single") // 'single' or 'bulk'
+  const [deleteMode, setDeleteMode] = useState("single")
 
-  // Use roles prop instead of documents to populate dropdown
   useEffect(() => {
-    const roleNames = roles.map(role => role.name || role) // Adjust based on your role object structure
+    const roleNames = roles.map(role => role.name || role)
     setAllOptions1(["Alle Rollen", ...roleNames])
   }, [roles])
 
@@ -94,11 +94,22 @@ export default function AllDocumentsTab({
     return roles
   }, [documents])
 
+  const baseDocuments = useMemo(() => {
+    return selectedRole === "Alle Rollen" ? getAllDocuments() : getDocumentsForRole(selectedRole)
+  }, [getAllDocuments, getDocumentsForRole, selectedRole])
+
+  const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
+
   const filteredDocuments = useMemo(() => {
-    let docs = selectedRole === "Alle Rollen" ? getAllDocuments() : getDocumentsForRole(selectedRole)
-    if (searchQuery.trim()) docs = docs.filter(doc => doc.file.toLowerCase().includes(searchQuery.toLowerCase()))
-    return docs
-  }, [getAllDocuments, getDocumentsForRole, selectedRole, searchQuery])
+    if (!searchQuery.trim()) return sortedDocuments
+    
+    const lowerSearch = searchQuery.toLowerCase()
+    return sortedDocuments.filter(doc => 
+      doc.file.toLowerCase().includes(lowerSearch) ||
+      doc.folder.toLowerCase().includes(lowerSearch) ||
+      doc.role.toLowerCase().includes(lowerSearch)
+    )
+  }, [sortedDocuments, searchQuery])
 
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
@@ -175,7 +186,8 @@ export default function AllDocumentsTab({
         )}
       </div>
 
-      <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
+      {/* Role Filter */}
+      <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
         <div className="w-3/10">
           <DropdownMenu
             value={selectedRole}
@@ -185,7 +197,8 @@ export default function AllDocumentsTab({
         </div>
       </div>
 
-      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
+      {/* Action Bar */}
+      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
             <DropdownMenu
@@ -205,9 +218,9 @@ export default function AllDocumentsTab({
         <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
       </div>
 
-      {/* Check if there are no documents or if documents for the selected role are empty */}
+      {/* Documents Table */}
       {filteredDocuments.length === 0 ? (
-        <div className="text-center py-4 text-gray-500">
+        <div className="text-center py-4 text-gray-500 font-montserrat">
           {selectedRole === "Alle Rollen" 
             ? "Er zijn geen documenten beschikbaar."
             : `Er zijn geen documenten beschikbaar voor de rol "${selectedRole}".`
@@ -218,7 +231,12 @@ export default function AllDocumentsTab({
           <table className="w-full border-collapse text-left">
             <thead className="bg-[#F9FBFA]">
               <tr className="h-[51px] border-b border-[#C5BEBE]">
-                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <SortableHeader 
+                  sortKey="folder" 
+                  onSort={requestSort} 
+                  currentSort={sortConfig}
+                  className="px-4 py-2"
+                >
                   <div className="flex items-center gap-3">
                     <CheckBox 
                       toggle={allSelected} 
@@ -226,33 +244,41 @@ export default function AllDocumentsTab({
                       onChange={handleSelectAll}
                       color="#23BD92" 
                     />
-                    <span>Map</span>
-                    <DownArrow />
+                    Map
                   </div>
-                </th>
+                </SortableHeader>
+
                 {selectedRole === "Alle Rollen" && (
-                  <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                    <div className="flex items-center gap-3">
-                      Rol
-                      <DownArrow />
-                    </div>
-                  </th>
+                  <SortableHeader 
+                    sortKey="role" 
+                    onSort={requestSort} 
+                    currentSort={sortConfig}
+                    className="px-4 py-2"
+                  >
+                    Rol
+                  </SortableHeader>
                 )}
-                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                  <div className="flex items-center gap-3">
-                    Document
-                    <DownArrow />
-                  </div>
+
+                <SortableHeader 
+                  sortKey="file" 
+                  onSort={requestSort} 
+                  currentSort={sortConfig}
+                  className="px-4 py-2"
+                >
+                  Document
+                </SortableHeader>
+
+                <th className="w-[180px] px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
+                  Acties
                 </th>
-                <th className="w-[52px] px-4 py-2"></th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredDocuments.map((doc, i) => (
+              {filteredDocuments.map((doc) => (
                 <tr
                   key={doc.id}
-                  className="w-full items-center h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
                 >
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     <div className="flex items-center gap-3">
@@ -264,26 +290,29 @@ export default function AllDocumentsTab({
                       {doc.folder}
                     </div>
                   </td>
+
                   {selectedRole === "Alle Rollen" && (
                     <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                       {doc.role}
                     </td>
                   )}
+
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     {doc.file}
                   </td>
-                  <td className="px-4 py-2 h-full">
-                    <div className="flex h-full items-center gap-3">
-                      <div
-                        className="relative w-[19px] h-[20px] cursor-pointer"
+
+                  <td className="px-4 py-2">
+                    <div className="flex justify-center items-center gap-4">
+                      <button
+                        className="relative w-[19px] h-5 cursor-pointer"
                         title="Gebruikers"
                         onClick={() => onShowUsers(doc.assigned_to, doc.file)}
                       >
-                        <Image src={GebruikersItem} alt="GebruikersItem" />
-                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay hover:scale-110 transition"></div>
-                      </div>
+                        <Image src={GebruikersItem} alt="Gebruikers" fill className="object-contain" />
+                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
+                      </button>
 
-                      <div
+                      <button
                         className="relative w-[25px] h-[27px] cursor-pointer"
                         title="Rollen"
                         onClick={() => {
@@ -291,12 +320,12 @@ export default function AllDocumentsTab({
                           onShowRoles(doc.file, allRoles);
                         }}
                       >
-                        <Image src={RollenItem} alt="RollenItem" />
+                        <Image src={RollenItem} alt="Rollen" fill className="object-contain" />
                         <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
-                      </div>
+                      </button>
 
                       <button 
-                        className="cursor-pointer" 
+                        className="cursor-pointer transition-opacity" 
                         title="Mappen"
                         onClick={() => {
                           const allFolders = getAllFoldersForFile(doc.file);
@@ -307,6 +336,7 @@ export default function AllDocumentsTab({
                       </button>
 
                       <button 
+                        className="cursor-pointer transition-opacity"
                         title="Verwijder"
                         onClick={() => handleDeleteClick(doc)}
                       >
