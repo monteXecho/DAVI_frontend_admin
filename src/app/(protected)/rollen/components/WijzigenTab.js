@@ -12,9 +12,7 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
   const [folders, setFolders] = useState([""])
   const [modules, setModules] = useState([
     { name: "Documentenchat", enabled: true },
-    { name: "Vaste gezichten criterium", enabled: false },
-    { name: "3-uursregeling check", enabled: true },
-    { name: "BKR check", enabled: false },
+    { name: "GGD Checks", enabled: true }
   ])
 
   const [loading, setLoading] = useState(false)
@@ -124,7 +122,7 @@ export default function WijzigenTab({ roles, onAddOrUpdateRole, onDeleteRoles, s
 
         {/* --- Folders section --- */}
         <span className="mb-2 font-montserrat text-[16px]">
-          Toegang tot mappen
+          Toegang tot map
         </span>
 
         {folders.map((folder, index) => (

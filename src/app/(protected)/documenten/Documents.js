@@ -6,14 +6,16 @@ import UsersTab from "./components/UsersTab"
 import AppearInRoleTab from "./components/AppearInRoleTab"
 import GekoppeldDocumentTab from "./components/AppearInFolderTab"
 import ToevoegenTab from "./components/ToevoegenTab"
+import MappenTab from "./components/MappenTab"
 import { useApi } from "@/lib/useApi"
 
 const tabsConfig = [
-  { label: 'Alle documenten', component: AlleDocumentenTab },
-  { label: 'Toevoegen', component: ToevoegenTab },
-  { label: 'Gebruikers', component: UsersTab },
-  { label: 'Komt voor bij rol', component: AppearInRoleTab },
-  { label: 'Komt voor in map', component: GekoppeldDocumentTab },
+  { label: 'Alle documenten', component: AlleDocumentenTab, selectable: true },
+  { label: 'Toevoegen', component: ToevoegenTab, selectable: true },
+  { label: 'Gebruikers', component: UsersTab, selectable: false },
+  { label: 'Komt voor bij rol', component: AppearInRoleTab, selectable: false },
+  { label: 'Komt voor in map', component: GekoppeldDocumentTab, selectable: false },
+  { label: 'Mappen', component: MappenTab, selectable: true },
 ]
 
 export default function Documents() {
@@ -55,7 +57,6 @@ export default function Documents() {
     init()
   }, [refreshData])  
 
-
   const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
     try {
       const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
@@ -73,19 +74,19 @@ export default function Documents() {
   const handleShowUsers = (users, docName) => {
     setSelectedUsers(users)
     setSelectedDocName(docName)
-    setActiveIndex(2) 
+    setActiveIndex(2) // UsersTab index
   }
 
   const handleShowRoles = (fileName, roles) => {
     setSelectedRoles(roles)
     setSelectedDocName(fileName)
-    setActiveIndex(3)
+    setActiveIndex(3) // AppearInRoleTab index
   }
 
   const handleShowFolders = (fileName, folders) => {
     setSelectedFolders(folders)
     setSelectedDocName(fileName)
-    setActiveIndex(4)
+    setActiveIndex(4) // AppearInFolderTab index
   }
 
   const handleDeleteDocuments = async (documentsToDelete) => {
@@ -104,6 +105,14 @@ export default function Documents() {
 
   const handleUploadTab = () => setActiveIndex(1)
 
+  const handleTabClick = (index) => {
+    const tab = tabsConfig[index]
+    if (tab.selectable) {
+      setActiveIndex(index)
+    }
+    // Do nothing if tab is not selectable
+  }
+
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
       <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl">
@@ -111,16 +120,23 @@ export default function Documents() {
       </div>
 
       <div className="flex flex-col w-full">
-        {/* Tabs Header */}
+        {/* Tabs Header - All tabs visible but non-selectable ones are disabled */}
         <div className="pl-24 flex gap-2">
           {tabsConfig.map((tab, index) => {
             const isActive = activeIndex === index
+            const isSelectable = tab.selectable
+            
             return (
               <button
                 key={tab.label}
-                onClick={() => setActiveIndex(index)}
+                onClick={() => handleTabClick(index)}
+                disabled={!isSelectable}
                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all relative
                   ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
+                  ${isSelectable 
+                    ? 'cursor-pointer hover:bg-gray-100' 
+                    : 'cursor-not-allowed opacity-60'
+                  }
                   w-fit px-4 py-1 font-montserrat font-semibold text-[12px]
                 `}
               >
@@ -156,6 +172,7 @@ export default function Documents() {
               selectedUsers={selectedUsers} 
               selectedDocName={selectedDocName}
               selectedRoles={selectedRoles}
+              selectedFolders={selectedFolders}
             />
           )}
         </div>

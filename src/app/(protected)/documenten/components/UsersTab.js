@@ -5,8 +5,6 @@ import DownArrow from "@/components/icons/DownArrowIcon"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import SearchBox from "@/components/input/SearchBox"
 import SelectedData from "@/components/input/SelectedData"
-import EditIcon from "@/components/icons/EditIcon"
-import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import { useState, useEffect, useMemo } from "react"
 
 export default function UsersTab({ selectedUsers = [], selectedDocName }) {
@@ -144,10 +142,6 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
                   </td>
                   <td className="w-6/9 font-montserrat text-[16px] px-4 py-2">
                     {user.email}
-                  </td>
-                  <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                    <EditIcon />
-                    <RedCancelIcon />
                   </td>
                 </tr>
               )

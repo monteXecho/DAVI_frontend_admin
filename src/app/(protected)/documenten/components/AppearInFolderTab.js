@@ -11,109 +11,97 @@ import SelectedData from "@/components/input/SelectedData";
 import DeleteDocumentFromFoldersModal from "./modals/DeleteDocumentFromFoldersModal";
 
 export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
-  const allOptions = ["Bulkacties", "Verwijderen"]; 
-  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]); 
+  const allOptions = ["Bulkacties", "Verwijder uit map"];
+  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedFoldersSet, setSelectedFoldersSet] = useState(new Set());
   const [deleteMode, setDeleteMode] = useState("single"); // 'single' or 'bulk'
 
-  // Derive current folders from documents instead of using static selectedFolders prop
+  // ✅ Derive current folders uniquely using role + folder name
   const currentFolders = useMemo(() => {
     const folders = [];
-    
+
     if (!documents || !selectedDocName) return folders;
 
-    // Search through all roles and folders to find where this document exists
-    Object.values(documents).forEach((roleData) => {
-      if (roleData && roleData.folders) {
+    Object.entries(documents).forEach(([roleName, roleData]) => {
+      if (roleData?.folders) {
         roleData.folders.forEach((folder) => {
-          if (folder.documents && folder.documents.some(doc => doc.file_name === selectedDocName)) {
-            folders.push(folder.name);
+          if (folder.documents?.some(doc => doc.file_name === selectedDocName)) {
+            folders.push({
+              key: `${roleName}::${folder.name}`,
+              name: folder.name,
+              role: roleName
+            });
           }
         });
       }
     });
-    
-    return folders;
-  }, [documents, selectedDocName]); // Recalculate when documents or selectedDocName changes
 
-  // Filter folders by search
+    return folders;
+  }, [documents, selectedDocName]);
+
+  // ✅ Filter folders by search query
   const filteredFolders = useMemo(() => {
     return currentFolders.filter((folder) =>
-      folder.toLowerCase().includes(searchQuery.toLowerCase())
+      folder.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [currentFolders, searchQuery]);
 
-  // Handle individual checkbox selection
-  const handleFolderSelect = (folderName, isSelected) => {
+  // ✅ Handle folder selection
+  const handleFolderSelect = (folder, isSelected) => {
     setSelectedFoldersSet(prev => {
       const newSelected = new Set(prev);
-      if (isSelected) {
-        newSelected.add(folderName);
-      } else {
-        newSelected.delete(folderName);
-      }
+      if (isSelected) newSelected.add(folder.key);
+      else newSelected.delete(folder.key);
       return newSelected;
     });
   };
 
-  // Handle select all checkbox
+  // ✅ Handle select all
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      // Select all filtered folders
-      const allFilteredFolderNames = new Set(filteredFolders);
-      setSelectedFoldersSet(allFilteredFolderNames);
+      setSelectedFoldersSet(new Set(filteredFolders.map(f => f.key)));
     } else {
-      // Deselect all
       setSelectedFoldersSet(new Set());
     }
   };
 
-  // Check if all filtered folders are selected
-  const allSelected = filteredFolders.length > 0 && filteredFolders.every(folder => selectedFoldersSet.has(folder));
+  const allSelected = filteredFolders.length > 0 && filteredFolders.every(f => selectedFoldersSet.has(f.key));
+  const someSelected = filteredFolders.some(f => selectedFoldersSet.has(f.key)) && !allSelected;
 
-  // Check if some filtered folders are selected
-  const someSelected = filteredFolders.some(folder => selectedFoldersSet.has(folder)) && !allSelected;
-
-  // Handle bulk action selection
+  // ✅ Handle bulk actions
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action);
-    
-    if (action === "Verwijderen") {
+
+    if (action === "Verwijder uit map") {
       if (selectedFoldersSet.size > 0) {
         setDeleteMode("bulk");
         setIsDeleteModalOpen(true);
       } else {
-        // Show message if no folders are selected
         alert("Selecteer eerst mappen om het document uit te verwijderen.");
-        setSelectedBulkAction("Bulkacties"); // Reset to default
+        setSelectedBulkAction("Bulkacties");
       }
     }
   };
 
+  // ✅ Handle confirm delete (single or bulk)
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteDocuments && selectedFoldersSet.size > 0) {
-        // Create document entries for each selected folder
         const documentsToDelete = [];
-        
-        // For each selected folder, find the corresponding document entry
-        Array.from(selectedFoldersSet).forEach(folder => {
-          // Find the document data for this specific folder
-          const documentEntry = findDocumentEntry(selectedDocName, folder);
+
+        Array.from(selectedFoldersSet).forEach(folderKey => {
+          const [roleName, folderName] = folderKey.split("::");
+          const documentEntry = findDocumentEntry(selectedDocName, folderName, roleName);
           if (documentEntry) {
-            documentsToDelete.push({
-              fileName: selectedDocName,
-              role: documentEntry.role,
-              path: documentEntry.path
-            });
+            documentsToDelete.push(documentEntry);
           }
         });
-        
+
         if (documentsToDelete.length > 0) {
           await onDeleteDocuments(documentsToDelete);
-          setSelectedFoldersSet(new Set()); // Clear selection after deletion
+          setSelectedFoldersSet(new Set());
         }
       }
     } catch (err) {
@@ -121,16 +109,17 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
       alert("Failed to remove document from folders. Please try again.");
     } finally {
       setIsDeleteModalOpen(false);
-      setSelectedBulkAction("Bulkacties"); // Reset bulk action after deletion
+      setSelectedBulkAction("Bulkacties");
     }
   };
 
-  // Helper function to find the specific document entry for a folder
-  const findDocumentEntry = (fileName, folderName) => {
+  // ✅ Find document by role + folder name
+  const findDocumentEntry = (fileName, folderName, roleFilter = null) => {
     if (!documents) return null;
-    
-    // Search through all roles and folders to find the exact document
+
     for (const [roleName, roleData] of Object.entries(documents)) {
+      if (roleFilter && roleName !== roleFilter) continue;
+
       for (const folder of roleData.folders || []) {
         if (folder.name === folderName) {
           const doc = folder.documents?.find(d => d.file_name === fileName);
@@ -148,14 +137,22 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
   };
 
   const handleDeleteClick = (folder) => {
-    setSelectedFoldersSet(new Set([folder])); // Select only this folder
+    setSelectedFoldersSet(new Set([folder.key]));
     setDeleteMode("single");
     setIsDeleteModalOpen(true);
   };
 
-  // Get selected folders data for display in modal
   const getSelectedFoldersData = () => {
-    return Array.from(selectedFoldersSet);
+    return Array.from(selectedFoldersSet).map(key => {
+      const [roleName, folderName] = key.split("::");
+      return { key, role: roleName, name: folderName };
+    });
+  };
+
+  // ✅ Get folder name for single delete (fix for the error)
+  const getSingleFolderName = () => {
+    const folders = getSelectedFoldersData();
+    return folders.length > 0 ? folders[0].name : "";
   };
 
   return (
@@ -171,67 +168,68 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
       </div>
 
       <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
-          <SelectedData SelectedData={selectedDocName} />
+        <SelectedData SelectedData={selectedDocName} />
       </div>
 
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
-          <div className="flex w-2/3 gap-4 items-center">
-              <div className="w-4/9">
-                  <DropdownMenu 
-                    value={selectedBulkAction} 
-                    onChange={handleBulkAction} 
-                    allOptions={allOptions} 
-                  />
-              </div>
-
-              <div className="w-4/9">
-                  <SearchBox 
-                    placeholderText='Zoek map...' 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-              </div>
+        <div className="flex w-2/3 gap-4 items-center">
+          <div className="w-4/9">
+            <DropdownMenu
+              value={selectedBulkAction}
+              onChange={handleBulkAction}
+              allOptions={allOptions}
+            />
           </div>
 
-          <AddButton onClick={() => {}} text="Voeg toe aan map" />
-      </div>        
+          <div className="w-4/9">
+            <SearchBox
+              placeholderText='Zoek map...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <AddButton onClick={() => {}} text="Voeg toe aan map" />
+      </div>
 
       <table className="w-full border-separate border-spacing-0 border border-transparent">
-          <thead className="bg-[#F9FBFA]">                
-              <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
-                  <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
-                      <CheckBox 
-                        toggle={allSelected} 
-                        indeterminate={someSelected}
-                        onChange={handleSelectAll}
-                        color='#23BD92' 
-                      />  
-                      <span>Map</span>
-                      <DownArrow />
-                  </th>
-                  <th className="w-[52px] px-4 py-2"></th>
-              </tr>
-          </thead>
-          <tbody>
-              {filteredFolders.map((folder, i) => (
-                  <tr key={i} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
-                      <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
-                          <CheckBox 
-                            toggle={selectedFoldersSet.has(folder)} 
-                            onChange={(isSelected) => handleFolderSelect(folder, isSelected)}
-                            color='#23BD92' 
-                          />  
-                          {folder}
-                      </td>
-                      <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
-                          <EditIcon />
-                          <button onClick={() => handleDeleteClick(folder)}>
-                            <RedCancelIcon />
-                          </button>
-                      </td>
-                  </tr>
-              ))}
-          </tbody>
+        <thead className="bg-[#F9FBFA]">
+          <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
+            <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
+              <CheckBox
+                toggle={allSelected}
+                indeterminate={someSelected}
+                onChange={handleSelectAll}
+                color='#23BD92'
+              />
+              <span>Map</span>
+              <DownArrow />
+            </th>
+            <th className="w-[52px] px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredFolders.map((folder) => (
+            <tr key={folder.key} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
+              <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
+                <CheckBox
+                  toggle={selectedFoldersSet.has(folder.key)}
+                  onChange={(isSelected) => handleFolderSelect(folder, isSelected)}
+                  color='#23BD92'
+                />
+                {folder.name}
+                <span className="text-gray-500 text-sm">({folder.role})</span>
+              </td>
+              <td className="w-fit flex justify-end items-center gap-3 px-4 py-2">
+                <EditIcon />
+                <button onClick={() => handleDeleteClick(folder)}>
+                  <RedCancelIcon />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
 
       {filteredFolders.length === 0 && (
@@ -251,14 +249,15 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
         >
           <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
             <DeleteDocumentFromFoldersModal
-              folders={getSelectedFoldersData()}
+              folders={deleteMode === "bulk" ? getSelectedFoldersData() : []}
+              folderName={deleteMode === "single" ? getSingleFolderName() : ""}
               documentName={selectedDocName}
               onClose={() => {
                 setIsDeleteModalOpen(false);
                 setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleDeleteConfirm}
-              isMultiple={selectedFoldersSet.size > 1}
+              isMultiple={deleteMode === "bulk"}
             />
           </div>
         </div>

@@ -14,12 +14,25 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getRoles, addOrUpdateRole, deleteRoles } = useApi()
+  const { getUser, getRoles, addOrUpdateRole, deleteRoles } = useApi()
   const [roles, setRoles] = useState([])
-  const [selectedRole, setSelectedRole] = useState(null) // Add selected role state
+  const [selectedRole, setSelectedRole] = useState(null) 
+  const [ user, setUser ] = useState()
   const [loading, setLoading] = useState(true)
   
   const ActiveComponent = tabsConfig[activeIndex].component
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const loginUser = await getUser()
+      if(loginUser) setUser(loginUser)
+      console.log("Current logged in user:", loginUser)
+    } catch (err) {
+      console.log("Failed to fetch user info: ", err)
+    } finally {
+      setLoading(false)
+    }  
+  }, [getUser])
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -36,6 +49,7 @@ export default function Rollen() {
 
   useEffect(() => {
     fetchRoles()
+    fetchUser()
   }, [fetchRoles])
 
   const handleDeleteRoles = async (role_names) => {
@@ -48,9 +62,9 @@ export default function Rollen() {
     }
   }
 
-  const handleAddOrUpdateRole = async (role_name, folders) => {
+  const handleAddOrUpdateRole = async (role_name, folders, modules) => {
     try {
-      await addOrUpdateRole(role_name, folders)
+      await addOrUpdateRole(role_name, folders, modules)
       await fetchRoles()
     } catch (err) {
       console.log("Failed to update role.", err)
@@ -107,6 +121,7 @@ export default function Rollen() {
             </div>
             ) : (
           <ActiveComponent 
+            user={user}
             roles={roles} 
             refreshRoles={fetchRoles} 
             onDeleteRoles={handleDeleteRoles} 

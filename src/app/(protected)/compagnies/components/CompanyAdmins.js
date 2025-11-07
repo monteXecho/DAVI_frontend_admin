@@ -79,7 +79,7 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
               onClose={() => setIsDeleteAdminOpen(false)}
               onDelete={(companyId, adminId) => {
                 if (onDeleteCompanyAdmin) onDeleteCompanyAdmin( companyId, adminId );
-                setIsAddAdminOpen(false);
+                setIsDeleteAdminOpen(false);
               }}
               selectedCompany={selectedCompany}
               selectedAdminId={selectedId} 

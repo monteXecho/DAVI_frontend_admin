@@ -27,7 +27,7 @@ export default function MakenTab({ roles = [], onAddUser }) {
 
     const isBeheerder = selected === "Beheerder"
     const company_role = isBeheerder ? "company_admin" : "company_user"
-    const assigned_role = isBeheerder ? null : selected // only send if not beheerder
+    const assigned_role = isBeheerder ? "" : selected // only send if not beheerder
 
     try {
       setLoading(true)

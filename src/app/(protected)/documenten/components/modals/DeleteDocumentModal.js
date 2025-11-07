@@ -55,7 +55,7 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
 
       <button
         onClick={onConfirm}
-        className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-[196px] h-10 flex items-center justify-center"
+        className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-fit h-fit px-4 py-2 flex items-center justify-center"
       >
         {isMultiple ? `Verwijder ${documents.length} documenten` : 'Verwijder document'}
       </button>

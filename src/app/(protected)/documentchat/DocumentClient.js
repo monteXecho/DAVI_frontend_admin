@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useKeycloak } from '@react-keycloak/web';
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea';
 import ProtectedLayout from '@/components/ProtectedLayout';
 import PdfSnippetList from '@/components/PdfSnippetList';

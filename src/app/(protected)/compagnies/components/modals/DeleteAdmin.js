@@ -1,9 +1,9 @@
 import { useState } from "react";
-import DropdownMenu from "@/components/input/DropdownMenu";
 
 export default function DeleteAdmin({ onClose, selectedCompany, selectedAdminId, onDelete }) {
   const allOptions = selectedCompany?.admins?.map(admin => admin.name || [])
-  const defaultAdmin = selectedCompany?.admins.find(admin => admin.email === selectedAdminId)?.name || allOptions[0] || "";
+  const defaultAdmin = selectedCompany?.admins.find(admin => admin.id === selectedAdminId)?.name || allOptions[0] || "";
+
   const [selectedAdmin, setSelectedAdmin] = useState(defaultAdmin);
 
   const handleDelete = () => {

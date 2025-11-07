@@ -18,11 +18,16 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
   const [selectedRoles, setSelectedRoles] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState('single') // 'single' or 'bulk'
 
-  // Filter roles by search
+  // Filter roles by search (matches role name or folder names)
   const filteredRoles = useMemo(() => {
-    return roles.filter((r) =>
-      r.name.toLowerCase().includes(search.toLowerCase())
-    )
+    const lowerSearch = search.toLowerCase()
+    return roles.filter((r) => {
+      const matchName = r.name.toLowerCase().includes(lowerSearch)
+      const matchFolder = r.folders?.some(folder =>
+        folder.toLowerCase().includes(lowerSearch)
+      )
+      return matchName || matchFolder
+    })
   }, [roles, search])
 
   // Handle individual checkbox selection
@@ -132,7 +137,7 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
           <div className="w-1/3">
             <SearchBox
-              placeholderText="Zoek rol..."
+              placeholderText="Zoek rol, map..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

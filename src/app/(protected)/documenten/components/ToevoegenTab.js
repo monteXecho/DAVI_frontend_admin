@@ -5,6 +5,8 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import UploadBttn from '@/components/buttons/UploadBttn'
 import UploadingBttn from '@/components/buttons/UploadingBttn'
 import SuccessBttn from '@/components/buttons/SuccessBttn'
+import AddIcon from "@/components/icons/AddIcon"
+import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import { ToastContainer, toast } from 'react-toastify';
 
 const UploadStates = {
@@ -20,21 +22,24 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const [selectedFolder, setSelectedFolder] = useState("")
   const [uploadedFileName, setUploadedFileName] = useState("")
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE)
+  
+  // Array to store multiple role-folder combinations
+  const [uploadTargets, setUploadTargets] = useState([])
+  const [currentUploadIndex, setCurrentUploadIndex] = useState(0)
 
   const fileInputRef = useRef(null)
 
-  // --- initialize roles ONLY on mount or roles change ---
+  // Initialize roles
   useEffect(() => {
     const roleList = roles.map(r => r.name)
     setRoleNames(roleList)
 
-    // only auto-select default once
     if (!selectedRole && roleList.length > 0) {
       setSelectedRole(roleList[0])
     }
-  }, [roles])  // ✅ correct — no need for selectedRole
+  }, [roles])
 
-  // --- react WHEN selectedRole changes ---
+  // Update folders when selected role changes
   useEffect(() => {
     if (!selectedRole) {
       setFolders([])
@@ -47,9 +52,40 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
     setFolders(folderList)
     setSelectedFolder(folderList[0] || "")
-  }, [selectedRole, roles]) // ✅ correct
+  }, [selectedRole, roles])
+
+  // Add current role-folder combination to upload targets
+  const handleAddUploadTarget = () => {
+    if (!selectedRole || !selectedFolder) {
+      toast.warn("Please select both a role and a folder.")
+      return
+    }
+
+    const targetExists = uploadTargets.some(
+      target => target.role === selectedRole && target.folder === selectedFolder
+    )
+
+    if (targetExists) {
+      toast.warn("This role-folder combination is already added.")
+      return
+    }
+
+    setUploadTargets(prev => [
+      ...prev,
+      { role: selectedRole, folder: selectedFolder }
+    ])
+  }
+
+  // Remove role-folder combination from upload targets
+  const handleRemoveUploadTarget = (index) => {
+    setUploadTargets(prev => prev.filter((_, i) => i !== index))
+  }
 
   const handleUploadClick = () => {
+    if (uploadTargets.length === 0) {
+      toast.warn("Please add at least one role-folder combination before uploading.")
+      return
+    }
     fileInputRef.current?.click()
   }
 
@@ -57,33 +93,42 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (!selectedRole || !selectedFolder) {
-      alert("Please select both a role and a folder before uploading.")
+    if (uploadTargets.length === 0) {
+      toast.warn("Please add at least one role-folder combination.")
       return
     }
 
     setUploadedFileName(file.name)
     setUploadStatus(UploadStates.UPLOADING)
+    setCurrentUploadIndex(0)
 
-    const formData = new FormData()
-    formData.append('file', file)
+    // Upload to all targets sequentially
+    await uploadToAllTargets(file)
+  }
 
-    try {
-      const result = await onUploadDocument(selectedRole, selectedFolder, formData)
+  const uploadToAllTargets = async (file) => {
+    for (let i = 0; i < uploadTargets.length; i++) {
+      setCurrentUploadIndex(i)
+      const target = uploadTargets[i]
+      
+      const formData = new FormData()
+      formData.append('file', file)
 
-      if (result?.success) {
-        setUploadStatus(UploadStates.SUCCESS)
-      } else {
-        toast.warn(`${result.message}`)
-        console.error("Upload failed or response invalid:", result)
-        setUploadStatus(UploadStates.IDLE)
-        setUploadedFileName("")
+      try {
+        const result = await onUploadDocument(target.role, target.folder, formData)
+
+        if (!result?.success) {
+          toast.warn(`Failed to upload to ${target.role}/${target.folder}: ${result?.message || 'Unknown error'}`)
+          // Continue with other uploads even if one fails
+        }
+      } catch (err) {
+        console.error(`Upload error for ${target.role}/${target.folder}:`, err)
+        toast.warn(`Failed to upload to ${target.role}/${target.folder}`)
+        // Continue with other uploads even if one fails
       }
-    } catch (err) {
-      console.error("Upload error:", err)
-      setUploadStatus(UploadStates.IDLE)
-      setUploadedFileName("")
     }
+
+    setUploadStatus(UploadStates.SUCCESS)
   }
 
   const renderUploadSection = () => {
@@ -91,12 +136,16 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
       case UploadStates.IDLE:
         return <UploadBttn onClick={handleUploadClick} text="Upload document" />
       case UploadStates.UPLOADING:
-        return <UploadingBttn text={uploadedFileName} />
+        const progressText = uploadTargets.length > 1 
+          ? `Uploading to ${currentUploadIndex + 1}/${uploadTargets.length}: ${uploadTargets[currentUploadIndex].role}/${uploadTargets[currentUploadIndex].folder}`
+          : `Uploading to ${uploadTargets[0].role}/${uploadTargets[0].folder}`
+        
+        return <UploadingBttn text={`${uploadedFileName} - ${progressText}`} />
       case UploadStates.SUCCESS:
         return (
           <>
-            <SuccessBttn text={uploadedFileName} />
-            <UploadBttn onClick={handleUploadClick} text="Upload another document" />
+            <SuccessBttn text={`${uploadedFileName} - Uploaded to ${uploadTargets.length} location(s)`} />
+            <UploadBttn onClick={handleUploadClick} text="Upload nog een document" />
           </>
         )
       default:
@@ -118,14 +167,46 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
         <div className="flex flex-col w-1/3">
           <span className="mb-2 font-montserrat text-[16px]">Kies een map</span>
-          <DropdownMenu
-            value={selectedFolder}
-            onChange={setSelectedFolder}
-            allOptions={folders}
-            disabled={folders.length === 0}
-          />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <DropdownMenu
+                value={selectedFolder}
+                onChange={setSelectedFolder}
+                allOptions={folders}
+                disabled={folders.length === 0}
+              />
+            </div>
+            <button
+              onClick={handleAddUploadTarget}
+              title="Add role-folder combination"
+            >
+              <AddIcon />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Display selected upload targets */}
+      {uploadTargets.length > 0 && (
+        <div className="flex flex-col w-2/3 gap-2">
+          <span className="font-montserrat text-[16px]">Toevoegen aan:</span>
+          <div className="flex flex-col gap-2 max-h-90 overflow-y-auto">
+            {uploadTargets.map((target, index) => (
+              <div key={index} className="flex items-center justify-between bg-gray-100 p-3 rounded">
+                <span className="font-montserrat text-[14px]">
+                  {target.role} / {target.folder}
+                </span>
+                <button
+                  onClick={() => handleRemoveUploadTarget(index)}
+                  title="Remove"
+                >
+                  <RedCancelIcon />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <input
         type="file"

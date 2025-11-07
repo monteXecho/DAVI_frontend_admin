@@ -3,11 +3,11 @@ import AddButton from "@/components/buttons/AddButton";
 import CheckBox from "@/components/buttons/CheckBox";
 import SearchBox from "@/components/input/SearchBox";
 import EditIcon from "@/components/icons/EditIcon";
-import ResetPassIcon from "@/components/icons/ResetPassIcon";
 import RedCancelIcon from "@/components/icons/RedCancelIcon";
 import DownArrow from "@/components/icons/DownArrowIcon";
 import DropdownMenu from "@/components/input/DropdownMenu";
 import DeleteUserModal from "./modals/DeleteUserModal";
+import DeleteSuccessModal from "./modals/DeleteSuccessModal";
 import BulkImportModal from "./modals/BulkImportModal";
 
 import { useState, useMemo } from "react";
@@ -21,11 +21,13 @@ export default function GebruikersTab({
   uploadLoading 
 }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteSuccessModalOpen, setIsDeleteSuccessModalOpen] = useState(false);
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [bulkAction, setBulkAction] = useState("Bulkacties");
   const [deleteMode, setDeleteMode] = useState("single");
   const [uploadResult, setUploadResult] = useState(null);
+  const [deletedUsersData, setDeletedUsersData] = useState([]); // Store deleted users data
 
   const [selectedRole, setSelectedRole] = useState("Alle rollen");
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,7 +36,7 @@ export default function GebruikersTab({
   const allRoles = useMemo(() => {
     const roles = new Set();
     users.forEach((user) => user.Rol?.forEach((r) => roles.add(r)));
-    return ["Alle rollen", ...Array.from(roles)];
+    return ["Alle rollen", "Zonder rol", ...Array.from(roles)];
   }, [users]);
 
   // Filter users by role + search
@@ -110,7 +112,13 @@ export default function GebruikersTab({
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteUsers && selectedUsers.size > 0) {
+        // Store the users data before deletion
+        const usersToDelete = getSelectedUsersData();
+        setDeletedUsersData(usersToDelete);
+        
         await onDeleteUsers(Array.from(selectedUsers));
+        // Show success modal after deletion
+        setIsDeleteSuccessModalOpen(true);
         setSelectedUsers(new Set()); // Clear selection after deletion
       }
     } catch (err) {
@@ -126,6 +134,12 @@ export default function GebruikersTab({
     setSelectedUsers(new Set([user.id])); // Select only this user
     setDeleteMode("single");
     setIsDeleteModalOpen(true);
+  };
+
+  // Handle success modal close
+  const handleSuccessModalClose = () => {
+    setIsDeleteSuccessModalOpen(false);
+    setDeletedUsersData([]); // Clear deleted users data
   };
 
   // Handle bulk import button click
@@ -258,7 +272,6 @@ export default function GebruikersTab({
                 <button onClick={() => onEditUser && onEditUser(user)}>
                   <EditIcon />
                 </button>
-                <ResetPassIcon />
                 <button onClick={() => handleDeleteClick(user)}>
                   <RedCancelIcon />
                 </button>
@@ -286,6 +299,22 @@ export default function GebruikersTab({
               }}
               onConfirm={handleDeleteConfirm}
               isMultiple={selectedUsers.size > 1}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Modal */}
+      {isDeleteSuccessModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={handleSuccessModalClose}
+        >
+          <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
+            <DeleteSuccessModal
+              users={deletedUsersData} // Use the stored deleted users data
+              onClose={handleSuccessModalClose}
+              isMultiple={deletedUsersData.length > 1}
             />
           </div>
         </div>

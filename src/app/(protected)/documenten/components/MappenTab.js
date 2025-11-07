@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useMemo, useCallback } from "react"
-import Image from "next/image"
 
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
@@ -8,41 +7,56 @@ import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import DownArrow from "@/components/icons/DownArrowIcon"
-import GreenFolderIcon from "@/components/icons/GreenFolderIcon"
-import RollenItem from "@/assets/rollen_item.png"
-import GebruikersItem from "@/assets/gebruikers_item.png"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
 
-export default function AllDocumentsTab({ 
+export default function MappenTab({ 
   documents = {}, 
   roles = [], // Receive roles from parent
   onUploadTab, 
-  onShowUsers, 
-  onShowRoles, 
-  onShowFolders, 
   onDeleteDocuments 
 }) {
   const [allOptions1, setAllOptions1] = useState([])
+  const [allOptions2, setAllOptions2] = useState([])
   const [selectedRole, setSelectedRole] = useState("Alle Rollen")
-  const allOptions2 = ["Bulkacties", "Verwijderen"]
-  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions2[0])
+  const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
+  const allOptions3 = ["Bulkacties", "Verwijderen"]
+  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
-  const [deleteMode, setDeleteMode] = useState("single") // 'single' or 'bulk'
+  const [deleteMode, setDeleteMode] = useState("single") 
 
-  // Use roles prop instead of documents to populate dropdown
+  // Use roles prop to populate role dropdown
   useEffect(() => {
-    const roleNames = roles.map(role => role.name || role) // Adjust based on your role object structure
+    const roleNames = roles.map(role => role.name || role)
     setAllOptions1(["Alle Rollen", ...roleNames])
   }, [roles])
+
+  // Update folder dropdown based on selected role
+  useEffect(() => {
+    if (selectedRole === "Alle Rollen") {
+      // Only show "Alle Mappen" when viewing all roles
+      setAllOptions2(["Alle Mappen"])
+    } else if (documents && documents[selectedRole]) {
+      // Get folders for selected role
+      const roleFolders = documents[selectedRole].folders?.map(folder => folder.name) || []
+      setAllOptions2(["Alle Mappen", ...roleFolders])
+    } else {
+      setAllOptions2(["Alle Mappen"])
+    }
+  }, [selectedRole, documents]);
+
+  // Reset folder selection when role changes
+  useEffect(() => {
+    setSelectedFolder("Alle Mappen");
+  }, [selectedRole]);
 
   const getAllDocuments = useCallback(() => {
     if (!documents) return []
     const allDocs = []
     Object.entries(documents).forEach(([roleName, roleData]) => {
-      roleData.folders.forEach(folder => {
-        folder.documents.forEach(doc => {
+      roleData.folders?.forEach(folder => {
+        folder.documents?.forEach(doc => {
           allDocs.push({
             id: `${roleName}-${folder.name}-${doc.file_name}`,
             folder: folder.name,
@@ -60,8 +74,8 @@ export default function AllDocumentsTab({
 
   const getDocumentsForRole = useCallback((role) => {
     if (!documents || !documents[role]) return []
-    return documents[role].folders.flatMap(folder =>
-      folder.documents.map(doc => ({
+    return documents[role].folders?.flatMap(folder =>
+      folder.documents?.map(doc => ({
         id: `${role}-${folder.name}-${doc.file_name}`,
         folder: folder.name,
         file: doc.file_name,
@@ -69,15 +83,34 @@ export default function AllDocumentsTab({
         uploaded_at: doc.uploaded_at,
         assigned_to: doc.assigned_to,
         role: role
-      }))
-    )
+      })) || []
+    ) || []
+  }, [documents])
+
+  const getDocumentsForRoleAndFolder = useCallback((role, folder) => {
+    if (!documents || !documents[role]) return []
+    
+    return documents[role].folders?.flatMap(folderData => {
+      if (folder === "Alle Mappen" || folderData.name === folder) {
+        return folderData.documents?.map(doc => ({
+          id: `${role}-${folderData.name}-${doc.file_name}`,
+          folder: folderData.name,
+          file: doc.file_name,
+          path: doc.path,
+          uploaded_at: doc.uploaded_at,
+          assigned_to: doc.assigned_to,
+          role: role
+        })) || []
+      }
+      return []
+    }) || []
   }, [documents])
 
   const getAllFoldersForFile = useCallback((fileName) => {
     const folders = []
     Object.values(documents || {}).forEach(role => {
-      role.folders.forEach(folder => {
-        const hasFile = folder.documents.some(doc => doc.file_name === fileName)
+      role.folders?.forEach(folder => {
+        const hasFile = folder.documents?.some(doc => doc.file_name === fileName)
         if (hasFile) folders.push(folder.name)
       })
     })
@@ -87,7 +120,7 @@ export default function AllDocumentsTab({
   const getAllRolesForFile = useCallback((fileName) => {
     const roles = []
     Object.entries(documents || {}).forEach(([roleName, roleData]) => {
-      if (roleData.folders.some(folder => folder.documents.some(doc => doc.file_name === fileName))) {
+      if (roleData.folders?.some(folder => folder.documents?.some(doc => doc.file_name === fileName))) {
         roles.push(roleName)
       }
     })
@@ -95,10 +128,29 @@ export default function AllDocumentsTab({
   }, [documents])
 
   const filteredDocuments = useMemo(() => {
-    let docs = selectedRole === "Alle Rollen" ? getAllDocuments() : getDocumentsForRole(selectedRole)
-    if (searchQuery.trim()) docs = docs.filter(doc => doc.file.toLowerCase().includes(searchQuery.toLowerCase()))
+    let docs = []
+    
+    if (selectedRole === "Alle Rollen") {
+      docs = getAllDocuments()
+    } else {
+      docs = selectedFolder === "Alle Mappen" 
+        ? getDocumentsForRole(selectedRole)
+        : getDocumentsForRoleAndFolder(selectedRole, selectedFolder)
+    }
+    
+    if (searchQuery.trim()) {
+      docs = docs.filter(doc => doc.file.toLowerCase().includes(searchQuery.toLowerCase()))
+    }
+    
     return docs
-  }, [getAllDocuments, getDocumentsForRole, selectedRole, searchQuery])
+  }, [
+    getAllDocuments, 
+    getDocumentsForRole, 
+    getDocumentsForRoleAndFolder, 
+    selectedRole, 
+    selectedFolder, 
+    searchQuery
+  ])
 
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
@@ -160,14 +212,24 @@ export default function AllDocumentsTab({
   const getSelectedDocumentsData = () =>
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
+  // Generate header text based on selections
+  const getHeaderText = () => {
+    if (selectedRole === "Alle Rollen" && selectedFolder === "Alle Mappen") {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
+    } else if (selectedRole === "Alle Rollen") {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} in map "${selectedFolder}"`
+    } else if (selectedFolder === "Alle Mappen") {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
+    } else {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} in map "${selectedFolder}" van rol "${selectedRole}"`
+    }
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {selectedRole === "Alle Rollen" 
-          ? `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
-          : `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
-        }
+        {getHeaderText()}
         {selectedDocuments.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedDocuments.size} geselecteerd)
@@ -181,6 +243,15 @@ export default function AllDocumentsTab({
             value={selectedRole}
             onChange={setSelectedRole}
             allOptions={allOptions1}
+            placeholder="Selecteer rol..."
+          />
+        </div>
+        <div className="w-3/10">
+          <DropdownMenu
+            value={selectedFolder}
+            onChange={setSelectedFolder}
+            allOptions={allOptions2}
+            placeholder="Selecteer map..."
           />
         </div>
       </div>
@@ -191,7 +262,7 @@ export default function AllDocumentsTab({
             <DropdownMenu
               value={selectedBulkAction}
               onChange={handleBulkAction}
-              allOptions={allOptions2}
+              allOptions={allOptions3}
             />
           </div>
           <div className="w-4/9">
@@ -205,12 +276,16 @@ export default function AllDocumentsTab({
         <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
       </div>
 
-      {/* Check if there are no documents or if documents for the selected role are empty */}
+      {/* Check if there are no documents or if documents for the selected role/folder are empty */}
       {filteredDocuments.length === 0 ? (
         <div className="text-center py-4 text-gray-500">
-          {selectedRole === "Alle Rollen" 
+          {selectedRole === "Alle Rollen" && selectedFolder === "Alle Mappen" 
             ? "Er zijn geen documenten beschikbaar."
-            : `Er zijn geen documenten beschikbaar voor de rol "${selectedRole}".`
+            : selectedRole === "Alle Rollen"
+            ? `Er zijn geen documenten beschikbaar in map "${selectedFolder}".`
+            : selectedFolder === "Alle Mappen"
+            ? `Er zijn geen documenten beschikbaar voor de rol "${selectedRole}".`
+            : `Er zijn geen documenten beschikbaar in map "${selectedFolder}" van rol "${selectedRole}".`
           }
         </div>
       ) : (
@@ -230,14 +305,6 @@ export default function AllDocumentsTab({
                     <DownArrow />
                   </div>
                 </th>
-                {selectedRole === "Alle Rollen" && (
-                  <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                    <div className="flex items-center gap-3">
-                      Rol
-                      <DownArrow />
-                    </div>
-                  </th>
-                )}
                 <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
                   <div className="flex items-center gap-3">
                     Document
@@ -264,48 +331,11 @@ export default function AllDocumentsTab({
                       {doc.folder}
                     </div>
                   </td>
-                  {selectedRole === "Alle Rollen" && (
-                    <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                      {doc.role}
-                    </td>
-                  )}
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     {doc.file}
                   </td>
                   <td className="px-4 py-2 h-full">
                     <div className="flex h-full items-center gap-3">
-                      <div
-                        className="relative w-[19px] h-[20px] cursor-pointer"
-                        title="Gebruikers"
-                        onClick={() => onShowUsers(doc.assigned_to, doc.file)}
-                      >
-                        <Image src={GebruikersItem} alt="GebruikersItem" />
-                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay hover:scale-110 transition"></div>
-                      </div>
-
-                      <div
-                        className="relative w-[25px] h-[27px] cursor-pointer"
-                        title="Rollen"
-                        onClick={() => {
-                          const allRoles = getAllRolesForFile(doc.file);
-                          onShowRoles(doc.file, allRoles);
-                        }}
-                      >
-                        <Image src={RollenItem} alt="RollenItem" />
-                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
-                      </div>
-
-                      <button 
-                        className="cursor-pointer" 
-                        title="Mappen"
-                        onClick={() => {
-                          const allFolders = getAllFoldersForFile(doc.file);
-                          onShowFolders(doc.file, allFolders);
-                        }}
-                      >
-                        <GreenFolderIcon />
-                      </button>
-
                       <button 
                         title="Verwijder"
                         onClick={() => handleDeleteClick(doc)}

@@ -7,6 +7,20 @@ export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('authError', { 
+            detail: { status: error.response.status }
+          }));
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+
   const getToken = useCallback(async () => {
     if (!keycloak?.authenticated) {
       throw new Error('User is not authenticated');
@@ -186,7 +200,7 @@ export function useApi() {
       const payload = {
         fullName: user.fullName,
         email: user.email,
-        username: user.username,
+        // username: user.username,
         password: user.password,
       };
       
@@ -281,6 +295,16 @@ export function useApi() {
     [withAuth]
   );  
 
+  const getUser = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/user', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   const updateUser = useCallback(
     (payload) =>
       withAuth((token) =>
@@ -322,13 +346,13 @@ export function useApi() {
     );
 
   const addOrUpdateRole = useCallback(
-    (role_name, folders) =>
+    (role_name, folders, modules) =>
       withAuth((token) => {
         console.log('Sending role_name:', role_name);
         console.log('Sending folders:', folders);
 
         apiClient
-          .post(`/company-admin/roles`, { role_name, folders }, createAuthHeaders(token))
+          .post(`/company-admin/roles`, { role_name, folders, modules }, createAuthHeaders(token))
           .then((res) => res.data)
       }
       ),
@@ -380,6 +404,7 @@ export function useApi() {
     sendResetPassword,
 
     getUsers,
+    getUser,
     addUser,
     updateUser,
     deleteUsers,

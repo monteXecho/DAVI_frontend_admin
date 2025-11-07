@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple }) {
+export default function DeleteSuccessModal({ users, onClose, isMultiple }) {
   // For single user deletion
   const singleUser = !isMultiple && users?.[0];
   
@@ -22,10 +22,10 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
         // Multiple users deletion
         <div className="text-center text-[18px] leading-6 text-black px-6">
           <p className="mb-4">
-            Weet je zeker dat je <br />
+            Gebruikers <br />
             <span className="font-semibold">{users.length} gebruikers</span>
             <br />
-            wil verwijderen?
+            verwijderd
           </p>
           <div className="max-h-20 overflow-y-auto text-sm mt-2">
             {users.slice(0, 5).map((user, index) => (
@@ -43,20 +43,13 @@ export default function DeleteUserModal({ users, onConfirm, onClose, isMultiple 
       ) : (
         // Single user deletion
         <p className="text-center text-[18px] leading-6 text-black px-6">
-          Weet je zeker dat je <br />
+          Gebruiker <br />
           <span className="font-semibold">{singleUser?.Naam}</span> / <br />
           <span className="font-semibold">{singleUser?.Email}</span>
           <br />
-          wil verwijderen?
+          verwijderd
         </p>
       )}
-
-      <button
-        onClick={onConfirm}
-        className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-fit h-fit px-4 py-2 flex items-center justify-center"
-      >
-        {isMultiple ? `Verwijder ${users.length} gebruikers` : 'Verwijder gebruiker'}
-      </button>
     </div>
   );
 }
