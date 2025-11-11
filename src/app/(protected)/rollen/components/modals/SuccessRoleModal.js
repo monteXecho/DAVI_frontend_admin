@@ -10,7 +10,7 @@ export default function SuccessRoleModal({ roleName, onClose }) {
 
       {/* Success Message */}
       <p className="text-center text-[18px] leading-6 text-black px-6">
-        De rol voor<br />
+        De rol<br />
         <span className="font-semibold">{roleName}</span>
         <br />
         is succesvol aangemaakt!

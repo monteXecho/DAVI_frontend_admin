@@ -53,7 +53,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
   const handleAddUploadTarget = () => {
     if (!selectedRole || !selectedFolder) {
-      toast.warn("Please select both a role and a folder.")
+      toast.warn("Selecteer zowel een rol als een map.")
       return
     }
 
@@ -62,7 +62,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     )
 
     if (targetExists) {
-      toast.warn("This role-folder combination is already added.")
+      toast.warn("Deze rol-map combinatie bestaat al.")
       return
     }
 
@@ -78,7 +78,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
 
   const handleUploadClick = () => {
     if (uploadTargets.length === 0) {
-      toast.warn("Please add at least one role-folder combination before uploading.")
+      toast.warn("Voeg minimaal één rol-mapcombinatie toe voordat u uploadt.")
       return
     }
     fileInputRef.current?.click()
@@ -89,7 +89,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     if (!file) return
 
     if (uploadTargets.length === 0) {
-      toast.warn("Please add at least one role-folder combination.")
+      toast.warn("Voeg minimaal één rol-mapcombinatie toe.")
       return
     }
 
@@ -112,11 +112,11 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
         const result = await onUploadDocument(target.role, target.folder, formData)
 
         if (!result?.success) {
-          toast.warn(`Failed to upload to ${target.role}/${target.folder}: ${result?.message || 'Unknown error'}`)
+          toast.warn(`Upload mislukt naar ${target.role}/${target.folder}: ${result?.message || 'Onbekende fout'}`)
         }
       } catch (err) {
         console.error(`Upload error for ${target.role}/${target.folder}:`, err)
-        toast.warn(`Failed to upload to ${target.role}/${target.folder}`)
+        toast.warn(`Upload naar ${target.role}/${target.folder} is mislukt`)
       }
     }
 
@@ -126,18 +126,18 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const renderUploadSection = () => {
     switch (uploadStatus) {
       case UploadStates.IDLE:
-        return <UploadBttn onClick={handleUploadClick} text="Upload document" />
+        return <UploadBttn onClick={handleUploadClick} text="Upload document"/>
       case UploadStates.UPLOADING:
         const progressText = uploadTargets.length > 1 
-          ? `Uploading to ${currentUploadIndex + 1}/${uploadTargets.length}: ${uploadTargets[currentUploadIndex].role}/${uploadTargets[currentUploadIndex].folder}`
-          : `Uploading to ${uploadTargets[0].role}/${uploadTargets[0].folder}`
+          ? `Bezig met uploaden naar ${currentUploadIndex + 1}/${uploadTargets.length}: ${uploadTargets[currentUploadIndex].role}/${uploadTargets[currentUploadIndex].folder}`
+          : `Bezig met uploaden naar ${uploadTargets[0].role}/${uploadTargets[0].folder}`
         
         return <UploadingBttn text={`${uploadedFileName} - ${progressText}`} />
       case UploadStates.SUCCESS:
         return (
           <>
-            <SuccessBttn text={`${uploadedFileName} - Uploaded to ${uploadTargets.length} location(s)`} />
-            <UploadBttn onClick={handleUploadClick} text="Upload nog een document" />
+            <SuccessBttn text={`${uploadedFileName} - Geüpload naar ${uploadTargets.length} locatie(s)`} />
+            <UploadBttn onClick={handleUploadClick} text="Nog een document uploaden" />
           </>
         )
       default:

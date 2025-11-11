@@ -7,8 +7,8 @@ import MakenTab from "./components/MakenTab"
 import WijzigenTab from "./components/WijzigenTab"
 
 const tabsConfig = [
-  { label: 'Gebruikers', component: GebruikersTab },
-  { label: 'Maken', component: MakenTab },
+  { label: 'Alle Gebruikers', component: GebruikersTab },
+  { label: 'Toevoegen', component: MakenTab },
   { label: 'Wijzigen', component: WijzigenTab },
 ]
 

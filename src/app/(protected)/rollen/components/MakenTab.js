@@ -100,7 +100,7 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
             className="mb-5 w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
 
-          <span className="mb-2 font-montserrat text-[16px]">Toegang tot map/document</span>
+          <span className="mb-2 font-montserrat text-[16px]">Toegang tot map</span>
           {folders.map((folder, index) => (
             <div key={index} className="flex mb-4 gap-3.5 items-center">
               <input

@@ -124,7 +124,7 @@ export default function RegisterPage() {
       const res = await register(form);
 
       if (!res.ok) {
-        const errorMsg = res.data?.detail || "Registration failed. Please try again.";
+        const errorMsg = res.data?.detail || "Registratie mislukt. Probeer het opnieuw.";
         
         if (res.data.message === "Duplicate" || errorMsg.toLowerCase().includes("already exists") || errorMsg.toLowerCase().includes("duplicate")) {
           setErrors(prev => ({
@@ -159,7 +159,7 @@ export default function RegisterPage() {
           emailNotFound: "E-mailadres niet bekend.\nVraag bij je organisatie om je uit te nodigen."
         }));
       } else {
-        toast.error("Unexpected error occurred. Please try again later.");
+        toast.error("Er is een fout opgetreden. Probeer het later nog eens.");
       }
     } finally {
       setLoading(false);

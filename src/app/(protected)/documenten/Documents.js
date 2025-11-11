@@ -19,17 +19,28 @@ const tabsConfig = [
 ]
 
 export default function Documents() {
-  const [ activeIndex, setActiveIndex ] = useState(0)
-  const [ roles, setRoles ] = useState([])
-  const [ documents, setDocuments ] = useState(null)
-  const [ selectedUsers, setSelectedUsers ] = useState([]) 
-  const [ selectedRoles, setSelectedRoles ] = useState([])
-  const [ selectedFolders, setSelectedFolders ] = useState([])
-  const [ selectedDocName, setSelectedDocName ] = useState("") 
-  const [ loading, setLoading ] = useState(true)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [roles, setRoles] = useState([])
+  const [documents, setDocuments] = useState(null)
+  const [selectedUsers, setSelectedUsers] = useState([]) 
+  const [selectedRoles, setSelectedRoles] = useState([])
+  const [selectedFolders, setSelectedFolders] = useState([])
+  const [selectedDocName, setSelectedDocName] = useState("") 
+  const [loading, setLoading] = useState(true)
 
   const { getRoles, uploadDocumentForRole, getAdminDocuments, deleteDocuments } = useApi()
-  const ActiveComponent = tabsConfig[activeIndex].component
+
+  // ✅ Dynamically make some tabs selectable if a document is selected
+  const isDocSelected = !!selectedDocName
+
+  const dynamicTabs = tabsConfig.map(tab => {
+    if (["Gebruikers", "Komt voor bij rol", "Komt voor in map"].includes(tab.label)) {
+      return { ...tab, selectable: isDocSelected }
+    }
+    return tab
+  })
+
+  const ActiveComponent = dynamicTabs[activeIndex].component
 
   const refreshData = useCallback(async () => {
     try {
@@ -60,11 +71,9 @@ export default function Documents() {
   const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
     try {
       const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
-
       if (res?.success) {
-        await refreshData();
+        await refreshData()
       }
-
       return res
     } catch (err) {
       console.error("❌ Failed to upload doc:", err)
@@ -92,21 +101,20 @@ export default function Documents() {
   const handleDeleteDocuments = async (documentsToDelete) => {
     try {
       const res = await deleteDocuments(documentsToDelete)
-      console.log("________res:____________", res)
       if (res?.success) {
-        await refreshData(); 
-        return res;
+        await refreshData()
+        return res
       }
     } catch (err) {
       console.error("❌ Failed to delete documents:", err)
-      throw err; 
+      throw err
     }
   }
 
   const handleUploadTab = () => setActiveIndex(1)
 
   const handleTabClick = (index) => {
-    const tab = tabsConfig[index]
+    const tab = dynamicTabs[index]
     if (tab.selectable) {
       setActiveIndex(index)
     }
@@ -120,7 +128,7 @@ export default function Documents() {
 
       <div className="flex flex-col w-full">
         <div className="pl-24 flex gap-2">
-          {tabsConfig.map((tab, index) => {
+          {dynamicTabs.map((tab, index) => {
             const isActive = activeIndex === index
             const isSelectable = tab.selectable
             
@@ -129,6 +137,7 @@ export default function Documents() {
                 key={tab.label}
                 onClick={() => handleTabClick(index)}
                 disabled={!isSelectable}
+                title={!isSelectable ? "Selecteer eerst een document" : ""}
                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all relative
                   ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
                   ${isSelectable 

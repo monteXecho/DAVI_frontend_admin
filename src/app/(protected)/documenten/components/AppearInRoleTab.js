@@ -185,8 +185,6 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
             />
           </div>
         </div>
-
-        <AddButton onClick={() => {}} text="Voeg toe aan rol" />
       </div>        
 
       {/* Roles Table */}

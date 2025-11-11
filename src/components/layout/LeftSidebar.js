@@ -12,7 +12,7 @@ import VGCItem from "@/assets/VGC_item.png";
 import RollenItem from "@/assets/rollen_item.png";
 import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
-import InstellingenItem from "@/assets/instellingen_item.png";
+// import InstellingenItem from "@/assets/instellingen_item.png";
 import CompanyItem from "@/assets/company_item.png";
 
 export default function LeftSidebar() {
@@ -40,7 +40,7 @@ export default function LeftSidebar() {
     Rollen: RollenItem,
     Gebruikers: GebruikersItem,
     Documenten: DocumentenItem,
-    Instellingen: InstellingenItem,
+    // Instellingen: InstellingenItem,
   };
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function LeftSidebar() {
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
       "/documenten": "Documenten",
-      "/instellingen": "Instellingen",
+      // "/instellingen": "Instellingen",
     };
 
     const tab = routeToTab[pathname] || null;
@@ -79,7 +79,7 @@ export default function LeftSidebar() {
         Compagnies: "/compagnies",
         Gebruikers: "/gebruikers",
         Documenten: "/documenten",
-        Instellingen: "/instellingen",
+        // Instellingen: "/instellingen",
       };
 
       if (label === "Afmelden") {
@@ -132,7 +132,7 @@ export default function LeftSidebar() {
             )}
 
             {(isSuperAdmin || isCompanyAdmin) &&
-              ["Rollen", "Gebruikers", "Documenten", "Instellingen"].map(
+              ["Rollen", "Gebruikers", "Documenten"].map(
                 (label) => (
                   <MenuButton
                     key={label}

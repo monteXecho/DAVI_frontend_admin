@@ -101,7 +101,6 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
             />
           </div>
         </div>
-        <AddButton onClick={() => {}} text="Voeg gebruiker toe" />
       </div>
 
       {/* Users Table */}
