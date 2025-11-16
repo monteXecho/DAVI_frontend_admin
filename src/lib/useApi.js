@@ -346,8 +346,7 @@ export function useApi() {
   const addOrUpdateRole = useCallback(
     (role_name, folders, modules) =>
       withAuth((token) => {
-        console.log('Sending role_name:', role_name);
-        console.log('Sending folders:', folders);
+        console.log('Sending modules:', modules);
 
         apiClient
           .post(`/company-admin/roles`, { role_name, folders, modules }, createAuthHeaders(token))

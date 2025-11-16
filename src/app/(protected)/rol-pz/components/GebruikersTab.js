@@ -35,7 +35,7 @@ export default function GebruikersTab() {
         </div>
 
         <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-             <button className="w-[127px] h-[40px] border-[2px] border-[#23BD92] rounded-[8px] font-bold text-[16px] leading-[100%] text-[#23BD92]">
+             <button className="w-[127px] h-[40px] border-[2px] border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]">
                 Bulk import
             </button>
             <AddButton onClick={() => {}} text="Toevoegen" />

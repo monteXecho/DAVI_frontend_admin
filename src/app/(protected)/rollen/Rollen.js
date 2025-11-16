@@ -50,7 +50,7 @@ export default function Rollen() {
   useEffect(() => {
     fetchRoles()
     fetchUser()
-  }, [fetchRoles])
+  }, [fetchRoles, fetchUser])
 
   const handleDeleteRoles = async (role_names) => {
     try {

@@ -226,7 +226,7 @@ export default function RegisterPage() {
                   value={form.fullName}
                   onChange={handleChange}
                   placeholder="Voor- en achternaam"
-                  className="w-full h-[52px] px-[14px] border-2 border-[#23BD92] rounded-lg text-gray-700 focus:outline-none focus:border-[#00b37e] font-normal text-base"
+                  className="w-full h-[52px] px-3.5 border-2 border-[#23BD92] rounded-lg text-gray-700 focus:outline-none focus:border-[#00b37e] font-normal text-base"
                   required
                 />
                 
@@ -239,7 +239,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="E-mailadres"
-                    className={`w-full h-[52px] px-[14px] rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
+                    className={`w-full h-[52px] px-3.5 rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
                       showEmailError ? "bg-[#F0C8C8] border-0" : "bg-white focus:border-[#00b37e]"
                     }`}
                     required
@@ -266,7 +266,7 @@ export default function RegisterPage() {
                     value={form.password}
                     onChange={handleChange}
                     placeholder="Maak wachtwoord aan"
-                    className={`w-full h-[52px] px-[14px] rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
+                    className={`w-full h-[52px] px-3.5 rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
                       showPasswordError ? "bg-[#F0C8C8] border-0" : "bg-white focus:border-[#00b37e]"
                     }`}
                     required
@@ -292,7 +292,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Wachtwoord herhalen"
-                    className={`w-full h-[52px] px-[14px] rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
+                    className={`w-full h-[52px] px-3.5 rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
                       showPasswordError ? "bg-[#F0C8C8] border-0" : "bg-white focus:border-[#00b37e]"
                     }`}
                     required

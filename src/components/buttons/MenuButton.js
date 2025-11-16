@@ -7,7 +7,7 @@ export default function MenuButton({ text, image, isActive, onClick }) {
       onClick={onClick}
       className={`
         w-full h-[52px]
-        rounded-[8px]
+        rounded-lg
         flex justify-start items-center gap-4
         font-montserrat font-medium text-[16px] leading-[20px] text-black px-4 py-[15px]
         ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA]'}

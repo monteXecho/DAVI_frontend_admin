@@ -2,7 +2,7 @@ export default function UploadBttn ({onClick, text}) {
     return (
         <button
             onClick={onClick}
-            className="w-fit bg-[#23BD92] rounded-[8px] flex items-center gap-[10px] px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white"
+            className="w-fit bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white"
             >
             <svg width="24" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path

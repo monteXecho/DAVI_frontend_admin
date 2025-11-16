@@ -1,23 +1,28 @@
 import "@/app/globals.css";
-// import "@fontsource/montserrat/800.css";
 import KeycloakProviderWrapper from "@/components/KeycloakProviderWrapper";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 export default function RootLayout({ children }) {
-
   return (
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
+          rel="manifest"
+          href="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/progressier.json"
         />
-        <link rel="manifest" href="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/progressier.json"/>
-        <script defer src="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/script.js"></script>
+        <script
+          defer
+          src="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/script.js"
+        ></script>
       </head>
-      <body className="lg:h-screen">
-        <KeycloakProviderWrapper>
-          {children}
-        </KeycloakProviderWrapper>
+
+      <body className={`${montserrat.className} lg:h-screen`}>
+        <KeycloakProviderWrapper>{children}</KeycloakProviderWrapper>
       </body>
     </html>
   );

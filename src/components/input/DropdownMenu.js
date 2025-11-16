@@ -20,7 +20,7 @@ export default function DropdownMenu ({ value, onChange, allOptions }) {
     return (
         <div className="relative w-full">
             <div
-                className="flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-[8px] px-4 cursor-pointer select-none"
+                className="flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-lg px-4 cursor-pointer select-none"
                 onClick={toggleDropdown}
                 tabIndex={0}
                 onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDropdown(); } }}

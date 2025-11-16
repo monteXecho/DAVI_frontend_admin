@@ -4,7 +4,7 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
   const singleDocument = !isMultiple && documents?.[0];
   
   return (
-    <div className="relative w-[350px] h-[350px] bg-white shadow-md rounded-2xl flex flex-col items-center justify-center gap-10">
+    <div className="relative w-fit h-fit py-7 px-13 bg-white shadow-md rounded-2xl flex flex-col items-center justify-center gap-10">
       <button
         onClick={onClose}
         className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
@@ -18,14 +18,14 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
       </div>
 
       {isMultiple ? (
-        <div className="text-center text-[18px] leading-6 text-black px-6">
+        <div className="text-center text-[18px] leading-6 text-black">
           <p className="mb-4">
             Weet je zeker dat je <br />
             <span className="font-semibold">{documents.length} document{documents.length !== 1 ? 'en' : ''}</span>
             <br />
             wil verwijderen?
           </p>
-          <div className="max-h-20 overflow-y-auto text-sm mt-2">
+          <div className="h-fit overflow-y-auto scrollbar-hide text-sm mt-2">
             {documents.slice(0, 5).map((doc, index) => (
               <div key={index} className="truncate">
                 • {doc.file}

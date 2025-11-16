@@ -68,9 +68,14 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
 
     try {
       setLoading(true)
-      const filteredModules = modules.map(({ name, enabled }) => ({ name, enabled }))
-      console.log("Filtered modules: ", filteredModules)
-      await onAddOrUpdateRole(roleName, cleanFolders, filteredModules)
+      
+      const enabledModules = modules
+        .filter(module => module.enabled && !module.locked)
+        .map(({ name, enabled }) => ({ name, enabled }))
+      
+      console.log("Sending enabled modules: ", enabledModules)
+      
+      await onAddOrUpdateRole(roleName, cleanFolders, enabledModules)
       setShowSuccessModal(true)
     } catch (err) {
       alert("Er is een fout opgetreden bij het opslaan van de rol.")
@@ -83,13 +88,11 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
     setShowSuccessModal(false)
     setRoleName("")
     setFolders(["/beleid", "/kwaliteit"])
-    setModules(defaultModules)
   }
 
   return (
     <>
       <div className="flex flex-col w-full gap-11">
-        {/* === Role Info === */}
         <div className="flex flex-col w-full">
           <span className="mb-2 font-montserrat text-[16px]">Rolnaam</span>
           <input
@@ -122,7 +125,6 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
           ))}
         </div>
 
-        {/* === Modules Section === */}
         <div className="flex flex-col w-1/3 gap-10">
           <div className="flex flex-col w-full gap-[23px]">
             <div className="flex w-full items-center justify-between">
@@ -134,26 +136,28 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
               />
             </div>
 
-            {modules.map((item, index) => (
-              <div
-                key={item.name}
-                className="flex w-full items-center justify-between"
-              >
-                <span
-                  className={`font-montserrat text-[16px] ${
-                    item.locked ? "text-gray-400" : ""
-                  }`}
+            {modules
+              .filter(module => module.enabled || !module.locked) 
+              .map((item, index) => (
+                <div
+                  key={item.name}
+                  className="flex w-full items-center justify-between"
                 >
-                  {item.name}
-                </span>
-                <Toggle
-                  checked={item.enabled}
-                  onChange={(val) => toggleOne(index, val)}
-                  activeColor="#23BD92"
-                  disabled={item.locked}
-                />
-              </div>
-            ))}
+                  <span
+                    className={`font-montserrat text-[16px] ${
+                      item.locked ? "text-gray-400" : ""
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                  <Toggle
+                    checked={item.enabled}
+                    onChange={(val) => toggleOne(index, val)}
+                    activeColor="#23BD92"
+                    disabled={item.locked}
+                  />
+                </div>
+              ))}
           </div>
 
           <button
@@ -168,7 +172,6 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
         </div>
       </div>
 
-      {/* ✅ Success Modal */}
       {showSuccessModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"

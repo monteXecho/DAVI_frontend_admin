@@ -105,7 +105,7 @@ export default function DocumentClient() {
           {renderUploadSection()}
 
           {submittedQuestion && (
-            <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-[8px] flex justify-between items-start px-4 gap-11">
+            <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
               <p className="w-fit h-[24px] m-auto text-[#342222] text-[16px] leading-[24px] font-normal font-Montserrat">
                 {submittedQuestion}
               </p>

@@ -118,7 +118,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Carsten Altena"
-              className="mb-5 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+              className="mb-5 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
             />
           </div>
         </div>
@@ -175,12 +175,12 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="info@creeert.net"
-            className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+            className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
           <div className="relative">
             <button
               type="button"
-              className="w-fit h-[40px] flex items-center py-[15px] px-[13px] border-[2px] border-[#23BD92] rounded-[8px] font-bold text-[16px] leading-[100%] text-[#23BD92]"
+              className="w-fit h-[40px] flex items-center py-[15px] px-[13px] border-[2px] border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]"
               onClick={() => onResetPass(email)}
             >
               Wachtwoord resetten
@@ -197,7 +197,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
       <button
         disabled={isSaving || loading}
         onClick={handleSave}
-        className={`w-[110px] h-[50px] rounded-[8px] font-montserrat font-bold text-base text-white ${
+        className={`w-[110px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white ${
           isSaving || loading
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-[#23BD92] hover:bg-[#1fa87c]"

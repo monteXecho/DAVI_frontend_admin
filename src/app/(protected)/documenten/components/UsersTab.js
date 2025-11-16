@@ -81,14 +81,14 @@ export default function UsersTab({ selectedUsers = [], selectedDocName }) {
       </div>
 
       {/* Selected Document */}
-      <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
+      <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
         <div className="w-9/10">
           <SelectedData SelectedData={selectedDocName || "Geen document geselecteerd"} />
         </div>
       </div>
 
       {/* Action Bar */}
-      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
+      <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
         <div className="flex w-2/3 gap-4 items-center">
           <div className="w-4/9">
             <DropdownMenu value={selected} onChange={setSelected} allOptions={allOptions} />

@@ -20,11 +20,12 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const [selectedRole, setSelectedRole] = useState("")
   const [folders, setFolders] = useState([])
   const [selectedFolder, setSelectedFolder] = useState("")
-  const [uploadedFileName, setUploadedFileName] = useState("")
+  const [uploadedFiles, setUploadedFiles] = useState([]) // Changed to array for multiple files
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE)
   
   const [uploadTargets, setUploadTargets] = useState([])
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0)
+  const [currentFileIndex, setCurrentFileIndex] = useState(0) // Track current file being uploaded
 
   const fileInputRef = useRef(null)
 
@@ -35,7 +36,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
     if (!selectedRole && roleList.length > 0) {
       setSelectedRole(roleList[0])
     }
-  }, [roles])
+  }, [roles, selectedRole])
 
   useEffect(() => {
     if (!selectedRole) {
@@ -85,38 +86,45 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   }
 
   const handleDocumentUpload = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const files = Array.from(event.target.files || [])
+    if (files.length === 0) return
 
     if (uploadTargets.length === 0) {
       toast.warn("Voeg minimaal één rol-mapcombinatie toe.")
       return
     }
 
-    setUploadedFileName(file.name)
+    setUploadedFiles(files)
     setUploadStatus(UploadStates.UPLOADING)
+    setCurrentFileIndex(0)
     setCurrentUploadIndex(0)
 
-    await uploadToAllTargets(file)
+    await uploadAllFiles(files)
   }
 
-  const uploadToAllTargets = async (file) => {
-    for (let i = 0; i < uploadTargets.length; i++) {
-      setCurrentUploadIndex(i)
-      const target = uploadTargets[i]
+  const uploadAllFiles = async (files) => {
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      setCurrentFileIndex(fileIndex)
+      const file = files[fileIndex]
       
-      const formData = new FormData()
-      formData.append('file', file)
+      // Upload current file to all targets
+      for (let targetIndex = 0; targetIndex < uploadTargets.length; targetIndex++) {
+        setCurrentUploadIndex(targetIndex)
+        const target = uploadTargets[targetIndex]
+        
+        const formData = new FormData()
+        formData.append('file', file)
 
-      try {
-        const result = await onUploadDocument(target.role, target.folder, formData)
+        try {
+          const result = await onUploadDocument(target.role, target.folder, formData)
 
-        if (!result?.success) {
-          toast.warn(`Upload mislukt naar ${target.role}/${target.folder}: ${result?.message || 'Onbekende fout'}`)
+          if (!result?.success) {
+            toast.warn(`Upload mislukt voor ${file.name} naar ${target.role}/${target.folder}: ${result?.message || 'Onbekende fout'}`)
+          }
+        } catch (err) {
+          console.error(`Upload error for ${file.name} to ${target.role}/${target.folder}:`, err)
+          toast.warn(`Upload van ${file.name} naar ${target.role}/${target.folder} is mislukt`)
         }
-      } catch (err) {
-        console.error(`Upload error for ${target.role}/${target.folder}:`, err)
-        toast.warn(`Upload naar ${target.role}/${target.folder} is mislukt`)
       }
     }
 
@@ -126,18 +134,33 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const renderUploadSection = () => {
     switch (uploadStatus) {
       case UploadStates.IDLE:
-        return <UploadBttn onClick={handleUploadClick} text="Upload document"/>
+        return <UploadBttn onClick={handleUploadClick} text="Upload documenten"/>
       case UploadStates.UPLOADING:
-        const progressText = uploadTargets.length > 1 
-          ? `Bezig met uploaden naar ${currentUploadIndex + 1}/${uploadTargets.length}: ${uploadTargets[currentUploadIndex].role}/${uploadTargets[currentUploadIndex].folder}`
-          : `Bezig met uploaden naar ${uploadTargets[0].role}/${uploadTargets[0].folder}`
+        const currentFile = uploadedFiles[currentFileIndex]
+        const totalFiles = uploadedFiles.length
         
-        return <UploadingBttn text={`${uploadedFileName} - ${progressText}`} />
+        let progressText = ""
+        if (totalFiles > 1) {
+          progressText = `Bestand ${currentFileIndex + 1}/${totalFiles}: ${currentFile.name} - `
+        } else {
+          progressText = `${currentFile.name} - `
+        }
+        
+        if (uploadTargets.length > 1) {
+          progressText += `Bezig met uploaden naar ${currentUploadIndex + 1}/${uploadTargets.length}: ${uploadTargets[currentUploadIndex].role}/${uploadTargets[currentUploadIndex].folder}`
+        } else {
+          progressText += `Bezig met uploaden naar ${uploadTargets[0].role}/${uploadTargets[0].folder}`
+        }
+        
+        return <UploadingBttn text={progressText} />
       case UploadStates.SUCCESS:
+        const totalUploads = uploadedFiles.length * uploadTargets.length
+        const fileNames = uploadedFiles.map(f => f.name).join(', ')
+        
         return (
           <>
-            <SuccessBttn text={`${uploadedFileName} - Geüpload naar ${uploadTargets.length} locatie(s)`} />
-            <UploadBttn onClick={handleUploadClick} text="Nog een document uploaden" />
+            <SuccessBttn text={`${fileNames} - Geüpload naar ${uploadTargets.length} locatie(s) (${totalUploads} uploads totaal)`} />
+            <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
           </>
         )
       default:
@@ -205,6 +228,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
         ref={fileInputRef}
         className="hidden"
         onChange={handleDocumentUpload}
+        multiple // Added multiple attribute
       />
 
       {renderUploadSection()}

@@ -18,7 +18,7 @@ export default function KeycloakProviderWrapper({ children }) {
     return () => {
       window.removeEventListener('authError', handleAuthError);
     };
-  }, [keycloak]);
+  });
 
   return (
     <ReactKeycloakProvider

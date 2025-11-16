@@ -70,7 +70,7 @@ export default function MakenTab({ roles = [], onAddUser }) {
             placeholder="info@creeert.net"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+            className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function MakenTab({ roles = [], onAddUser }) {
       <button
         onClick={handleSave}
         disabled={loading}
-        className={`w-[95px] h-[50px] rounded-[8px] font-montserrat font-bold text-base leading-[100%] tracking-normal text-center text-white ${
+        className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base leading-[100%] tracking-normal text-center text-white ${
           loading
             ? "bg-[#1e9c79]/70 cursor-not-allowed"
             : "bg-[#23BD92] hover:bg-[#1e9c79]"

@@ -29,7 +29,7 @@ export default function AutoGrowingTextarea({ onSubmit, loading }) {
             e.target.style.height = 'auto';
             e.target.style.height = e.target.scrollHeight + 'px';
           }}
-          className="w-full border border-[#23BD92] rounded-[8px] px-[16px] pr-[50px] py-[16px] font-montserrat text-[16px] leading-[24px] text-[#1f1f1f] resize-none overflow-hidden focus:outline-none"
+          className="w-full border border-[#23BD92] rounded-lg px-[16px] pr-[50px] py-[16px] font-montserrat text-[16px] leading-[24px] text-[#1f1f1f] resize-none overflow-hidden focus:outline-none"
         />
         <div
           onClick={handleSubmit}

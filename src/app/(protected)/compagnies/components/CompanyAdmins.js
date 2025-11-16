@@ -11,7 +11,7 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
   console.log('____ Selected admin ____', selectedId)
 
   return (
-    <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50">
+    <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50">
       <div className="flex flex-col gap-3">
         <span className="text-lg font-bold text-zinc-500">
           2) Kies compagnie admin
@@ -66,27 +66,32 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
         </div>
       )}
 
-      {isDeleteAdminOpen && (
+    {isDeleteAdminOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+        onClick={() => setIsDeleteAdminOpen(false)}
+      >
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
-          onClick={() => setIsDeleteAdminOpen(false)}
+          className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DeleteAdmin
-              onClose={() => setIsDeleteAdminOpen(false)}
-              onDelete={(companyId, adminId) => {
-                if (onDeleteCompanyAdmin) onDeleteCompanyAdmin( companyId, adminId );
-                setIsDeleteAdminOpen(false);
-              }}
-              selectedCompany={selectedCompany}
-              selectedAdminId={selectedId} 
-            />
-          </div>
+          <DeleteAdmin
+            onClose={() => setIsDeleteAdminOpen(false)}
+            onDelete={(companyId, adminId, newAdminEmail, newAdminName) => {
+              if (onDeleteCompanyAdmin) {
+                onDeleteCompanyAdmin(companyId, adminId, newAdminEmail, newAdminName);
+              }
+              setIsDeleteAdminOpen(false);
+            }}
+            onCreate={(companyId, name, email) => {
+              if (onCreateCompanyAdmin) onCreateCompanyAdmin(companyId, name, email);
+            }}
+            selectedCompany={selectedCompany}
+            selectedAdminId={selectedId} 
+          />
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

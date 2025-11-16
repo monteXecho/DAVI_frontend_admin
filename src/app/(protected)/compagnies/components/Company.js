@@ -10,7 +10,7 @@ export default function Company({ companies, selectedId, onSelect, onCreateCompa
   const selectedCompany = companies.find((c) => c.id === selectedId);
 
   return (
-    <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border-1 border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50 relative">
+    <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50 relative">
       <div className="flex flex-col gap-3">
         <span className="text-lg font-bold text-zinc-500">1) Kies compagnie</span>
         {companies.map((item) => (

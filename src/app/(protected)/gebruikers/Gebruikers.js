@@ -55,7 +55,7 @@ export default function Gebruikers() {
       }
     }
     loadUsers()
-  }, [getUsers])
+  }, [getUsers, getRoles])
 
   const handleAddUser = async (email, role, assigend_role) => {
     await addUser(email, role, assigend_role)
@@ -77,13 +77,28 @@ export default function Gebruikers() {
     setUsers(prev => prev.filter(u => !ids.includes(u.id)))
   }
 
-  const handleBulkImport = async (file) => {
+  const handleBulkImport = async (file, selectedRole = "Alle rollen") => {
     if (!file) return
 
     setUploadLoading(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
+      
+      if (selectedRole === "Zonder rol") {
+        // Send empty value for "Zonder rol"
+        formData.append('role', '')
+      } else if (selectedRole === "Alle rollen") {
+        // Send "Alle rollen" as the value
+        formData.append('role', 'Alle rollen')
+      } else {
+        // Send the specific role
+        formData.append('role', selectedRole)
+      }
+
+      for (let pair of formData.entries()) {
+        console.log('DEBUG FormData:', pair[0], pair[1])
+      }
 
       const result = await uploadUsersFile(formData)
       
@@ -149,8 +164,8 @@ export default function Gebruikers() {
                   key={tab.label}
                   onClick={() => setActiveIndex(index)}
                   className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
-                    ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
-                    w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
+                    ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
+                    w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-6 tracking-[0]
                   `}
                 >
                 {loading && isActive ? (

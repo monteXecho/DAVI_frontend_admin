@@ -18,7 +18,7 @@ export default function ToewijzenTab () {
                 </div>               
                 <span className="mt-[23px] mb-2 font-montserrat font-normal text-[16px] leading-normal tracking-normal">E-mail adres</span>
                 <div className="flex gap-[14px] items-center">
-                    <input type="text" placeholder="info@creeert.net" className="w-1/3 h-12 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
+                    <input type="text" placeholder="info@creeert.net" className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
                     <AddIcon />
                 </div>
                 <div className="flex mt-[37px] gap-3 items-center">
@@ -28,7 +28,7 @@ export default function ToewijzenTab () {
 
             </div>
 
-            <button className="w-[95px] h-[50px] rounded-[8px] bg-[#23BD92] font-montserrat font-bold text-base leading-[100%] tracking-normal text-center text-white">
+            <button className="w-[95px] h-[50px] rounded-lg bg-[#23BD92] font-montserrat font-bold text-base leading-[100%] tracking-normal text-center text-white">
                 Opslaan
             </button>
         </div>

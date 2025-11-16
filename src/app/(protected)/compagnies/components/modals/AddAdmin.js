@@ -42,7 +42,7 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
             placeholder="person@company.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+            className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
         </div>
 
@@ -53,14 +53,14 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
             placeholder="First Last"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+            className="w-full h-10 placeholder-[#697A8E] placeholder-opacity-100 cc border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
         </div>
       </div>
 
       <div className="flex gap-3 justify-end">
         <button
-          className="w-fit px-7 py-3 border-1 border-zinc-100 bg-[#ffffff] rounded-full text-[#020003] shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
+          className="w-fit px-7 py-3 border border-zinc-100 bg-[#ffffff] rounded-full text-[#020003] shadow-md shadow-zinc-300/50 cursor-pointer transition-colors duration-200"
           onClick={onClose}
         >
           Cancel

@@ -145,7 +145,7 @@ export default function GebruikersTab({
   const handleFileUpload = async (file) => {
     if (!file || !onBulkImport) return;
 
-    const result = await onBulkImport(file);
+    const result = await onBulkImport(file, selectedRole);
     setUploadResult(result);
     
     if (result.success) {

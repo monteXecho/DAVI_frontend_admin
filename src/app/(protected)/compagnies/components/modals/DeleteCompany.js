@@ -33,7 +33,7 @@ export default function DeleteCompany({ onClose, selectedCompany, onDelete }) {
         <span className="text-xl font-bold text-[#020003]">Selected company</span>
         <input
           type="text"
-          className="w-full h-10 rounded-[8px] border border-[#D9D9D9] px-4 py-3 bg-gray-100 text-gray-700"
+          className="w-full h-10 rounded-lg border border-[#D9D9D9] px-4 py-3 bg-gray-100 text-gray-700"
           value={`${selectedCompany?.name} (ID: ${selectedCompany?.id})`}
           readOnly
         />
@@ -49,7 +49,7 @@ export default function DeleteCompany({ onClose, selectedCompany, onDelete }) {
         <input
           type="text"
           placeholder={selectedCompany.name}
-          className="w-full h-10 placeholder-[#697A8E] rounded-[8px] border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+          className="w-full h-10 placeholder-[#697A8E] rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           value={confirmName}
           onChange={(e) => setConfirmName(e.target.value)}
         />
