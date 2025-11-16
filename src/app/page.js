@@ -1,4 +1,3 @@
-import Landing from "./(protected)/landing/page";
 import MainLayout from "@/components/layout/mainLayout"
 import DocumentClient from "./(protected)/documentchat/DocumentClient";
 
@@ -10,7 +9,6 @@ export const metadata = {
 export default function Home() {
   return (
     <MainLayout>
-      {/* <Landing /> */}
       <DocumentClient />
     </MainLayout>
   );

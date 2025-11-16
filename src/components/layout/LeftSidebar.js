@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useKeycloak } from "@react-keycloak/web";
 import { useApi } from "@/lib/useApi";
@@ -15,6 +15,9 @@ import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
 import CompanyItem from "@/assets/company_item.png";
 
+/* -------------------------------------------------------------
+   STATIC MENU CONFIG (never changes)
+------------------------------------------------------------- */
 const MENU_CONFIG = {
   publicModules: [
     {
@@ -64,216 +67,270 @@ const MENU_CONFIG = {
   ]
 };
 
+/* -------------------------------------------------------------
+   STABLE CALLBACK MANAGER
+------------------------------------------------------------- */
+const useStableCallbacks = () => {
+  const map = useRef(new Map());
+  const getStable = useCallback((key, fn) => {
+    if (!map.current.has(key)) map.current.set(key, fn);
+    return map.current.get(key);
+  }, []);
+  return getStable;
+};
+
+/* -------------------------------------------------------------
+   LEFT SIDEBAR
+------------------------------------------------------------- */
 export default function LeftSidebar() {
-  const { getUser } = useApi();
-  const [activeTab, setActiveTab] = useState('Documentenchat');
+
   const router = useRouter();
   const pathname = usePathname();
   const { keycloak, initialized } = useKeycloak();
+  const { getUser } = useApi();
+
   const [user, setUser] = useState(null);
+  const userRef = useRef(null);            // <<< FREEZE USER HERE
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const getStable = useStableCallbacks();
+  const [activeTab, setActiveTab] = useState("Documentenchat");
 
-  const isAuthenticated = useMemo(() => 
-    initialized && keycloak?.authenticated, 
-  [initialized, keycloak?.authenticated]);
+  /* -------------------------
+     AUTH STATUS
+  ---------------------------- */
+  const isAuthenticated = useMemo(
+    () => initialized && keycloak?.authenticated,
+    [initialized, keycloak?.authenticated]
+  );
 
+  /* -------------------------
+     USER ROLES
+  ---------------------------- */
   const userRoles = useMemo(() => {
-    if (!isAuthenticated) {
-      return {
-        isSuperAdmin: false,
-        isCompanyAdmin: false,
-        isCompanyUser: false
-      };
-    }
+    if (!isAuthenticated) return {
+      isSuperAdmin: false,
+      isCompanyAdmin: false,
+      isCompanyUser: false
+    };
 
     const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
-    
-    const roleState = {
+
+    return {
       isSuperAdmin: roles.includes("super_admin"),
       isCompanyAdmin: roles.includes("company_admin"),
       isCompanyUser: roles.includes("company_user")
     };
-
-    return roleState;
   }, [isAuthenticated, keycloak?.tokenParsed]);
 
-  const fetchUser = useCallback(async () => {
+  /* -------------------------------------------------------------
+     FETCH USER ONCE ONLY (FREEZE AFTER FIRST FETCH)
+  ------------------------------------------------------------- */
+  useEffect(() => {
     if (!isAuthenticated) {
       setLoading(false);
       return;
     }
 
-    try {
+    if (userRef.current) {
+      setUser(userRef.current);
+      setLoading(false);
+      return;
+    }
+
+    const loadUserOnce = async () => {
       setLoading(true);
-      setError(null);
-      const loginUser = await getUser();
-      if (loginUser) {
-        setUser(loginUser);
+      try {
+        const loginUser = await getUser();
+        if (loginUser) {
+          userRef.current = loginUser;           
+          setUser(prev => prev ?? loginUser);    
+        }
+      } catch (err) {
+        console.error("User fetch failed:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch user info: ", err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }  
-  }, [getUser, isAuthenticated]);
+    };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [fetchUser, isAuthenticated]);
+    loadUserOnce();
+  }, [isAuthenticated, getUser]);
 
-  const filteredPublicModules = useMemo(() => {
-    if (userRoles.isSuperAdmin) return MENU_CONFIG.publicModules;
+  /* -------------------------------------------------------------
+     FILTER MODULES (NOW DEPENDS ON STABLE USER)
+  ------------------------------------------------------------- */
+  const stableUser = userRef.current;  // <<< ALWAYS STABLE
 
-    if (!user || !user.modules) return [];
-    
-    
-    const enabledModules = MENU_CONFIG.publicModules.filter(module => {
-      const moduleConfig = user.modules[module.moduleKey];
-      
-      const isEnabled = moduleConfig && moduleConfig.enabled === true;
-      
-      return isEnabled;
-    });
-
-    return enabledModules;
-  }, [user, userRoles.isSuperAdmin]);
-
-  const filteredAdminModules = useMemo(() => {
-    if (!isAuthenticated) {
-      return [];
-    }
-
-    if (userRoles.isSuperAdmin) return MENU_CONFIG.adminModules;
-    
-
-    const modules = MENU_CONFIG.adminModules.filter(module => {
-      if (module.requiredRole === 'super_admin') {
-        return userRoles.isSuperAdmin;
-      }
-      
-      if (module.requiredRoles) {
-        return module.requiredRoles.some(role => {
-          if (role === 'super_admin') return userRoles.isSuperAdmin;
-          if (role === 'company_admin') return userRoles.isCompanyAdmin;
-          return false;
+  const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
+    const publicModules = userRoles.isSuperAdmin
+      ? MENU_CONFIG.publicModules
+      : MENU_CONFIG.publicModules.filter(module => {
+          const moduleInfo = stableUser?.modules?.[module.moduleKey];
+          return moduleInfo?.enabled === true;
         });
-      }
-      
-      return true;
-    });
 
-    return modules;
-  }, [userRoles, isAuthenticated]);
+    const adminModules = !isAuthenticated
+      ? []
+      : userRoles.isSuperAdmin
+      ? MENU_CONFIG.adminModules
+      : MENU_CONFIG.adminModules.filter(module => {
+          if (module.requiredRole === "super_admin")
+            return userRoles.isSuperAdmin;
+          if (module.requiredRoles)
+            return module.requiredRoles.some(role =>
+              role === "super_admin"
+                ? userRoles.isSuperAdmin
+                : role === "company_admin"
+                ? userRoles.isCompanyAdmin
+                : false
+            );
+          return true;
+        });
 
-  const defaultRoute = useMemo(() => {
-    if (userRoles.isSuperAdmin) return "/documentchat";
-    
+    return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
+  }, [stableUser, userRoles, isAuthenticated]);
 
-    if (filteredPublicModules.length > 0) {
-      const firstPublicModule = filteredPublicModules[0];
-      return firstPublicModule.path;
-    }
-    
-    if (filteredAdminModules.length > 0) {
-      const firstAdminModule = filteredAdminModules[0];
-      return firstAdminModule.path;
-    }
-    
-    return null;
-  }, [filteredPublicModules, filteredAdminModules, userRoles.isSuperAdmin]);
-
+  /* -------------------------------------------------------------
+     ROUTE → TAB MAPPING
+  ------------------------------------------------------------- */
   const routeToTab = useMemo(() => {
-    const mapping = {
+    const map = {
       "/documentchat": "Documentenchat",
       "/GGD": "GGD Checks",
       "/compagnies": "Compagnies",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
-      "/documenten": "Documenten",
+      "/documenten": "Documenten"
     };
-    
-    if (defaultRoute) {
-      mapping["/"] = mapping[defaultRoute] || "Documentenchat";
-    } else {
-      mapping["/"] = "Documentenchat";
-    }
-    
-    return mapping;
-  }, [defaultRoute]);
 
+    map["/"] =
+      filteredPublicModules[0]?.label ||
+      filteredAdminModules[0]?.label ||
+      "Documentenchat";
+
+    return map;
+  }, [filteredPublicModules, filteredAdminModules]);
+
+  /* -------------------------------------------------------------
+     AUTO-REDIRECT FOR DEFAULT ROUTE
+  ------------------------------------------------------------- */
   useEffect(() => {
-    if (pathname === '/' && defaultRoute && defaultRoute !== '/' && !userRoles.isSuperAdmin) {
+    if (pathname === "/" && !userRoles.isSuperAdmin) {
+      const defaultRoute =
+        filteredPublicModules[0]?.path ||
+        filteredAdminModules[0]?.path ||
+        "/documentchat";
+
       router.push(defaultRoute);
     }
-  }, [pathname, defaultRoute, router, userRoles.isSuperAdmin]);
+  }, [pathname, filteredPublicModules, filteredAdminModules, userRoles.isSuperAdmin, router]);
 
+  /* -------------------------------------------------------------
+     ACTIVE TAB UPDATE
+  ------------------------------------------------------------- */
   useEffect(() => {
-    const tab = routeToTab[pathname] || null;
-    setActiveTab(tab);
+    setActiveTab(routeToTab[pathname] || null);
   }, [pathname, routeToTab]);
 
+  /* -------------------------------------------------------------
+     STABLE HANDLERS
+  ------------------------------------------------------------- */
+  const handleNavigation = useCallback((path, label) => {
+    setActiveTab(label);
+    router.push(path);
+  }, [router]);
+
   const handleLogout = useCallback(() => {
-    if (keycloak?.authenticated) {
+    if (keycloak?.authenticated)
       keycloak.logout({ redirectUri: window.location.origin });
-    } else {
+    else
       router.push("/");
-    }
   }, [keycloak, router]);
 
-  const handleClick = useCallback((label) => {
-    setActiveTab(label);
+  const handleHomeClick = useCallback(() => {
+    const path =
+      filteredPublicModules[0]?.path ||
+      filteredAdminModules[0]?.path ||
+      "/documentchat";
 
-    const routes = {
-      Documentenchat: "/documentchat",
-      "GGD Checks": "/GGD",
-      Rollen: "/rollen",
-      Compagnies: "/compagnies",
-      Gebruikers: "/gebruikers",
-      Documenten: "/documenten",
-    };
+    router.push(path);
+    setActiveTab(null);
+  }, [filteredPublicModules, filteredAdminModules, router]);
 
-    if (label === "Afmelden") {
-      handleLogout();
-      return;
-    }
+  /* -------------------------------------------------------------
+     MENU SECTIONS
+  ------------------------------------------------------------- */
+  const publicMenuSection = useMemo(() => {
+    if (filteredPublicModules.length === 0) return null;
 
-    const route = routes[label];
-    if (route) router.push(route);
-  }, [router, handleLogout]);
-
-  if (!initialized) {
     return (
-      <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
-        <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <div className="font-extrabold text-[40px] leading-none tracking-normal font-montserrat text-[#23BD92]">
-            DAVI
-          </div>
-          <div className="flex justify-center items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#23BD92]"></div>
-            <span className="text-sm text-gray-600">Initializing...</span>
-          </div>
-        </div>
+      <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
+        {filteredPublicModules.map(module => {
+          const handler = getStable(`nav-${module.id}`, () =>
+            handleNavigation(module.path, module.label)
+          );
+          return (
+            <MenuButton
+              key={module.id}
+              text={module.label}
+              image={module.icon}
+              isActive={activeTab === module.label}
+              onClick={handler}
+            />
+          );
+        })}
       </div>
     );
-  }
+  }, [filteredPublicModules, activeTab, handleNavigation, getStable]);
 
-  if (loading) {
+  const adminMenuSection = useMemo(() => {
+    if (filteredAdminModules.length === 0) return null;
+
+    return (
+      <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
+        {filteredAdminModules.map(module => {
+          const handler = getStable(`nav-${module.id}`, () =>
+            handleNavigation(module.path, module.label)
+          );
+          return (
+            <MenuButton
+              key={module.id}
+              text={module.label}
+              image={module.icon}
+              isActive={activeTab === module.label}
+              onClick={handler}
+            />
+          );
+        })}
+      </div>
+    );
+  }, [filteredAdminModules, activeTab, handleNavigation, getStable]);
+
+  const logoutButton = useMemo(() => {
+    const handler = getStable("logout", handleLogout);
+    return (
+      <MenuButton
+        text="Afmelden"
+        image={logoutItem}
+        isActive={false}
+        onClick={handler}
+      />
+    );
+  }, [handleLogout, getStable]);
+
+  /* -------------------------------------------------------------
+     LOADING + NOT AUTH
+  ------------------------------------------------------------- */
+  if (!initialized || loading) {
     return (
       <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
         <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <div className="font-extrabold text-[40px] leading-none tracking-normal font-montserrat text-[#23BD92]">
+          <div className="font-extrabold text-[40px] leading-none font-montserrat text-[#23BD92]">
             DAVI
           </div>
-          <div className="flex justify-center items-center gap-2">
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#23BD92]"></div>
-            <span className="text-sm text-gray-600">Loading user data...</span>
+            Loading...
           </div>
         </div>
       </div>
@@ -281,102 +338,56 @@ export default function LeftSidebar() {
   }
 
   if (!isAuthenticated) {
+    const loginHandler = getStable("login", () => router.push("/"));
     return (
       <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
         <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <div className="font-extrabold text-[40px] leading-none tracking-normal font-montserrat text-[#23BD92]">
+          <div className="font-extrabold text-[40px] leading-none text-[#23BD92]">
             DAVI
           </div>
-          <div className="text-gray-500 text-sm text-center">
-            Please log in
-          </div>
+          <div className="text-gray-500 text-sm text-center">Please log in</div>
         </div>
         <div className="w-full pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <MenuButton
-            text="Login"
-            image={logoutItem}
-            isActive={false}
-            onClick={() => router.push("/")}
-          />
+          <MenuButton text="Login" image={logoutItem} isActive={false} onClick={loginHandler} />
         </div>
       </div>
     );
   }
 
-  const hasPublicModules = filteredPublicModules.length > 0;
-  const hasAdminModules = filteredAdminModules.length > 0;
-  const hasAnyModules = hasPublicModules || hasAdminModules;
-
+  /* -------------------------------------------------------------
+     MAIN SIDEBAR
+  ------------------------------------------------------------- */
   return (
     <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
       <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
         <div
-          className="font-extrabold text-[40px] leading-none tracking-normal font-montserrat text-[#23BD92] cursor-pointer"
-          onClick={() => {
-            if (defaultRoute) {
-              router.push(defaultRoute);
-            } else {
-              router.push("/");
-            }
-            setActiveTab(null);
-          }}
+          className="font-extrabold text-[40px] leading-none text-[#23BD92] cursor-pointer"
+          onClick={handleHomeClick}
         >
           DAVI
         </div>
 
         <div className="flex flex-col gap-6">
-          {hasPublicModules && (
-            <>
-              <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-                {filteredPublicModules.map((module) => (
-                  <MenuButton
-                    key={module.id}
-                    text={module.label}
-                    image={module.icon}
-                    isActive={activeTab === module.label}
-                    onClick={() => handleClick(module.label)}
-                  />
-                ))}
+          {publicMenuSection}
+
+          {filteredPublicModules.length > 0 &&
+            filteredAdminModules.length > 0 && (
+              <div className="w-full h-px bg-[#C5BEBE]"></div>
+            )}
+
+          {adminMenuSection}
+
+          {filteredPublicModules.length === 0 &&
+            filteredAdminModules.length === 0 && (
+              <div className="text-gray-500 text-sm text-center py-4 border rounded bg-gray-50">
+                No modules available.
               </div>
-              
-              {hasAdminModules && (
-                <div className="w-full h-px bg-[#C5BEBE]"></div>
-              )}
-            </>
-          )}
-
-          {hasAdminModules && (
-            <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-              {filteredAdminModules.map((module) => (
-                <MenuButton
-                  key={module.id}
-                  text={module.label}
-                  image={module.icon}
-                  isActive={activeTab === module.label}
-                  onClick={() => handleClick(module.label)}
-                />
-              ))}
-            </div>
-          )}
-
-          {!hasAnyModules && (
-            <div className="text-gray-500 text-sm text-center py-4 border border-gray-200 rounded-lg bg-gray-50">
-              <p>No modules available for your account</p>
-              <p className="text-xs mt-1">
-                Contact administrator to enable modules
-              </p>
-            </div>
-          )}
+            )}
         </div>
       </div>
 
       <div className="w-full pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-        <MenuButton
-          text="Afmelden"
-          image={logoutItem}
-          isActive={activeTab === "Afmelden"}
-          onClick={() => handleClick("Afmelden")}
-        />
+        {logoutButton}
       </div>
     </div>
   );
