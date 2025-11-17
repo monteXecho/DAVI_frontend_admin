@@ -228,7 +228,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                   key={role.id} 
                   className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
                 >
-                  <td className="px-2 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
+                  <td className="px-4 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
                     <div className="flex items-center gap-5">
                       <CheckBox 
                         toggle={selectedRolesSet.has(role.id)} 
@@ -239,14 +239,8 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                     </div>
                   </td>
 
-                  <td className="px-4 py-2">
-                    <div className="flex justify-center items-center gap-3">
-                      <button 
-                        className="hover:opacity-80 transition-opacity"
-                        aria-label={`Edit ${role.name}`}
-                      >
-                        <EditIcon />
-                      </button>
+                  <td className="px-8 py-2">
+                    <div className="flex justify-end">
                       <button 
                         onClick={() => handleDeleteClick(role)}
                         className="hover:opacity-80 transition-opacity"

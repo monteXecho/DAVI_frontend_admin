@@ -120,6 +120,8 @@ export default function Documents() {
     }
   }
 
+  const handleoveToToevoegen = () => setActiveIndex(1)
+
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
       <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl">
@@ -176,6 +178,7 @@ export default function Documents() {
               onShowRoles={handleShowRoles}
               onShowFolders={handleShowFolders}
               onDeleteDocuments={handleDeleteDocuments}
+              onMoveToToevoegen={handleoveToToevoegen}
               selectedUsers={selectedUsers} 
               selectedDocName={selectedDocName}
               selectedRoles={selectedRoles}

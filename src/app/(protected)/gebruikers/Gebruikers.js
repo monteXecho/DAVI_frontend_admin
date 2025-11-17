@@ -13,7 +13,7 @@ const tabsConfig = [
 ]
 
 export default function Gebruikers() {
-  const { getUsers, addUser, updateUser, deleteUsers, assignRole, getRoles, uploadUsersFile, sendResetPassword } = useApi()
+  const { getUsers, addUser, addRoleToUsers, updateUser, deleteUsers, deleteRoleFromUsers, assignRole, getRoles, uploadUsersFile, sendResetPassword } = useApi()
 
   const [ activeIndex, setActiveIndex ] = useState(0)
   const [ users, setUsers ] = useState([])
@@ -75,6 +75,16 @@ export default function Gebruikers() {
   const handleDeleteUsers = async (ids) => {
     await deleteUsers(ids)
     setUsers(prev => prev.filter(u => !ids.includes(u.id)))
+  }
+
+  const handleDeleteRoleFromUsers = async (ids, roleName) => {
+    await deleteRoleFromUsers(ids, roleName)
+    await refreshUsers()
+  }
+
+  const handleAddRoleToUsers = async (ids, roleName) => {
+    await addRoleToUsers(ids, roleName)
+    await refreshUsers()
   }
 
   const handleBulkImport = async (file, selectedRole = "Alle rollen") => {
@@ -198,6 +208,8 @@ export default function Gebruikers() {
                 onAddUser={handleAddUser}
                 onUpdateUser={handleUpdateUser}
                 onDeleteUsers={handleDeleteUsers}
+                onDeleteRoleFromUsers={handleDeleteRoleFromUsers}
+                onAddRoleToUsers={handleAddRoleToUsers}
                 onAssignRole={handleAssignRole}
                 onMoveToMaken={() => setActiveIndex(1)}
                 user={selectedUser}

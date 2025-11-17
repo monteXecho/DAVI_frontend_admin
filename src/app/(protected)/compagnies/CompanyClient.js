@@ -6,7 +6,7 @@ import CompanyAdmins from "./components/CompanyAdmins";
 import AssignModules from "./components/AssignModules";
 
 export default function CompanyClient() {
-  const { getCompanies, createCompany, deleteCompany, addCompanyAdmin, deleteCompanyAdmin, assignModules, error } = useApi();
+  const { getCompanies, createCompany, deleteCompany, addCompanyAdmin, reassignCompanyAdmin, deleteCompanyAdmin, assignModules, error } = useApi();
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
   const [selectedAdminId, setSelectedAdminId] = useState(null);
@@ -100,6 +100,16 @@ const fetchCompanies = useCallback(async () => {
     }    
   }  
 
+  const handleReAssignCompanyAdmin = async (companyId, adminId, oldName, oldEmail) => {
+    try {
+      await reassignCompanyAdmin(companyId, adminId, oldName, oldEmail)
+      await fetchCompanies();
+      window.alert("Success!")
+    } catch (err) {
+      console.log("Reassign company admin failed.")
+    }
+  }
+
   return (
     <div className="w-full h-full flex flex-col xl:flex-row p-5 xl:p-10 gap-8 overflow-scroll scrollbar-hide">
       <div className="w-full xl:w-1/3 h-fit xl:h-full">
@@ -118,6 +128,7 @@ const fetchCompanies = useCallback(async () => {
           selectedId={selectedAdminId}
           onSelect={setSelectedAdminId}
           onCreateCompanyAdmin={handleAddCompanyAdmin}
+          onReAssignCompanyAdmin={handleReAssignCompanyAdmin}
           onDeleteCompanyAdmin={handleDeleteCompanyAdmin}
           selectedCompany={selectedCompany}
           companies={companies}

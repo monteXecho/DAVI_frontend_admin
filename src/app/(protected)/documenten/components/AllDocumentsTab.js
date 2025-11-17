@@ -24,9 +24,11 @@ export default function AllDocumentsTab({
   onDeleteDocuments 
 }) {
   const [allOptions1, setAllOptions1] = useState([])
+  const [allOptions2, setAllOptions2] = useState([])
   const [selectedRole, setSelectedRole] = useState("Alle Rollen")
-  const allOptions2 = ["Bulkacties", "Verwijderen"]
-  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions2[0])
+  const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
+  const allOptions3 = ["Bulkacties", "Verwijderen"]
+  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
@@ -36,6 +38,24 @@ export default function AllDocumentsTab({
     const roleNames = roles.map(role => role.name || role)
     setAllOptions1(["Alle Rollen", ...roleNames])
   }, [roles])
+
+  // Set folder options based on selected role
+  useEffect(() => {
+    if (selectedRole === "Alle Rollen") {
+      // When "Alle Rollen" is selected, only show "Alle Mappen"
+      setAllOptions2(["Alle Mappen"])
+    } else if (documents && documents[selectedRole]) {
+      const roleFolders = documents[selectedRole].folders?.map(folder => folder.name) || []
+      setAllOptions2(["Alle Mappen", ...roleFolders])
+    } else {
+      setAllOptions2(["Alle Mappen"])
+    }
+  }, [selectedRole, documents]);
+
+  // Reset folder when role changes
+  useEffect(() => {
+    setSelectedFolder("Alle Mappen");
+  }, [selectedRole]);
 
   const getAllDocuments = useCallback(() => {
     if (!documents) return []
@@ -73,6 +93,26 @@ export default function AllDocumentsTab({
     )
   }, [documents])
 
+  // Get documents for specific role and folder
+  const getDocumentsForRoleAndFolder = useCallback((role, folder) => {
+    if (!documents || !documents[role]) return []
+    
+    return documents[role].folders.flatMap(folderData => {
+      if (folder === "Alle Mappen" || folderData.name === folder) {
+        return folderData.documents.map(doc => ({
+          id: `${role}-${folderData.name}-${doc.file_name}`,
+          folder: folderData.name,
+          file: doc.file_name,
+          path: doc.path,
+          uploaded_at: doc.uploaded_at,
+          assigned_to: doc.assigned_to,
+          role: role
+        }))
+      }
+      return []
+    })
+  }, [documents])
+
   const getAllFoldersForFile = useCallback((fileName) => {
     const folders = []
     Object.values(documents || {}).forEach(role => {
@@ -95,8 +135,21 @@ export default function AllDocumentsTab({
   }, [documents])
 
   const baseDocuments = useMemo(() => {
-    return selectedRole === "Alle Rollen" ? getAllDocuments() : getDocumentsForRole(selectedRole)
-  }, [getAllDocuments, getDocumentsForRole, selectedRole])
+    if (selectedRole === "Alle Rollen") {
+      // When "Alle Rollen" is selected, always show all documents regardless of folder selection
+      return getAllDocuments()
+    } else {
+      return selectedFolder === "Alle Mappen" 
+        ? getDocumentsForRole(selectedRole)
+        : getDocumentsForRoleAndFolder(selectedRole, selectedFolder)
+    }
+  }, [
+    getAllDocuments, 
+    getDocumentsForRole, 
+    getDocumentsForRoleAndFolder,
+    selectedRole, 
+    selectedFolder
+  ])
 
   const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
 
@@ -171,14 +224,21 @@ export default function AllDocumentsTab({
   const getSelectedDocumentsData = () =>
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
+  const getHeaderText = () => {
+    if (selectedRole === "Alle Rollen") {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
+    } else if (selectedFolder === "Alle Mappen") {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
+    } else {
+      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} in map "${selectedFolder}" van rol "${selectedRole}"`
+    }
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {selectedRole === "Alle Rollen" 
-          ? `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
-          : `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
-        }
+        {getHeaderText()}
         {selectedDocuments.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedDocuments.size} geselecteerd)
@@ -186,13 +246,22 @@ export default function AllDocumentsTab({
         )}
       </div>
 
-      {/* Role Filter */}
+      {/* Role and Folder Filters */}
       <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
         <div className="w-3/10">
           <DropdownMenu
             value={selectedRole}
             onChange={setSelectedRole}
             allOptions={allOptions1}
+          />
+        </div>
+        <div className="w-3/10">
+          <DropdownMenu
+            value={selectedFolder}
+            onChange={setSelectedFolder}
+            allOptions={allOptions2}
+            placeholder="Selecteer map..."
+            disabled={selectedRole === "Alle Rollen"} // Disable folder dropdown when "Alle Rollen" is selected
           />
         </div>
       </div>
@@ -204,7 +273,7 @@ export default function AllDocumentsTab({
             <DropdownMenu
               value={selectedBulkAction}
               onChange={handleBulkAction}
-              allOptions={allOptions2}
+              allOptions={allOptions3}
             />
           </div>
           <div className="w-4/9">
@@ -221,9 +290,11 @@ export default function AllDocumentsTab({
       {/* Documents Table */}
       {filteredDocuments.length === 0 ? (
         <div className="text-center py-4 text-gray-500 font-montserrat">
-          {selectedRole === "Alle Rollen" 
+          {selectedRole === "Alle Rollen"
             ? "Er zijn geen documenten beschikbaar."
-            : `Er zijn geen documenten beschikbaar voor de rol "${selectedRole}".`
+            : selectedFolder === "Alle Mappen"
+            ? `Er zijn geen documenten beschikbaar voor de rol "${selectedRole}".`
+            : `Er zijn geen documenten beschikbaar in map "${selectedFolder}" van rol "${selectedRole}".`
           }
         </div>
       ) : (

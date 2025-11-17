@@ -20,12 +20,12 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
   const [selectedRole, setSelectedRole] = useState("")
   const [folders, setFolders] = useState([])
   const [selectedFolder, setSelectedFolder] = useState("")
-  const [uploadedFiles, setUploadedFiles] = useState([]) // Changed to array for multiple files
+  const [uploadedFiles, setUploadedFiles] = useState([]) 
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE)
   
   const [uploadTargets, setUploadTargets] = useState([])
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0)
-  const [currentFileIndex, setCurrentFileIndex] = useState(0) // Track current file being uploaded
+  const [currentFileIndex, setCurrentFileIndex] = useState(0) 
 
   const fileInputRef = useRef(null)
 
@@ -107,7 +107,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
       setCurrentFileIndex(fileIndex)
       const file = files[fileIndex]
       
-      // Upload current file to all targets
       for (let targetIndex = 0; targetIndex < uploadTargets.length; targetIndex++) {
         setCurrentUploadIndex(targetIndex)
         const target = uploadTargets[targetIndex]
@@ -119,7 +118,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
           const result = await onUploadDocument(target.role, target.folder, formData)
 
           if (!result?.success) {
-            toast.warn(`Upload mislukt voor ${file.name} naar ${target.role}/${target.folder}: ${result?.message || 'Onbekende fout'}`)
+            toast.warn(`Upload mislukt voor ${file.name} naar ${target.role} / ${target.folder}: ${result?.message || 'Onbekende fout'}`)
           }
         } catch (err) {
           console.error(`Upload error for ${file.name} to ${target.role}/${target.folder}:`, err)
@@ -155,14 +154,40 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
         return <UploadingBttn text={progressText} />
       case UploadStates.SUCCESS:
         const totalUploads = uploadedFiles.length * uploadTargets.length
-        const fileNames = uploadedFiles.map(f => f.name).join(', ')
         
-        return (
-          <>
-            <SuccessBttn text={`${fileNames} - Geüpload naar ${uploadTargets.length} locatie(s) (${totalUploads} uploads totaal)`} />
-            <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
-          </>
-        )
+        // Create a custom component for multiple files
+        if (uploadedFiles.length > 1) {
+          return (
+            <div className="flex flex-col w-2/3 gap-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="text-green-800 font-semibold mb-2">
+                  Successvol geüpload ({uploadedFiles.length} documenten):
+                </div>
+                <div className="text-green-700 text-sm">
+                  {uploadedFiles.map((file, index) => (
+                    <div key={index} className="ml-2">
+                      • {file.name}
+                    </div>
+                  ))}
+                </div>
+                {uploadTargets.length > 1 && (
+                  <div className="text-green-600 text-xs mt-2">
+                    Naar {uploadTargets.length} bestemmingen geüpload
+                  </div>
+                )}
+              </div>
+              <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
+            </div>
+          )
+        } else {
+          // Single file - use the original SuccessBttn
+          return (
+            <>
+              <SuccessBttn text={uploadedFiles[0]?.name} />
+              <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
+            </>
+          )
+        }
       default:
         return null
     }
@@ -228,7 +253,7 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
         ref={fileInputRef}
         className="hidden"
         onChange={handleDocumentUpload}
-        multiple // Added multiple attribute
+        multiple
       />
 
       {renderUploadSection()}

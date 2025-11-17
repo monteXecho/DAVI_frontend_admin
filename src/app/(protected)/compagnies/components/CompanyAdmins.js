@@ -4,7 +4,7 @@ import Section from "./Section";
 import AddAdmin from "./modals/AddAdmin";
 import DeleteAdmin from "./modals/DeleteAdmin";
 
-export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCompanyAdmin, onDeleteCompanyAdmin, selectedCompany, companies = [] }) {
+export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCompanyAdmin, onReAssignCompanyAdmin, onDeleteCompanyAdmin, selectedCompany, companies = [] }) {
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
   const [isDeleteAdminOpen, setIsDeleteAdminOpen] = useState(false);
 
@@ -77,14 +77,14 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
         >
           <DeleteAdmin
             onClose={() => setIsDeleteAdminOpen(false)}
-            onDelete={(companyId, adminId, newAdminEmail, newAdminName) => {
+            onDelete={(companyId, adminId) => {
               if (onDeleteCompanyAdmin) {
-                onDeleteCompanyAdmin(companyId, adminId, newAdminEmail, newAdminName);
+                onDeleteCompanyAdmin(companyId, adminId);
               }
               setIsDeleteAdminOpen(false);
             }}
-            onCreate={(companyId, name, email) => {
-              if (onCreateCompanyAdmin) onCreateCompanyAdmin(companyId, name, email);
+            onReAssign={(companyId, adminId, name, email) => {
+              if (onReAssignCompanyAdmin) onReAssignCompanyAdmin(companyId, adminId, name, email);
             }}
             selectedCompany={selectedCompany}
             selectedAdminId={selectedId} 

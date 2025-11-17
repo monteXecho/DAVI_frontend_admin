@@ -174,6 +174,16 @@ export function useApi() {
     [withAuth]
   );
 
+  const reassignCompanyAdmin = useCallback(
+    (companyId, adminId, name, email) =>
+      withAuth((token) =>
+        apiClient
+          .patch(`/super-admin/companies/${companyId}/admins/${adminId}`, {name, email}, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );  
+
   const assignModules = useCallback(
     (companyId, adminId, modules) =>
       withAuth((token) =>
@@ -323,6 +333,26 @@ export function useApi() {
     [withAuth]
   );
 
+  const deleteRoleFromUsers = useCallback(
+    (user_ids, role_name) =>
+      withAuth((token) =>
+        apiClient
+          .post('/company-admin/users/role/delete', {user_ids, role_name}, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const addRoleToUsers = useCallback(
+    (user_ids, role_name) =>
+      withAuth((token) =>
+        apiClient
+          .post('/company-admin/users/role/add', {user_ids, role_name}, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   const getCompanyStats = useCallback(
     () =>
       withAuth((token) =>
@@ -396,6 +426,7 @@ export function useApi() {
 
     getCompanyAdmins,
     addCompanyAdmin,
+    reassignCompanyAdmin,
     deleteCompanyAdmin,
     getAdminDocuments,
     sendResetPassword,
@@ -403,8 +434,10 @@ export function useApi() {
     getUsers,
     getUser,
     addUser,
+    addRoleToUsers,
     updateUser,
     deleteUsers,
+    deleteRoleFromUsers,
     uploadUsersFile,
 
     getCompanyStats,

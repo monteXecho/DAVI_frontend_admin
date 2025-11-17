@@ -11,7 +11,7 @@ import DeleteDocumentFromFoldersModal from "./modals/DeleteDocumentFromFoldersMo
 import SortableHeader from "@/components/SortableHeader";
 import { useSortableData } from "@/lib/useSortableData";
 
-export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
+export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments, onMoveToToevoegen }) {
   const allOptions = ["Bulkacties", "Verwijder uit map"];
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -193,7 +193,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
           </div>
         </div>
 
-        <AddButton onClick={() => {}} text="Voeg toe aan map" />
+        <AddButton onClick={onMoveToToevoegen} text="Voeg toe aan map" />
       </div>
 
       {/* Folders Table */}
