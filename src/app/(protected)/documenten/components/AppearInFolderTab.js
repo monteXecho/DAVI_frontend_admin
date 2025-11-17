@@ -288,6 +288,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
             <DeleteDocumentFromFoldersModal
               folders={deleteMode === "bulk" ? getSelectedFoldersData() : []}
               folderName={deleteMode === "single" ? getSingleFolderName() : ""}
+              roleName={deleteMode === "single" ? getSelectedFoldersData()[0]?.role : ""}
               documentName={selectedDocName}
               onClose={() => {
                 setIsDeleteModalOpen(false);

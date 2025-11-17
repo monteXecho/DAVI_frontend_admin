@@ -1,9 +1,9 @@
-// components/modal/DeleteDocumentFromFoldersModal.jsx
 import { X } from "lucide-react"
 
 export default function DeleteDocumentFromFoldersModal({
   folders = [],
   folderName = "",
+  roleName = "",
   documentName = "",
   onConfirm,
   onClose,
@@ -23,16 +23,20 @@ export default function DeleteDocumentFromFoldersModal({
         <span className="text-white text-3xl leading-none">×</span>
       </div>
 
+      {/* MULTIPLE DELETE */}
       {isMultiple ? (
         <div className="text-center text-[17px] leading-6 text-black px-4">
           <p className="mb-4">
-            Weet je zeker dat je het document<br />
-            <span className="font-semibold">&ldquo;{documentName}&rdquo;</span><br />
+            Weet u zeker dat u het document<br />
+            <span className="font-semibold">{"[" + documentName + "]"}</span><br />
             wilt verwijderen uit <span className="font-semibold">{folders.length} mappen</span>?
           </p>
+
           <div className="max-h-24 overflow-y-auto text-sm text-gray-700 mt-2 space-y-1">
             {folders.slice(0, 5).map((folder, index) => (
-              <div key={index} className="truncate">• {folder.name}</div>
+              <div key={index} className="truncate">
+                • {folder.name} <span className="text-gray-500">({folder.role})</span>
+              </div>
             ))}
             {folders.length > 5 && (
               <div className="text-gray-500 italic">
@@ -42,11 +46,13 @@ export default function DeleteDocumentFromFoldersModal({
           </div>
         </div>
       ) : (
+        /* SINGLE DELETE */
         <p className="text-center text-[17px] leading-6 text-black px-4">
           Weet je zeker dat je het document<br />
-          <span className="font-semibold">&ldquo;{documentName}&rdquo;</span><br />
+          <span className="font-semibold">{"[" + documentName + "]"}</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">&ldquo;{folderName}&rdquo;</span>?
+          <span className="font-semibold">{"[" + folderName + "]"}</span> voor rol{" "}
+          <span className="font-semibold">{"[" + roleName + "]"}</span>?
         </p>
       )}
 
@@ -61,5 +67,5 @@ export default function DeleteDocumentFromFoldersModal({
         </button>
       </div>
     </div>
-  )
+  );
 }
