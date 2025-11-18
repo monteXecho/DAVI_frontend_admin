@@ -10,7 +10,7 @@ export default function DeleteDocumentFromFoldersModal({
   isMultiple = false
 }) {
   return (
-    <div className="relative w-[360px] min-h-[340px] bg-white shadow-lg rounded-2xl flex flex-col items-center justify-center p-8 gap-8">
+    <div className="relative w-fit h-fit bg-white shadow-lg rounded-2xl flex flex-col items-center justify-center p-8 gap-8">
       <button
         onClick={onClose}
         className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -49,10 +49,10 @@ export default function DeleteDocumentFromFoldersModal({
         /* SINGLE DELETE */
         <p className="text-center text-[17px] leading-6 text-black px-4">
           Weet je zeker dat je het document<br />
-          <span className="font-semibold">{"[" + documentName + "]"}</span><br />
+          <span className="font-semibold">"{documentName}"</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">{"[" + folderName + "]"}</span> voor rol{" "}
-          <span className="font-semibold">{"[" + roleName + "]"}</span>?
+          <span className="font-semibold">"{folderName}"</span> voor rol{" "}
+          <span className="font-semibold">"{roleName}"</span>?
         </p>
       )}
 

@@ -1,4 +1,3 @@
-// components/table/SortableHeader.js
 import DownArrow from '@/components/icons/DownArrowIcon'
 
 const SortableHeader = ({ 
@@ -25,8 +24,9 @@ const SortableHeader = ({
       className={`px-4 py-2 font-montserrat font-bold text-[16px] text-black cursor-pointer select-none hover:bg-gray-50 transition-colors ${className}`}
       onClick={handleClick}
     >
-      <div className={`flex items-center gap-2 ${align === 'center' ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-2 whitespace-nowrap ${align === 'center' ? 'justify-center' : ''}`}>
         <span>{children}</span>
+
         <div className="flex flex-col">
           <DownArrow 
             className={`w-3 h-3 transition-transform ${

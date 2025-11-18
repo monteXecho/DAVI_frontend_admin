@@ -237,7 +237,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
                   key={folder.id} 
                   className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
                 >
-                  <td className="px-2 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
+                  <td className="px-4 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
                     <div className="flex items-center gap-5">
                       <CheckBox
                         toggle={selectedFoldersSet.has(folder.id)}

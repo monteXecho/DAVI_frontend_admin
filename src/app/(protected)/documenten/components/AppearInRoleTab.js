@@ -1,8 +1,6 @@
 'use client'
 import { useState, useMemo } from "react";
-import AddButton from "@/components/buttons/AddButton";
 import CheckBox from "@/components/buttons/CheckBox";
-import EditIcon from "@/components/icons/EditIcon";
 import SearchBox from "@/components/input/SearchBox";
 import RedCancelIcon from "@/components/icons/RedCancelIcon";
 import DropdownMenu from "@/components/input/DropdownMenu";
@@ -19,67 +17,67 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   const [selectedRolesSet, setSelectedRolesSet] = useState(new Set());
   const [deleteMode, setDeleteMode] = useState("single");
 
+  /** Extract roles + folders that contain this document */
   const currentRolesData = useMemo(() => {
     const roles = [];
     
     if (!documents || !selectedDocName) return roles;
 
     Object.entries(documents).forEach(([roleName, roleData]) => {
-      if (roleData && roleData.folders) {
-        const hasDocument = roleData.folders.some(folder => 
-          folder.documents && folder.documents.some(doc => doc.file_name === selectedDocName)
-        );
-        if (hasDocument) {
-          roles.push({
-            id: roleName, 
-            name: roleName,
-          });
-        }
+      if (!roleData?.folders) return;
+
+      const matchingFolders = roleData.folders
+        .filter(folder =>
+          folder.documents?.some(doc => doc.file_name === selectedDocName)
+        )
+        .map(folder => folder.name);
+
+      if (matchingFolders.length > 0) {
+        roles.push({
+          id: roleName,
+          name: roleName,
+          folders: matchingFolders
+        });
       }
     });
-    
+
     return roles;
   }, [documents, selectedDocName]);
 
-  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(currentRolesData)
+  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(currentRolesData);
 
   const filteredRoles = useMemo(() => {
     if (!searchQuery.trim()) return sortedRoles;
-
-    const lowerSearch = searchQuery.toLowerCase();
-    return sortedRoles.filter((role) =>
-      role.name.toLowerCase().includes(lowerSearch)
-    );
+    const lower = searchQuery.toLowerCase();
+    return sortedRoles.filter(role => role.name.toLowerCase().includes(lower));
   }, [sortedRoles, searchQuery]);
 
   const handleRoleSelect = (roleId, isSelected) => {
     setSelectedRolesSet(prev => {
-      const newSelected = new Set(prev);
-      if (isSelected) {
-        newSelected.add(roleId);
-      } else {
-        newSelected.delete(roleId);
-      }
-      return newSelected;
+      const newSet = new Set(prev);
+      isSelected ? newSet.add(roleId) : newSet.delete(roleId);
+      return newSet;
     });
   };
 
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      const allFilteredRoleIds = new Set(filteredRoles.map(role => role.id));
-      setSelectedRolesSet(allFilteredRoleIds);
+      setSelectedRolesSet(new Set(filteredRoles.map(r => r.id)));
     } else {
       setSelectedRolesSet(new Set());
     }
   };
 
-  const allSelected = filteredRoles.length > 0 && filteredRoles.every(role => selectedRolesSet.has(role.id));
+  const allSelected =
+    filteredRoles.length > 0 &&
+    filteredRoles.every(role => selectedRolesSet.has(role.id));
 
-  const someSelected = filteredRoles.some(role => selectedRolesSet.has(role.id)) && !allSelected;
+  const someSelected =
+    filteredRoles.some(role => selectedRolesSet.has(role.id)) && !allSelected;
 
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action);
-    
+
     if (action === "Verwijderen") {
       if (selectedRolesSet.size > 0) {
         setDeleteMode("bulk");
@@ -91,20 +89,37 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
     }
   };
 
+  const findDocumentEntriesForRole = (fileName, roleName) => {
+    const entries = [];
+    if (!documents[roleName]) return entries;
+
+    documents[roleName].folders?.forEach(folder => {
+      const doc = folder.documents?.find(d => d.file_name === fileName);
+      if (doc) {
+        entries.push({
+          fileName: doc.file_name,
+          role: roleName,
+          path: doc.path
+        });
+      }
+    });
+
+    return entries;
+  };
+
   const handleDeleteConfirm = async () => {
     try {
-      if (onDeleteDocuments && selectedRolesSet.size > 0) {
-        const documentsToDelete = [];
-        
-        Array.from(selectedRolesSet).forEach(roleName => {
-          const documentEntries = findDocumentEntriesForRole(selectedDocName, roleName);
-          documentsToDelete.push(...documentEntries);
-        });
-        
-        if (documentsToDelete.length > 0) {
-          await onDeleteDocuments(documentsToDelete);
-          setSelectedRolesSet(new Set());
-        }
+      const documentsToDelete = [];
+
+      selectedRolesSet.forEach(roleName => {
+        documentsToDelete.push(
+          ...findDocumentEntriesForRole(selectedDocName, roleName)
+        );
+      });
+
+      if (documentsToDelete.length > 0) {
+        await onDeleteDocuments(documentsToDelete);
+        setSelectedRolesSet(new Set());
       }
     } catch (err) {
       console.error("Failed to remove document from roles:", err);
@@ -115,28 +130,6 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
     }
   };
 
-  const findDocumentEntriesForRole = (fileName, roleName) => {
-    const entries = [];
-    
-    if (!documents || !documents[roleName]) return entries;
-
-    const roleData = documents[roleName];
-    if (roleData.folders) {
-      roleData.folders.forEach(folder => {
-        const doc = folder.documents?.find(d => d.file_name === fileName);
-        if (doc) {
-          entries.push({
-            fileName: doc.file_name,
-            role: roleName,
-            path: doc.path
-          });
-        }
-      });
-    }
-    
-    return entries;
-  };
-
   const handleDeleteClick = (role) => {
     setSelectedRolesSet(new Set([role.id]));
     setDeleteMode("single");
@@ -144,20 +137,23 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   };
 
   const getSelectedRolesData = () => {
-    return Array.from(selectedRolesSet).map(roleName => 
-      filteredRoles.find(role => role.id === roleName)?.name || roleName
-    );
+    return Array.from(selectedRolesSet).map(roleId => {
+      const role = filteredRoles.find(r => r.id === roleId);
+      return {
+        role: role?.name ?? roleId,
+        folders: role?.folders ?? []
+      };
+    });
   };
+
 
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
-      <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {filteredRoles.length} rol{filteredRoles.length !== 1 ? 'len' : ''} waar &quot;{selectedDocName}&quot; in voorkomt
+      <div className="mb-[29px] font-montserrat font-extrabold text-[18px]">
+        {filteredRoles.length} rol{filteredRoles.length !== 1 ? "len" : ""} waar "{selectedDocName}" in voorkomt
         {selectedRolesSet.size > 0 && (
-          <span className="ml-2 text-gray-600">
-            ({selectedRolesSet.size} geselecteerd)
-          </span>
+          <span className="ml-2 text-gray-600">({selectedRolesSet.size} geselecteerd)</span>
         )}
       </div>
 
@@ -169,47 +165,49 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
       {/* Action Bar */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
         <div className="flex w-2/3 gap-4 items-center">
-          <div className="w-4/9">
-            <DropdownMenu 
-              value={selectedBulkAction} 
-              onChange={handleBulkAction} 
-              allOptions={allOptions} 
-            />
-          </div>
-
-          <div className="w-4/9">
-            <SearchBox 
-              placeholderText='Zoek rol...' 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <DropdownMenu
+            value={selectedBulkAction}
+            onChange={handleBulkAction}
+            allOptions={allOptions}
+          />
+          <SearchBox
+            placeholderText="Zoek rol..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      </div>        
+      </div>
 
       {/* Roles Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead className="bg-[#F9FBFA]">
-            <tr className="h-[51px] border-b border-[#C5BEBE]">
-              <SortableHeader 
-                sortKey="name" 
-                onSort={requestSort} 
-                currentSort={sortConfig}
-                className="px-2 py-2"
-              >
-                <div className="flex items-center gap-5">
-                  <CheckBox 
-                    toggle={allSelected} 
+            <tr className="w-full h-[51px] border-b border-[#C5BEBE]">
+              {/* Role Column - Fixed width */}
+              <th className="w-1/3 px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                <div className="flex items-center gap-3 whitespace-nowrap">
+                  <CheckBox
+                    toggle={allSelected}
                     indeterminate={someSelected}
                     onChange={handleSelectAll}
-                    color='#23BD92' 
-                  />  
+                    color="#23BD92"
+                  />
                   Rol
                 </div>
+              </th>
+
+              {/* Folders Column */}
+              <SortableHeader
+                sortKey="folder"
+                onSort={requestSort}
+                currentSort={sortConfig}
+                className="w-2/5" // Give this more space
+              >
+                Mappen
               </SortableHeader>
 
-              <th className="w-[120px] px-4 py-2 font-montserrat font-bold text-[16px] leading-6 text-black text-center">
+              {/* Actions Column - Fixed width */}
+              <th className="w-[120px] px-4 py-2 font-montserrat font-bold text-[16px] text-center">
                 Acties
               </th>
             </tr>
@@ -218,33 +216,50 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
           <tbody>
             {filteredRoles.length === 0 ? (
               <tr>
-                <td colSpan="2" className="px-4 py-6 text-center text-gray-500 font-montserrat">
-                  {searchQuery ? 'Geen rollen gevonden voor deze zoekopdracht.' : 'Geen rollen gevonden.'}
+                <td
+                  colSpan="3"
+                  className="px-4 py-6 text-center text-gray-500 font-montserrat"
+                >
+                  {searchQuery
+                    ? "Geen rollen gevonden voor deze zoekopdracht."
+                    : "Geen rollen gevonden."}
                 </td>
               </tr>
             ) : (
               filteredRoles.map((role) => (
-                <tr 
-                  key={role.id} 
-                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                <tr
+                  key={role.id}
+                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA]"
                 >
-                  <td className="px-4 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
-                    <div className="flex items-center gap-5">
-                      <CheckBox 
-                        toggle={selectedRolesSet.has(role.id)} 
-                        onChange={(isSelected) => handleRoleSelect(role.id, isSelected)}
-                        color='#23BD92' 
-                      />  
-                      {role.name}
+                  {/* Role Name */}
+                  <td className="w-1/3 px-4 py-2">
+                    <div className="flex items-center gap-3">
+                      <CheckBox
+                        toggle={selectedRolesSet.has(role.id)}
+                        onChange={(isSelected) =>
+                          handleRoleSelect(role.id, isSelected)
+                        }
+                        color="#23BD92"
+                      />
+                      <span className="truncate">{role.name}</span>
                     </div>
                   </td>
 
-                  <td className="px-8 py-2">
+                  {/* Folder names */}
+                  <td className="w-2/5 px-4 py-2 font-montserrat text-[15px] text-gray-700">
+                    <span className="line-clamp-2">
+                      {role.folders?.length > 0
+                        ? role.folders.join(", ")
+                        : "-"}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="w-[120px] px-4 py-2">
                     <div className="flex justify-end">
-                      <button 
+                      <button
                         onClick={() => handleDeleteClick(role)}
-                        className="hover:opacity-80 transition-opacity"
-                        aria-label={`Remove from ${role.name}`}
+                        className="hover:opacity-80"
                       >
                         <RedCancelIcon />
                       </button>
@@ -257,7 +272,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
         </table>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       {isDeleteModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
