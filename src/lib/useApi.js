@@ -106,6 +106,20 @@ export function useApi() {
     [withAuth]
   );
 
+  const deletePrivateDocuments = useCallback(
+    (documentsToDelete) =>
+      withAuth((token) =>
+        apiClient
+          .post(`/company-admin/documents/delete/private`, { documents: documentsToDelete }, createAuthHeaders(token))
+          .then((res) => ({ success: true, data: res.data }))
+          .catch((err) => {
+            console.error('[useApi] Delete documents failed:', err);
+            return { success: false };
+          })
+      ),
+    [withAuth]
+  );
+
   const uploadDocument = useCallback(
     (formData, uploadType) =>
       withAuth((token) =>
@@ -232,6 +246,16 @@ export function useApi() {
       withAuth((token) =>
         apiClient
           .get('/company-admin/documents', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const getPrivateDocuments = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/documents/private', createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -419,6 +443,7 @@ export function useApi() {
     uploadDocument,
     uploadDocumentForRole,
     deleteDocuments,
+    deletePrivateDocuments,
 
     getCompanies,
     createCompany,
@@ -429,6 +454,7 @@ export function useApi() {
     reassignCompanyAdmin,
     deleteCompanyAdmin,
     getAdminDocuments,
+    getPrivateDocuments,
     sendResetPassword,
 
     getUsers,

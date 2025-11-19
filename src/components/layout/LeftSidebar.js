@@ -14,10 +14,8 @@ import RollenItem from "@/assets/rollen_item.png";
 import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
 import CompanyItem from "@/assets/company_item.png";
+import GrayFolderIcon from "@/components/icons/GrayFolderIcon"
 
-/* -------------------------------------------------------------
-   STATIC MENU CONFIG (never changes)
-------------------------------------------------------------- */
 const MENU_CONFIG = {
   publicModules: [
     {
@@ -63,13 +61,17 @@ const MENU_CONFIG = {
       icon: DocumentenItem,
       path: '/documenten',
       requiredRoles: ['super_admin', 'company_admin']
+    },
+    {
+      id: 'mappen',
+      label: 'Mappen',
+      icon: GrayFolderIcon,
+      path: '/mappen',
+      requiredRoles: ['super_admin', 'company_admin']
     }
   ]
 };
 
-/* -------------------------------------------------------------
-   STABLE CALLBACK MANAGER
-------------------------------------------------------------- */
 const useStableCallbacks = () => {
   const map = useRef(new Map());
   const getStable = useCallback((key, fn) => {
@@ -79,9 +81,6 @@ const useStableCallbacks = () => {
   return getStable;
 };
 
-/* -------------------------------------------------------------
-   LEFT SIDEBAR
-------------------------------------------------------------- */
 export default function LeftSidebar() {
 
   const router = useRouter();
@@ -90,22 +89,16 @@ export default function LeftSidebar() {
   const { getUser } = useApi();
 
   const [user, setUser] = useState(null);
-  const userRef = useRef(null);            // <<< FREEZE USER HERE
+  const userRef = useRef(null);          
   const [loading, setLoading] = useState(true);
   const getStable = useStableCallbacks();
   const [activeTab, setActiveTab] = useState("Documentenchat");
 
-  /* -------------------------
-     AUTH STATUS
-  ---------------------------- */
   const isAuthenticated = useMemo(
     () => initialized && keycloak?.authenticated,
     [initialized, keycloak?.authenticated]
   );
 
-  /* -------------------------
-     USER ROLES
-  ---------------------------- */
   const userRoles = useMemo(() => {
     if (!isAuthenticated) return {
       isSuperAdmin: false,
@@ -122,9 +115,6 @@ export default function LeftSidebar() {
     };
   }, [isAuthenticated, keycloak?.tokenParsed]);
 
-  /* -------------------------------------------------------------
-     FETCH USER ONCE ONLY (FREEZE AFTER FIRST FETCH)
-  ------------------------------------------------------------- */
   useEffect(() => {
     if (!isAuthenticated) {
       setLoading(false);
@@ -155,10 +145,7 @@ export default function LeftSidebar() {
     loadUserOnce();
   }, [isAuthenticated, getUser]);
 
-  /* -------------------------------------------------------------
-     FILTER MODULES (NOW DEPENDS ON STABLE USER)
-  ------------------------------------------------------------- */
-  const stableUser = userRef.current;  // <<< ALWAYS STABLE
+  const stableUser = userRef.current;  
 
   const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
     const publicModules = userRoles.isSuperAdmin
@@ -189,18 +176,17 @@ export default function LeftSidebar() {
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
   }, [stableUser, userRoles, isAuthenticated]);
 
-  /* -------------------------------------------------------------
-     ROUTE → TAB MAPPING
-  ------------------------------------------------------------- */
   const routeToTab = useMemo(() => {
     const map = {
       "/documentchat": "Documentenchat",
+      "/documentchat/mijn": "Documentenchat", // Add this line
       "/GGD": "GGD Checks",
       "/compagnies": "Compagnies",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
-      "/documenten": "Documenten"
+      "/documenten": "Documenten",
+      "/mappen": "Mappen"
     };
 
     map["/"] =
@@ -211,9 +197,6 @@ export default function LeftSidebar() {
     return map;
   }, [filteredPublicModules, filteredAdminModules]);
 
-  /* -------------------------------------------------------------
-     AUTO-REDIRECT FOR DEFAULT ROUTE
-  ------------------------------------------------------------- */
   useEffect(() => {
     if (pathname === "/" && !userRoles.isSuperAdmin) {
       const defaultRoute =
@@ -225,16 +208,10 @@ export default function LeftSidebar() {
     }
   }, [pathname, filteredPublicModules, filteredAdminModules, userRoles.isSuperAdmin, router]);
 
-  /* -------------------------------------------------------------
-     ACTIVE TAB UPDATE
-  ------------------------------------------------------------- */
   useEffect(() => {
     setActiveTab(routeToTab[pathname] || null);
   }, [pathname, routeToTab]);
 
-  /* -------------------------------------------------------------
-     STABLE HANDLERS
-  ------------------------------------------------------------- */
   const handleNavigation = useCallback((path, label) => {
     setActiveTab(label);
     router.push(path);
@@ -257,9 +234,6 @@ export default function LeftSidebar() {
     setActiveTab(null);
   }, [filteredPublicModules, filteredAdminModules, router]);
 
-  /* -------------------------------------------------------------
-     MENU SECTIONS
-  ------------------------------------------------------------- */
   const publicMenuSection = useMemo(() => {
     if (filteredPublicModules.length === 0) return null;
 
@@ -318,9 +292,6 @@ export default function LeftSidebar() {
     );
   }, [handleLogout, getStable]);
 
-  /* -------------------------------------------------------------
-     LOADING + NOT AUTH
-  ------------------------------------------------------------- */
   if (!initialized || loading) {
     return (
       <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
@@ -354,9 +325,6 @@ export default function LeftSidebar() {
     );
   }
 
-  /* -------------------------------------------------------------
-     MAIN SIDEBAR
-  ------------------------------------------------------------- */
   return (
     <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
       <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">

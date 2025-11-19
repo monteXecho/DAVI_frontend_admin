@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react';
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea';
-import ProtectedLayout from '@/components/ProtectedLayout';
 import PdfSnippetList from '@/components/PdfSnippetList';
 import { useApi } from '@/lib/useApi';
 import UploadBttn from '@/components/buttons/UploadBttn';
@@ -92,57 +91,55 @@ export default function DocumentClient() {
   };
 
   return (
-    <ProtectedLayout>
-      <div className="w-full h-full flex flex-col gap-[50px] lg:py-[143px] lg:px-[97px] px-[25px] py-[22px] overflow-scroll scrollbar-hide">
-        <section className="flex flex-col gap-[52px]">
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleDocumentUpload}
-          />
+    <div className="w-full h-full flex flex-col gap-[50px] lg:py-[143px] lg:px-[97px] px-[25px] py-[22px] overflow-scroll scrollbar-hide">
+      <section className="flex flex-col gap-[52px]">
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleDocumentUpload}
+        />
 
-          {renderUploadSection()}
+        {renderUploadSection()}
 
-          {submittedQuestion && (
-            <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
-              <p className="w-fit h-[24px] m-auto text-[#342222] text-[16px] leading-[24px] font-normal font-Montserrat">
-                {submittedQuestion}
-              </p>
-              {loadingCardVisible && (
-                <div className="w-[29px] h-[29px] m-auto border-4 border-t-[#23BD92] border-[#F9FBFA] rounded-full animate-spin" />
-              )}
-            </div>
-          )}
+        {submittedQuestion && (
+          <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
+            <p className="w-fit h-[24px] m-auto text-[#342222] text-[16px] leading-[24px] font-normal font-Montserrat">
+              {submittedQuestion}
+            </p>
+            {loadingCardVisible && (
+              <div className="w-[29px] h-[29px] m-auto border-4 border-t-[#23BD92] border-[#F9FBFA] rounded-full animate-spin" />
+            )}
+          </div>
+        )}
 
-          {response && (
-            <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
-              {response}
-            </div>
-          )}
+        {response && (
+          <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
+            {response}
+          </div>
+        )}
 
-          {Array.isArray(documents) && documents.length > 0 && (
-            <section className="w-full">
-              <PdfSnippetList documents={documents} />
-            </section>
-          )}
-          
-          {error && (
-            <div className="text-red-600 text-[16px] font-medium">
-              {error.message || 'Er is een fout opgetreden.'}
-            </div>
-          )}
+        {Array.isArray(documents) && documents.length > 0 && (
+          <section className="w-full">
+            <PdfSnippetList documents={documents} />
+          </section>
+        )}
+        
+        {error && (
+          <div className="text-red-600 text-[16px] font-medium">
+            {error.message || 'Er is een fout opgetreden.'}
+          </div>
+        )}
 
-          {!loadingCardVisible && submittedQuestion && (
-            <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
-          )}
+        {!loadingCardVisible && submittedQuestion && (
+          <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
+        )}
 
-          {!submittedQuestion && !loadingCardVisible && (
-            <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
-          )}
-        </section>
+        {!submittedQuestion && !loadingCardVisible && (
+          <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
+        )}
+      </section>
 
-      </div>
-    </ProtectedLayout>
+    </div>
   );
 }
