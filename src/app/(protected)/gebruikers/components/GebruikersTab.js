@@ -22,7 +22,6 @@ export default function GebruikersTab({
   users = [],
   roles = [],
   onEditUser,
-  onDocumenten,
   onDocumentenForUser,
   onAddRoleToUsers,
   onDeleteUsers,
@@ -45,6 +44,21 @@ export default function GebruikersTab({
   const [searchQuery, setSearchQuery] = useState("");
 
   const { items: sortedUsers, requestSort, sortConfig } = useSortableData(users);
+
+  // Get URL search params
+  const [urlParams, setUrlParams] = useState({});
+  
+  useEffect(() => {
+    // Check URL for role parameter
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const roleParam = searchParams.get('role');
+      
+      if (roleParam) {
+        setSelectedRole(roleParam);
+      }
+    }
+  }, []);
 
   // Map roles for folders
   const roleMap = useMemo(() => {

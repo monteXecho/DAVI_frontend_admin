@@ -34,6 +34,18 @@ export default function AllDocumentsTab({
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single")
 
+  // Check URL for role parameter on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const roleParam = searchParams.get('role');
+      
+      if (roleParam) {
+        setSelectedRole(roleParam);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const roleNames = roles.map(role => role.name || role)
     setAllOptions1(["Alle Rollen", ...roleNames])

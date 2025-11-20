@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AddButton from '@/components/buttons/AddButton'
 import CheckBox from '@/components/buttons/CheckBox'
 import SearchBox from '@/components/input/SearchBox'
@@ -12,6 +13,10 @@ import SortableHeader from '@/components/SortableHeader'
 import { useSortableData } from '@/lib/useSortableData'
 
 export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlRole = searchParams.get('role')
+  
   const allOptions = ['Bulkacties', 'Verwijderen']
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0])
   const [search, setSearch] = useState('')
@@ -19,8 +24,23 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
   const [selectedRoles, setSelectedRoles] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState('single')
   const [expandedFolders, setExpandedFolders] = useState(new Set())
+  const [selectedRoleFromUrl, setSelectedRoleFromUrl] = useState(null)
 
   const { items: sortedRoles, requestSort, sortConfig } = useSortableData(roles)
+
+  // Listen for URL parameter changes
+  useEffect(() => {
+    if (urlRole) {
+      const role = roles.find(r => r.name === urlRole)
+      if (role) {
+        setSelectedRoleFromUrl(role)
+        // You might want to automatically filter or highlight this role
+        console.log(`Role from URL: ${urlRole}`, role)
+      }
+    } else {
+      setSelectedRoleFromUrl(null)
+    }
+  }, [urlRole, roles])
 
   const filteredRoles = useMemo(() => {
     const lowerSearch = search.toLowerCase()
@@ -34,6 +54,20 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
       return matchName || matchFolder
     })
   }, [sortedRoles, search])
+
+  // Handle click on user count
+  const handleUserCountClick = (role) => {
+    if (role.user_count > 0) {
+      router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
+    }
+  }
+
+  // Handle click on document count
+  const handleDocumentCountClick = (role) => {
+    if (role.document_count > 0) {
+      router.push(`/documenten?role=${encodeURIComponent(role.name)}`)
+    }
+  }
 
   // Highlight matching search terms in text
   const highlightText = (text, searchTerm) => {
@@ -225,6 +259,11 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
             ({selectedRoles.size} geselecteerd)
           </span>
         )}
+        {selectedRoleFromUrl && (
+          <span className="ml-2 text-[#23BD92] font-semibold">
+            • Gefilterd op: {selectedRoleFromUrl.name}
+          </span>
+        )}
       </div>
 
       {/* Controls */}
@@ -307,7 +346,9 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
             {filteredRoles.map((role) => (
               <tr
                 key={role.name}
-                className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                className={`h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors ${
+                  selectedRoleFromUrl && role.name === selectedRoleFromUrl.name ? 'bg-[#23BD92]/10' : ''
+                }`}
               >
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-3 font-montserrat text-[16px] text-black">
@@ -321,14 +362,35 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                 </td>
 
                 <td className="px-4 py-2 text-center font-montserrat text-[16px] text-black">
-                  {role.user_count ?? 0}
+                  <button
+                    onClick={() => handleUserCountClick(role)}
+                    className={`transition-colors ${
+                      role.user_count > 0 
+                        ? 'hover:underline cursor-pointer' 
+                        : 'cursor-default'
+                    }`}
+                    disabled={role.user_count === 0}
+                    title={role.user_count > 0 ? `Bekijk gebruikers voor ${role.name}` : 'Geen gebruikers'}
+                  >
+                    {role.user_count ?? 0}
+                  </button>
                 </td>
 
                 <td className="px-4 py-2 text-center font-montserrat text-[16px] text-black">
-                  {role.document_count ?? 0}
+                  <button
+                    onClick={() => handleDocumentCountClick(role)}
+                    className={`transition-colors ${
+                      role.document_count > 0 
+                        ? 'hover:underline cursor-pointer' 
+                        : 'cursor-default'
+                    }`}
+                    disabled={role.document_count === 0}
+                    title={role.document_count > 0 ? `Bekijk documenten voor ${role.name}` : 'Geen documenten'}
+                  >
+                    {role.document_count ?? 0}
+                  </button>
                 </td>
 
-                {/* MAPPEN (folders with exact same style as GebruikersTab) */}
                 <td className="px-4 py-2 font-montserrat text-[16px] text-black">
                   {renderFolders(role)}
                 </td>
@@ -366,7 +428,6 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
         )}
       </div>
 
-      {/* Modal */}
       {isDeleteModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
