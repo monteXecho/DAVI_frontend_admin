@@ -1,4 +1,3 @@
-// components/modal/BulkImportModal.jsx
 import { useState, useRef } from "react";
 import { X, Upload, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 

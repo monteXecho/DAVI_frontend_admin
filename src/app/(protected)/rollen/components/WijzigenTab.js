@@ -16,7 +16,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
   const [error, setError] = useState("")
   const [initialized, setInitialized] = useState(false)
 
-  // Available modules based on user's account
   const availableModules = useMemo(() => {
     if (!user?.modules) return []
     return Object.entries(user.modules).map(([name, config]) => ({
@@ -26,7 +25,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     }))
   }, [user])
 
-  // Initialize roles
   useEffect(() => {
     const roleList = roles.map(r => r.name)
     setRoleNames(roleList)
@@ -42,7 +40,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     }
   }, [roles, selectedRole, initialized])
 
-  // Update folders & modules when selected role changes
   useEffect(() => {
     if (!selected) return
 
@@ -68,7 +65,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     setModules(merged)
   }, [selected, roles, availableModules])
 
-  // Folder duplicated validation
   useEffect(() => {
     const cleaned = folders.map(f =>
       f.trim().replace(/^\/+|\/+$/g, "")
@@ -85,29 +81,24 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     }
   }, [folders])
 
-  // Folder helpers
   const addFolder = () => setFolders(prev => [...prev, ""])
   const removeFolder = (index) =>
     setFolders(prev => prev.filter((_, i) => i !== index))
   const updateFolder = (index, value) =>
     setFolders(prev => prev.map((f, i) => (i === index ? value : f)))
 
-  // Only editable (non-locked) modules
   const editableModules = useMemo(() => modules.filter(m => !m.locked), [modules])
 
-  // All enabled calculation for editable modules
   const allEnabled = useMemo(() => {
     return editableModules.length > 0 && editableModules.every(m => m.enabled)
   }, [editableModules])
 
-  // Toggle all editable modules
   const toggleAll = val => {
     setModules(prev =>
       prev.map(m => (m.locked ? m : { ...m, enabled: val }))
     )
   }
 
-  // Toggle single editable module
   const toggleOne = (index, val) => {
     const editableIndexes = modules.map((m, i) => !m.locked ? i : -1).filter(i => i !== -1)
     const moduleIndex = editableIndexes[index]
@@ -116,7 +107,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     )
   }
 
-  // Save role
   const handleSave = async () => {
     if (error) return
 
@@ -146,7 +136,6 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
     }
   }
 
-  // Delete role
   const handleDeleteRole = async () => {
     if (!selected) return alert("Geen rol geselecteerd.")
     if (!confirm(`Weet je zeker dat je de rol "${selected}" wilt verwijderen?`)) return
@@ -196,7 +185,7 @@ export default function WijzigenTab({ roles = [], onAddOrUpdateRole, onDeleteRol
               type="text"
               value={folder}
               onChange={e => updateFolder(index, e.target.value)}
-              placeholder="//beleid"
+              placeholder="Mapnaam..."
               className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
             />
             <div className="flex gap-1.5">

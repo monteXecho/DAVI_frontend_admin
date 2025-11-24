@@ -17,10 +17,8 @@ export default function DeleteAdmin({
     const hasReassign = reassignEmail.trim() !== "";
 
     if (hasReassign) {
-      // Only call reassign
       onReAssign(selectedCompany.id, selectedAdminId, reassignName, reassignEmail);
     } else {
-      // Only delete
       onDelete(selectedCompany.id, selectedAdminId);
     }
 
@@ -106,8 +104,8 @@ export default function DeleteAdmin({
           onClick={handleDelete}
           disabled={
             reassignEmail.trim()
-              ? !(reassignEmail && reassignName)  // if reassigning → require both fields
-              : false                              // if only deleting → allow
+              ? !(reassignEmail && reassignName)  
+              : false                             
           }
         >
           {reassignEmail.trim() ? "Remove & Create New Admin" : "Remove Admin"}

@@ -1,3 +1,5 @@
+'use client'
+
 import DocumentClient from './DocumentClient';
 
 export default function DocumentPage() {

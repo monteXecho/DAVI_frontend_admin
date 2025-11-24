@@ -6,7 +6,6 @@ import UsersTab from "./components/UsersTab"
 import AppearInRoleTab from "./components/AppearInRoleTab"
 import GekoppeldDocumentTab from "./components/AppearInFolderTab"
 import ToevoegenTab from "./components/ToevoegenTab"
-import MappenTab from "./components/MappenTab"
 import { useApi } from "@/lib/useApi"
 
 const tabsConfig = [
@@ -15,7 +14,6 @@ const tabsConfig = [
   { label: 'Gebruikers', component: UsersTab, selectable: false },
   { label: 'Komt voor bij rol', component: AppearInRoleTab, selectable: false },
   { label: 'Komt voor in map', component: GekoppeldDocumentTab, selectable: false },
-  { label: 'Mappen', component: MappenTab, selectable: true },
 ]
 
 export default function Documents() {
@@ -30,7 +28,6 @@ export default function Documents() {
 
   const { getRoles, uploadDocumentForRole, getAdminDocuments, deleteDocuments } = useApi()
 
-  // ✅ Dynamically make some tabs selectable if a document is selected
   const isDocSelected = !!selectedDocName
 
   const dynamicTabs = tabsConfig.map(tab => {
@@ -77,6 +74,46 @@ export default function Documents() {
       return res
     } catch (err) {
       console.error("❌ Failed to upload doc:", err)
+    }
+  }
+
+  const handleReplaceDocuments = async (documentsToDelete, newFiles, uploadTargets) => {
+    try {
+      const deleteRes = await deleteDocuments(documentsToDelete)
+      if (!deleteRes?.success) {
+        throw new Error("Failed to delete old documents")
+      }
+
+      const uploadPromises = []
+      
+      for (const file of newFiles) {
+        for (const target of uploadTargets) {
+          const formData = new FormData()
+          formData.append('file', file)
+          
+          uploadPromises.push(
+            uploadDocumentForRole(target.role, target.folder, formData)
+          )
+        }
+      }
+
+      const uploadResults = await Promise.all(uploadPromises)
+      
+      const failedUploads = uploadResults.filter(result => !result?.success)
+      if (failedUploads.length > 0) {
+        console.warn("Some uploads failed:", failedUploads)
+      }
+
+      await refreshData()
+
+      return {
+        success: true,
+        message: `Successfully replaced ${documentsToDelete.length} document(s) with ${newFiles.length} new file(s)`
+      }
+
+    } catch (err) {
+      console.error("Failed to replace documents:", err)
+      throw err
     }
   }
 
@@ -178,6 +215,7 @@ export default function Documents() {
               onShowRoles={handleShowRoles}
               onShowFolders={handleShowFolders}
               onDeleteDocuments={handleDeleteDocuments}
+              onReplaceDocuments={handleReplaceDocuments} 
               onMoveToToevoegen={handleoveToToevoegen}
               selectedUsers={selectedUsers} 
               selectedDocName={selectedDocName}

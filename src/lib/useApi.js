@@ -7,20 +7,6 @@ export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // apiClient.interceptors.response.use(
-  //   (response) => response,
-  //   (error) => {
-  //     if (error.response?.status === 401 || error.response?.status === 403) {
-  //       if (typeof window !== 'undefined') {
-  //         window.dispatchEvent(new CustomEvent('authError', { 
-  //           detail: { status: error.response.status }
-  //         }));
-  //       }
-  //     }
-  //     return Promise.reject(error);
-  //   }
-  // );
-
   const getToken = useCallback(async () => {
     if (!keycloak?.authenticated) {
       throw new Error('User is not authenticated');
@@ -428,6 +414,27 @@ export function useApi() {
     [withAuth]
   );
 
+  const deleteFolders = useCallback(
+    (payload) =>
+      withAuth((token) => {
+        console.log('Sending role_name,and folder_names:', payload.role_names,payload.folder_names);
+        return apiClient
+          .post(`/company-admin/folders/delete`, 
+            { role_names:payload.role_names, folder_names:payload.folder_names }, 
+            createAuthHeaders(token)
+          )
+          .then((res) => {
+            console.log('Delete folders response:', res.data);
+            return res.data;
+          })
+          .catch((err) => {
+            console.error('[useApi] Delete folders failed:', err.response?.data || err);
+            throw err;
+          })
+      }),
+    [withAuth]
+  );
+
   const assignRole = useCallback(
     (user_id, role_name) =>
       withAuth((token) =>
@@ -471,6 +478,7 @@ export function useApi() {
     getRoles,
     addOrUpdateRole,
     deleteRoles,
+    deleteFolders,
     assignRole,
 
     assignModules,

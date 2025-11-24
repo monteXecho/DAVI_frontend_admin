@@ -1,7 +1,24 @@
 import { X } from "lucide-react";
 
-export default function DeleteDocumentModal({ documents, onConfirm, onClose, isMultiple }) {
+export default function DeleteDocumentModal({
+  documents,
+  onConfirm,
+  onClose,
+  isMultiple
+}) {
   const single = !isMultiple ? documents?.[0] : null;
+
+  const uniqMap = new Map();
+  (documents || []).forEach((d) => {
+    const key = `${d.role}|||${d.folder}`;
+    if (!uniqMap.has(key)) {
+      uniqMap.set(key, { folder: d.folder, role: d.role });
+    }
+  });
+  const uniqueFolders = Array.from(uniqMap.values());
+
+  const previewItems = uniqueFolders.slice(0, 5);
+  const remaining = Math.max(0, uniqueFolders.length - previewItems.length);
 
   return (
     <div className="relative w-fit h-fit py-7 px-13 bg-white shadow-md rounded-2xl flex flex-col items-center justify-center gap-10">
@@ -19,39 +36,37 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
         <span className="text-white text-3xl leading-none">×</span>
       </div>
 
-      {/* MULTIPLE DOCUMENTS */}
+      {/* MULTIPLE FOLDERS */}
       {isMultiple ? (
         <div className="text-center text-[18px] leading-6 text-black">
           <p className="mb-4">
             Weet je zeker dat je<br />
-            <span className="font-semibold">{documents.length} documenten</span><br />
+            <span className="font-semibold">{uniqueFolders.length} mappen</span><br />
             wilt verwijderen?
           </p>
 
-          {/* list of docs */}
           <div className="h-fit overflow-y-auto scrollbar-hide text-sm mt-2">
-            {documents.slice(0, 5).map((doc, index) => (
+            {previewItems.map((it, index) => (
               <div key={index} className="truncate">
-                • {doc.file} — map: {doc.folder}, rol: {doc.role}
+                • map: {it.folder} — rol: {it.role}
               </div>
             ))}
 
-            {documents.length > 5 && (
+            {remaining > 0 && (
               <div className="text-gray-500">
-                ... en {documents.length - 5} meer
+                ... en {remaining} meer
               </div>
             )}
           </div>
         </div>
       ) : (
-        /* SINGLE DOCUMENT */
+        /* SINGLE FOLDER */
         <p className="text-center text-[18px] leading-6 text-black px-6">
-          Weet je zeker dat je het document<br />
-          <span className="font-semibold">"{single?.file}"</span><br />
-          wilt verwijderen uit de map<br />
+          Weet je zeker dat je de map<br />
           <span className="font-semibold">"{single?.folder}"</span><br />
-          voor rol<br />
+          wilt verwijderen uit de rol<br />
           <span className="font-semibold">"{single?.role}"</span>?
+          <br />
         </p>
       )}
 
@@ -61,8 +76,8 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
         className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-fit h-fit px-4 py-2 flex items-center justify-center"
       >
         {isMultiple
-          ? `Verwijder ${documents.length} documenten`
-          : "Verwijder document"}
+          ? `Verwijder ${uniqueFolders.length} mappen`
+          : "Verwijder map"}
       </button>
     </div>
   );

@@ -46,8 +46,9 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
       ) : (
         /* SINGLE DOCUMENT */
         <p className="text-center text-[18px] leading-6 text-black px-6">
-          Weet je zeker dat je het document<br />
+          Weet je zeker dat je <br />
           <span className="font-semibold">"{single?.file_name}"?</span><br />
+          wilt verwijderen?
         </p>
       )}
 

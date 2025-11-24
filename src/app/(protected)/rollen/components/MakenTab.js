@@ -8,12 +8,11 @@ import SuccessRoleModal from "./modals/SuccessRoleModal"
 
 export default function MakenTab({ user, onAddOrUpdateRole }) {
   const [roleName, setRoleName] = useState("")
-  const [folders, setFolders] = useState(["/beleid", "/kwaliteit"])
+  const [folders, setFolders] = useState([""])
   const [modules, setModules] = useState([])
   const [loading, setLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-  // Initialize modules from user account
   useEffect(() => {
     if (user?.modules) {
       const userModules = Object.entries(user.modules).map(([name, val]) => ({
@@ -25,33 +24,27 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
     }
   }, [user])
 
-  // Filtered editable modules
   const editableModules = useMemo(() => modules.filter(m => !m.locked), [modules])
 
-  // "Select all" toggle state
   const allEnabled = useMemo(
     () => editableModules.length > 0 && editableModules.every(m => m.enabled),
     [editableModules]
   )
 
-  // Toggle all editable modules
   const toggleAll = (val) => {
     setModules(prev => prev.map(m => m.locked ? m : { ...m, enabled: val }))
   }
 
-  // Toggle single module
   const toggleOne = (index, val) => {
     const editableIndexes = modules.map((m, i) => !m.locked ? i : -1).filter(i => i !== -1)
     const moduleIndex = editableIndexes[index]
     setModules(prev => prev.map((m, i) => i === moduleIndex ? { ...m, enabled: val } : m))
   }
 
-  // Folder helpers
   const addFolder = () => setFolders(prev => [...prev, ""])
   const removeFolder = (index) => setFolders(prev => prev.filter((_, i) => i !== index))
   const updateFolder = (index, value) => setFolders(prev => prev.map((f, i) => i === index ? value : f))
 
-  // Save role
   const handleSave = async () => {
     if (!roleName.trim()) {
       alert("Voer een rolnaam in.")
@@ -83,7 +76,7 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
   const handleModalClose = () => {
     setShowSuccessModal(false)
     setRoleName("")
-    setFolders(["/beleid", "/kwaliteit"])
+    setFolders([""])
   }
 
   return (
@@ -96,7 +89,7 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
             type="text"
             value={roleName}
             onChange={(e) => setRoleName(e.target.value)}
-            placeholder="Bijv. Beheerder"
+            placeholder="Rolnaam..."
             className="mb-5 w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
           />
 
@@ -108,7 +101,7 @@ export default function MakenTab({ user, onAddOrUpdateRole }) {
                 type="text"
                 value={folder}
                 onChange={(e) => updateFolder(index, e.target.value)}
-                placeholder="//beleid"
+                placeholder="Mapnaam..."
                 className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
               />
               <div className="flex gap-1.5">

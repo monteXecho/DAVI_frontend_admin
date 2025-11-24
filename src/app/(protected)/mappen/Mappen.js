@@ -20,7 +20,7 @@ export default function Mappen() {
   const [selectedDocRole, setSelectedDocRole] = useState("")
   const [loading, setLoading] = useState(true)
 
-  const { getRoles, getAdminDocuments, deleteDocuments } = useApi()
+  const { getRoles, getAdminDocuments, deleteFolders } = useApi()
 
   const isDocSelected = !!selectedDocName
 
@@ -62,15 +62,16 @@ export default function Mappen() {
   const handleShowUsers = (users, docName, folderName, roleName) => {
     setSelectedUsers(users)
     setSelectedDocName(docName)
-    setSelectedDocFolder(folderName) // Use the new state
-    setSelectedDocRole(roleName) // Use the new state
+    setSelectedDocFolder(folderName)
+    setSelectedDocRole(roleName) 
     setActiveIndex(1) 
   }
 
-  const handleDeleteDocuments = async (documentsToDelete) => {
+  const handleDeleteFolders = async (payload) => {
     try {
-      const res = await deleteDocuments(documentsToDelete)
+      const res = await deleteFolders(payload)
       if (res?.success) {
+        console.log("✅ Folders deleted successfully", res)
         await refreshData()
         return res
       }
@@ -142,7 +143,7 @@ export default function Mappen() {
               documents={documents}
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 
-              onDeleteDocuments={handleDeleteDocuments}
+              onDeleteFolders={handleDeleteFolders}
               selectedUsers={selectedUsers} 
               selectedDocFolder={selectedDocFolder} 
               selectedDocRole={selectedDocRole} 

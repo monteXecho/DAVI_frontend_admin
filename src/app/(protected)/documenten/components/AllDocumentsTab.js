@@ -11,6 +11,7 @@ import GreenFolderIcon from "@/components/icons/GreenFolderIcon"
 import RollenItem from "@/assets/rollen_item.png"
 import GebruikersItem from "@/assets/gebruikers_item.png"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
+import ReplaceDocumentsModal from "./modals/ReplaceDocumentsModal"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 
@@ -21,20 +22,21 @@ export default function AllDocumentsTab({
   onShowUsers, 
   onShowRoles, 
   onShowFolders, 
-  onDeleteDocuments 
+  onDeleteDocuments,
+  onReplaceDocuments 
 }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [allOptions2, setAllOptions2] = useState([])
   const [selectedRole, setSelectedRole] = useState("Alle Rollen")
   const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
-  const allOptions3 = ["Bulkacties", "Verwijderen"]
+  const allOptions3 = ["Bulkacties", "Verwijderen", "Vervang"] 
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false) 
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single")
 
-  // Check URL for role parameter on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -51,10 +53,8 @@ export default function AllDocumentsTab({
     setAllOptions1(["Alle Rollen", ...roleNames])
   }, [roles])
 
-  // Set folder options based on selected role
   useEffect(() => {
     if (selectedRole === "Alle Rollen") {
-      // When "Alle Rollen" is selected, only show "Alle Mappen"
       setAllOptions2(["Alle Mappen"])
     } else if (documents && documents[selectedRole]) {
       const roleFolders = documents[selectedRole].folders?.map(folder => folder.name) || []
@@ -64,7 +64,6 @@ export default function AllDocumentsTab({
     }
   }, [selectedRole, documents]);
 
-  // Reset folder when role changes
   useEffect(() => {
     setSelectedFolder("Alle Mappen");
   }, [selectedRole]);
@@ -105,7 +104,6 @@ export default function AllDocumentsTab({
     )
   }, [documents])
 
-  // Get documents for specific role and folder
   const getDocumentsForRoleAndFolder = useCallback((role, folder) => {
     if (!documents || !documents[role]) return []
     
@@ -148,7 +146,6 @@ export default function AllDocumentsTab({
 
   const baseDocuments = useMemo(() => {
     if (selectedRole === "Alle Rollen") {
-      // When "Alle Rollen" is selected, always show all documents regardless of folder selection
       return getAllDocuments()
     } else {
       return selectedFolder === "Alle Mappen" 
@@ -175,6 +172,17 @@ export default function AllDocumentsTab({
       doc.role.toLowerCase().includes(lowerSearch)
     )
   }, [sortedDocuments, searchQuery])
+
+  const getSelectedRoleFolderCombinations = useCallback(() => {
+    const combinations = new Set()
+    getSelectedDocumentsData().forEach(doc => {
+      combinations.add(`${doc.role}::${doc.folder}`)
+    })
+    return Array.from(combinations).map(combo => {
+      const [role, folder] = combo.split('::')
+      return { role, folder }
+    })
+  }, [selectedDocuments, filteredDocuments])
 
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
@@ -206,6 +214,14 @@ export default function AllDocumentsTab({
         setSelectedBulkAction("Bulkacties")
       }
     }
+    if (action === "Vervang") {
+      if (selectedDocuments.size > 0) {
+        setIsReplaceModalOpen(true)
+      } else {
+        alert("Selecteer eerst documenten om te vervangen.")
+        setSelectedBulkAction("Bulkacties")
+      }
+    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -224,6 +240,28 @@ export default function AllDocumentsTab({
     } finally {
       setIsDeleteModalOpen(false)
       setSelectedBulkAction("Bulkacties")
+    }
+  }
+
+  const handleReplaceConfirm = async (files) => {
+    try {
+      if (onReplaceDocuments && selectedDocuments.size > 0 && files.length > 0) {
+        const docsToDelete = getSelectedDocumentsData().map(doc => ({
+          fileName: doc.file,
+          role: doc.role,
+          path: doc.path,
+          folder: doc.folder
+        }))
+        
+        const uploadTargets = getSelectedRoleFolderCombinations()
+        
+        await onReplaceDocuments(docsToDelete, files, uploadTargets)
+        setSelectedDocuments(new Set())
+        setIsReplaceModalOpen(false)
+        setSelectedBulkAction("Bulkacties")
+      }
+    } catch (err) {
+      alert("Failed to replace documents. Please try again.")
     }
   }
 
@@ -273,7 +311,7 @@ export default function AllDocumentsTab({
             onChange={setSelectedFolder}
             allOptions={allOptions2}
             placeholder="Selecteer map..."
-            disabled={selectedRole === "Alle Rollen"} // Disable folder dropdown when "Alle Rollen" is selected
+            disabled={selectedRole === "Alle Rollen"} 
           />
         </div>
       </div>
@@ -451,6 +489,30 @@ export default function AllDocumentsTab({
                 setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleDeleteConfirm}
+              isMultiple={selectedDocuments.size > 1}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* >>> NEW <<< Replace Documents Modal */}
+      {isReplaceModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={() => {
+            setIsReplaceModalOpen(false);
+            setSelectedBulkAction("Bulkacties");
+          }}
+        >
+          <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
+            <ReplaceDocumentsModal
+              documents={getSelectedDocumentsData()}
+              uploadTargets={getSelectedRoleFolderCombinations()}
+              onClose={() => {
+                setIsReplaceModalOpen(false);
+                setSelectedBulkAction("Bulkacties");
+              }}
+              onConfirm={handleReplaceConfirm}
               isMultiple={selectedDocuments.size > 1}
             />
           </div>

@@ -2,7 +2,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 
-import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
@@ -53,19 +52,17 @@ export default function MijnTab() {
         return res
       }
     } catch (err) {
-      console.error("❌ Failed to delete documents:", err)
+      console.error("Failed to delete documents:", err)
       throw err
     }
   }
 
-  // Build rows including a lowercase field for case-insensitive sorting
   const getAllDocuments = useCallback(() => {
     if (!Array.isArray(documents)) return []
 
     return documents.map(doc => ({
       id: doc.file_name,
       file_name: doc.file_name,
-      // normalized field used purely for sorting (case-insensitive)
       file_name_lower: (doc.file_name || "").toLowerCase()
     }))
   }, [documents])
@@ -74,7 +71,6 @@ export default function MijnTab() {
     return getAllDocuments()
   }, [getAllDocuments])
 
-  // Sort by file_name_lower (case-insensitive)
   const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
 
   const filteredDocuments = useMemo(() => {
@@ -149,14 +145,14 @@ export default function MijnTab() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full px-[97px] py-[143px] overflow-scroll scrollbar-hide">
-      <div className="flex mb-[50px] gap-2 items-center">
-        <div onClick={() => {router.push('/documentchat')}}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div className="flex flex-col w-full h-full px-[25px] md:px-[97px] py-[22px] md:py-[143px] overflow-scroll scrollbar-hide">
+      <div className="flex flex-col md:flex-row mb-[50px] gap-2 md:items-center">
+        <div onClick={() => {router.push('/documentchat')}} className="w-fit cursor-pointer">
+          <svg className="w-9 h-9 md:w-15 md:h-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M9.998 0C15.516 0 19.995 4.48 19.995 9.998C19.995 15.515 15.516 19.995 9.998 19.995C4.48 19.995 0 15.515 0 9.998C0 4.48 4.48 0 9.998 0ZM8.475 6.21C8.475 6.21 6.973 7.715 5.22 9.469C5.073 9.616 5 9.808 5 10C5 10.192 5.073 10.383 5.22 10.53C6.973 12.284 8.474 13.788 8.474 13.788C8.619 13.933 8.809 14.005 9 14.005C9.192 14.004 9.384 13.931 9.531 13.784C9.823 13.491 9.825 13.018 9.534 12.727L7.557 10.75H14.25C14.664 10.75 15 10.414 15 10C15 9.586 14.664 9.25 14.25 9.25H7.557L9.535 7.271C9.825 6.982 9.822 6.509 9.529 6.217C9.382 6.07 9.19 5.996 8.999 5.995C8.809 5.995 8.619 6.066 8.475 6.21Z" fill="black"/>
           </svg>
         </div>
-        <span className="text-[32px] font-bold">
+        <span className="text-[30px] md:text-[32px] font-bold">
           Mijn documenten
         </span>
       </div>
@@ -173,15 +169,15 @@ export default function MijnTab() {
 
       {/* Action Bar */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
-        <div className="flex w-2/3 gap-4 items-center">
-          <div className="w-4/9">
+        <div className="flex flex-col md:flex-row w-full md:w-2/3 gap-4 md:items-center">
+          <div className="w-full md:w-4/9">
             <DropdownMenu
               value={selectedBulkAction}
               onChange={handleBulkAction}
               allOptions={allOptions3}
             />
           </div>
-          <div className="w-4/9">
+          <div className="w-full md:w-4/9">
             <SearchBox 
               placeholderText="Zoek document..." 
               value={searchQuery}
@@ -214,12 +210,12 @@ export default function MijnTab() {
                       onChange={handleSelectAll}
                       color="#23BD92" 
                     />
-                    Document
+                    Bestand
                   </div>
                 </SortableHeader>
 
                 <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
-                  Acties
+                  
                 </th>
               </tr>
             </thead>

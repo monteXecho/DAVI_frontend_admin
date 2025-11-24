@@ -155,7 +155,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
       case UploadStates.SUCCESS:
         const totalUploads = uploadedFiles.length * uploadTargets.length
         
-        // Create a custom component for multiple files
         if (uploadedFiles.length > 1) {
           return (
             <div className="flex flex-col w-2/3 gap-4">
@@ -180,7 +179,6 @@ export default function ToevoegenTab({ roles = [], onUploadDocument }) {
             </div>
           )
         } else {
-          // Single file - use the original SuccessBttn
           return (
             <>
               <SuccessBttn text={uploadedFiles[0]?.name} />

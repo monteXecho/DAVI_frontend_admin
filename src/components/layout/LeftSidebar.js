@@ -179,7 +179,7 @@ export default function LeftSidebar() {
   const routeToTab = useMemo(() => {
     const map = {
       "/documentchat": "Documentenchat",
-      "/documentchat/mijn": "Documentenchat", // Add this line
+      "/documentchat/mijn": "Documentenchat",
       "/GGD": "GGD Checks",
       "/compagnies": "Compagnies",
       "/rollen": "Rollen",

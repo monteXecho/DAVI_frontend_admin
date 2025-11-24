@@ -12,7 +12,6 @@ const groupByFileAndPage = (docs = []) => {
     if (!grouped[file]) grouped[file] = {};
     if (!grouped[file][page]) grouped[file][page] = [];
     
-    // Only add unique snippets (avoid duplicates)
     const snippetExists = grouped[file][page].some(
       existing => existing.snippet === doc.content
     );

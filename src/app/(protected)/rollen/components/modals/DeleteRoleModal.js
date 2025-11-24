@@ -1,4 +1,3 @@
-// components/modal/DeleteRoleModal.jsx
 import { X } from "lucide-react"
 
 export default function DeleteRoleModal({ roles, onConfirm, onClose, isMultiple }) {

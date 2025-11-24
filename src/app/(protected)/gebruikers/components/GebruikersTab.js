@@ -45,11 +45,9 @@ export default function GebruikersTab({
 
   const { items: sortedUsers, requestSort, sortConfig } = useSortableData(users);
 
-  // Get URL search params
   const [urlParams, setUrlParams] = useState({});
   
   useEffect(() => {
-    // Check URL for role parameter
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const roleParam = searchParams.get('role');
@@ -60,7 +58,6 @@ export default function GebruikersTab({
     }
   }, []);
 
-  // Map roles for folders
   const roleMap = useMemo(() => {
     const map = new Map();
     roles.forEach((r) => {
@@ -79,15 +76,11 @@ export default function GebruikersTab({
     return ["Alle rollen", "Zonder rol", ...Array.from(set)];
   }, [sortedUsers]);
 
-  // Expanded folders per user+role
   const [expandedFolders, setExpandedFolders] = useState(new Set());
-  // Expanded roles per user
   const [expandedRolesPerUser, setExpandedRolesPerUser] = useState(new Set());
 
-  // Auto-expand when search matches are found - ONLY for specific matched roles/folders
   useEffect(() => {
     if (!searchQuery.trim()) {
-      // Clear all expansions when search is empty
       setExpandedFolders(new Set());
       setExpandedRolesPerUser(new Set());
       return;
@@ -106,10 +99,8 @@ export default function GebruikersTab({
         const roleObj = roleMap.get(roleName);
         const folders = roleObj?.folders ?? [];
         
-        // Check if role name matches search
         const roleMatches = roleName.toLowerCase().includes(searchTerm);
         
-        // Check if any folder matches search
         const folderMatches = folders.some(folder => 
           folder.toLowerCase().includes(searchTerm)
         );
@@ -117,14 +108,12 @@ export default function GebruikersTab({
         if (roleMatches || folderMatches) {
           userHasRoleOrFolderMatch = true;
           
-          // If folders match, expand the folders for this specific role
           if (folderMatches) {
             newExpandedFolders.add(`${user.id}::${roleName}`);
           }
         }
       });
 
-      // If user has role or folder matches, expand all roles to show the matches
       if (userHasRoleOrFolderMatch) {
         newExpandedRolesPerUser.add(user.id);
       }
@@ -134,9 +123,7 @@ export default function GebruikersTab({
     setExpandedRolesPerUser(newExpandedRolesPerUser);
   }, [searchQuery, sortedUsers, roleMap]);
 
-  // Enhanced search function that includes folders and roles
   const userMatchesSearch = (user, searchTerm) => {
-    // Check name and email
     if (
       user.Naam?.toLowerCase().includes(searchTerm) ||
       user.Email?.toLowerCase().includes(searchTerm)
@@ -144,12 +131,10 @@ export default function GebruikersTab({
       return true;
     }
 
-    // Check roles
     if (user.Rol?.some(role => role.toLowerCase().includes(searchTerm))) {
       return true;
     }
 
-    // Check folders in roles
     if (user.Rol?.some(role => {
       const roleObj = roleMap.get(role);
       const folders = roleObj?.folders ?? [];
@@ -161,7 +146,6 @@ export default function GebruikersTab({
     return false;
   };
 
-  // Check if a specific role has search matches
   const roleHasSearchMatch = (roleName) => {
     if (!searchQuery.trim()) return false;
     
@@ -175,7 +159,6 @@ export default function GebruikersTab({
     );
   };
 
-  // Check if a user has any role or folder matches (excluding name/email)
   const userHasRoleOrFolderMatch = (user) => {
     if (!searchQuery.trim()) return false;
     
@@ -192,16 +175,13 @@ export default function GebruikersTab({
     }) || false;
   };
 
-  // NEW: Check if user has any assigned roles
   const userHasAssignedRoles = (user) => {
     return user.Rol && user.Rol.length > 0;
   };
 
-  // Filter users
   const filteredData = useMemo(() => {
     let data = sortedUsers;
     
-    // First filter by selected role
     if (selectedRole !== "Alle rollen") {
       data =
         selectedRole === "Zonder rol"
@@ -209,7 +189,6 @@ export default function GebruikersTab({
           : data.filter((u) => u.Rol?.includes(selectedRole));
     }
 
-    // Then filter by search query
     if (searchQuery.trim()) {
       const searchTerm = searchQuery.toLowerCase();
       data = data.filter(user => userMatchesSearch(user, searchTerm));
@@ -223,9 +202,8 @@ export default function GebruikersTab({
       ? `${filteredData.length} gebruiker${filteredData.length !== 1 ? "s" : ""} met de rol "${selectedRole}"`
       : `${filteredData.length} gebruikers`;
 
-  const allBulkActions = ["Bulkacties", "Delete user", "Delete role", "Add role"];
+  const allBulkActions = ["Bulkacties", "Verwijder gebruiker", "Verwijder rol", "Rol toevoegen"];
 
-  // Selection
   const handleUserSelect = (id, val) => {
     setSelectedUsers((prev) => {
       const newSet = new Set(prev);
@@ -246,20 +224,19 @@ export default function GebruikersTab({
       .map((id) => users.find((u) => u.id === id))
       .filter(Boolean);
 
-  // Bulk Actions
   const handleBulkAction = (action) => {
     setBulkAction(action);
-    if (action === "Delete user") {
+    if (action === "Verwijder gebruiker") {
       if (selectedUsers.size === 0) return alert("Selecteer eerst een gebruikers om te verwijderen.");
       setDeleteMode("bulk");
       setIsDeleteModalOpen(true);
     }
-    if (action === "Delete role") {
+    if (action === "Verwijder rol") {
       if (selectedRole === "Alle rollen") return alert("Kies eerst een specifieke rol.");
       if (selectedUsers.size === 0) return alert("Selecteer eerst gebruikers.");
       handleDeleteRoleFromUsersConfirm();
     }
-    if (action === "Add role") {
+    if (action === "Rol toevoegen") {
       if (selectedUsers.size === 0) return alert("Selecteer eerst gebruikers.");
       setIsAddRoleModalOpen(true);
     }
@@ -314,7 +291,6 @@ export default function GebruikersTab({
     setDeletedUsersData([]);
   };
 
-  // Manual toggle functions
   const toggleFolderExpand = (userId, roleName) => {
     const key = `${userId}::${roleName}`;
     setExpandedFolders((prev) => {
@@ -332,7 +308,6 @@ export default function GebruikersTab({
     });
   };
 
-  // Highlight matching search terms in text
   const highlightText = (text, searchTerm) => {
     if (!searchTerm || !text) return text;
     
@@ -355,7 +330,6 @@ export default function GebruikersTab({
     );
   };
 
-  // Render role with folders (per user) with search highlighting
   const renderRoleWithFolders = (userId, roleName) => {
     const roleObj = roleMap.get(roleName);
     const folders = roleObj?.folders ?? [];
@@ -396,7 +370,6 @@ export default function GebruikersTab({
     );
   };
 
-  // Render roles section for a user
   const renderUserRoles = (user) => {
     if (!user.Rol || user.Rol.length === 0) {
       return (
@@ -411,7 +384,6 @@ export default function GebruikersTab({
       user.Email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // During search: show all roles if user has role/folder matches, otherwise show only first role
     const shouldShowAllRoles = isExpanded || hasRoleOrFolderMatch;
     const rolesToShow = shouldShowAllRoles ? user.Rol : user.Rol.slice(0, 1);
     const hiddenRolesCount = user.Rol.length - 1;

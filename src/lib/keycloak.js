@@ -17,7 +17,6 @@ export const keycloakLoginUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/realms/
   "&scope=openid" +
   "&response_mode=fragment";
 
-// helper to check if the user has at least one of the given roles
 export const hasRole = (keycloak, roles = []) => {
   if (!keycloak?.authenticated) return false;
   const userRoles = keycloak?.tokenParsed?.realm_access?.roles || [];

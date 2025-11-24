@@ -66,7 +66,6 @@ export default function RegisterPage() {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
 
-    // Clear specific errors when user starts typing
     if (name === "email") {
       setErrors(prev => ({ ...prev, emailExists: "", emailNotFound: "" }));
     }
@@ -101,11 +100,9 @@ export default function RegisterPage() {
   const parseBackendError = (errorData) => {
     console.log("🔍 Raw error data for parsing:", errorData);
     
-    // Case 1: Direct detail from backend (from HTTPException)
     if (errorData?.detail) {
       console.log("📦 Found detail field:", errorData.detail);
       
-      // Check if detail is a string that contains our error
       if (typeof errorData.detail === 'string') {
         if (errorData.detail.includes("User exists with same username")) {
           return "USERNAME_EXISTS";
@@ -123,11 +120,9 @@ export default function RegisterPage() {
       return errorData.detail;
     }
 
-    // Case 2: The backend is returning the raw Keycloak error string directly
     if (typeof errorData === "string") {
       console.log("📝 Processing string error:", errorData);
       
-      // Direct string matching for the exact Keycloak error
       if (errorData.includes('User exists with same username')) {
         console.log("🎯 Detected USERNAME_EXISTS from Keycloak error string");
         return "USERNAME_EXISTS";
@@ -157,7 +152,6 @@ export default function RegisterPage() {
     const emailError = validateEmail(form.email);
     const passwordConfirmError = validatePasswordConfirm(form.password, form.passwordConfirm);
 
-    // Clear previous errors
     setErrors({
       fullName: "",
       email: emailError,
@@ -177,19 +171,16 @@ export default function RegisterPage() {
       console.log("📨 Register API result:", result);
 
       if (result.ok) {
-        // Success case
         console.log("✅ Registration successful");
         setLoggedin(true);
         setForm({ fullName: "", email: "", password: "", passwordConfirm: "" });
       } else {
-        // Error case - handle the error data
         const errorData = result.data;
         console.log("🚨 Registration failed with data:", errorData);
         
         const errorDetail = parseBackendError(errorData);
         console.log("🎯 Parsed error detail:", errorDetail);
 
-        // Handle specific error cases from backend
         switch (errorDetail) {
           case "EMAIL_NOT_FOUND":
             console.log("📧 Handling EMAIL_NOT_FOUND");
@@ -225,12 +216,11 @@ export default function RegisterPage() {
             break;
             
           default:
-            console.log("❓ Handling UNKNOWN_ERROR. Raw data was:", errorData);
+            console.log("Handling UNKNOWN_ERROR. Raw data was:", errorData);
             toast.error("Registratie mislukt. Probeer het opnieuw.");
         }
       }
     } catch (error) {
-      console.error("💥 Unexpected error:", error);
       toast.error("Er is een onverwachte fout opgetreden. Probeer het later nog eens.");
     } finally {
       setLoading(false);

@@ -10,7 +10,7 @@ import SortableHeader from "@/components/SortableHeader";
 import { useSortableData } from "@/lib/useSortableData";
 
 export default function AppearInRoleTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
-  const allOptions = ["Bulkacties", "Verwijderen"]; 
+  const allOptions = ["Bulkacties", "Verwijder document"]; 
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]); 
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -78,7 +78,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action);
 
-    if (action === "Verwijderen") {
+    if (action === "Verwijder document") {
       if (selectedRolesSet.size > 0) {
         setDeleteMode("bulk");
         setIsDeleteModalOpen(true);
@@ -201,7 +201,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                 sortKey="folder"
                 onSort={requestSort}
                 currentSort={sortConfig}
-                className="w-2/5" // Give this more space
+                className="w-2/5" 
               >
                 Mappen
               </SortableHeader>

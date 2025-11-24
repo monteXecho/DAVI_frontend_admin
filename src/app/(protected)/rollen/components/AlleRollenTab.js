@@ -28,13 +28,11 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
   const { items: sortedRoles, requestSort, sortConfig } = useSortableData(roles)
 
-  // Listen for URL parameter changes
   useEffect(() => {
     if (urlRole) {
       const role = roles.find(r => r.name === urlRole)
       if (role) {
         setSelectedRoleFromUrl(role)
-        // You might want to automatically filter or highlight this role
         console.log(`Role from URL: ${urlRole}`, role)
       }
     } else {
@@ -55,21 +53,18 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     })
   }, [sortedRoles, search])
 
-  // Handle click on user count
   const handleUserCountClick = (role) => {
     if (role.user_count > 0) {
       router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
     }
   }
 
-  // Handle click on document count
   const handleDocumentCountClick = (role) => {
     if (role.document_count > 0) {
       router.push(`/documenten?role=${encodeURIComponent(role.name)}`)
     }
   }
 
-  // Highlight matching search terms in text
   const highlightText = (text, searchTerm) => {
     if (!searchTerm || !text) return text;
     
@@ -92,7 +87,6 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     );
   };
 
-  // Toggle folder expansion for a role
   const toggleFolderExpand = (roleName) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev)
@@ -101,13 +95,6 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     })
   }
 
-  // Check if a specific folder has search matches
-  const folderHasSearchMatch = (folder) => {
-    if (!search.trim()) return false;
-    return folder.toLowerCase().includes(search.toLowerCase());
-  };
-
-  // Render folders with exact same style as GebruikersTab
   const renderFolders = (role) => {
     const folders = role.folders || []
     const isExpanded = expandedFolders.has(role.name)
@@ -120,7 +107,6 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     }
 
     if (folders.length === 1) {
-      // Single folder - show directly with same style as single role in GebruikersTab
       return (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -132,7 +118,6 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
       )
     }
 
-    // Multiple folders - show with expand/collapse like roles in GebruikersTab
     const visibleFolders = isExpanded ? folders : [folders[0]]
     const hiddenFoldersCount = folders.length - 1
 
@@ -452,3 +437,4 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
     </div>
   )
 }
+
