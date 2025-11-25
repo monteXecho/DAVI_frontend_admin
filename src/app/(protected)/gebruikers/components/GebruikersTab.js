@@ -37,15 +37,12 @@ export default function GebruikersTab({
 
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [bulkAction, setBulkAction] = useState("Bulkacties");
-  const [deleteMode, setDeleteMode] = useState("single");
   const [uploadResult, setUploadResult] = useState(null);
   const [deletedUsersData, setDeletedUsersData] = useState([]);
   const [selectedRole, setSelectedRole] = useState("Alle rollen");
   const [searchQuery, setSearchQuery] = useState("");
 
   const { items: sortedUsers, requestSort, sortConfig } = useSortableData(users);
-
-  const [urlParams, setUrlParams] = useState({});
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -228,7 +225,6 @@ export default function GebruikersTab({
     setBulkAction(action);
     if (action === "Verwijder gebruiker") {
       if (selectedUsers.size === 0) return alert("Selecteer eerst een gebruikers om te verwijderen.");
-      setDeleteMode("bulk");
       setIsDeleteModalOpen(true);
     }
     if (action === "Verwijder rol") {
@@ -282,7 +278,6 @@ export default function GebruikersTab({
 
   const handleDeleteClick = (user) => {
     setSelectedUsers(new Set([user.id]));
-    setDeleteMode("single");
     setIsDeleteModalOpen(true);
   };
 

@@ -26,6 +26,7 @@ export default function RegisterPage() {
     emailExists: "",
     emailNotFound: "",
     usernameExists: "",
+    password: "",
     passwordConfirm: "",
     roleMissing: "",
   });
@@ -33,6 +34,7 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState({
     fullName: false,
     email: false,
+    password: false,
     passwordConfirm: false,
   });
 
@@ -45,6 +47,13 @@ export default function RegisterPage() {
     return emailRegex.test(email) ? "" : "Voer een geldig e-mailadres in.";
   };
 
+  const validatePassword = (password) => {
+    if (password.length > 0 && password.length < 6) {
+      return "Wachtwoord moet minimaal 6 tekens bevatten.";
+    }
+    return "";
+  };
+
   const validatePasswordConfirm = (password, passwordConfirm) => {
     if (passwordConfirm.length > 0 && password !== passwordConfirm) {
       return "De wachtwoorden komen niet overeen.";
@@ -53,10 +62,11 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    if (submitted || touched.email || touched.passwordConfirm) {
+    if (submitted || touched.email || touched.password || touched.passwordConfirm) {
       setErrors(prev => ({
         ...prev,
         email: validateEmail(form.email),
+        password: validatePassword(form.password),
         passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm)
       }));
     }
@@ -78,6 +88,7 @@ export default function RegisterPage() {
         ...prev,
         [name]:
           name === 'email' ? validateEmail(value) :
+          name === 'password' ? validatePassword(value) :
           name === 'passwordConfirm' ? validatePasswordConfirm(form.password, value) :
           ""
       }));
@@ -92,6 +103,7 @@ export default function RegisterPage() {
       ...prev,
       [name]:
         name === "email" ? validateEmail(form.email) :
+        name === "password" ? validatePassword(form.password) :
         name === "passwordConfirm" ? validatePasswordConfirm(form.password, form.passwordConfirm) :
         ""
     }));
@@ -150,11 +162,13 @@ export default function RegisterPage() {
     setSubmitted(true);
 
     const emailError = validateEmail(form.email);
+    const passwordError = validatePassword(form.password);
     const passwordConfirmError = validatePasswordConfirm(form.password, form.passwordConfirm);
 
     setErrors({
       fullName: "",
       email: emailError,
+      password: passwordError,
       passwordConfirm: passwordConfirmError,
       emailExists: "",
       emailNotFound: "",
@@ -162,7 +176,7 @@ export default function RegisterPage() {
       roleMissing: ""
     });
 
-    if (emailError || passwordConfirmError) return;
+    if (emailError || passwordError || passwordConfirmError) return;
 
     setLoading(true);
 
@@ -230,7 +244,8 @@ export default function RegisterPage() {
   const showEmailError = (touched.email || submitted) &&
     (errors.email || errors.emailExists || errors.emailNotFound);
 
-  const showPasswordError = (touched.passwordConfirm || submitted) && errors.passwordConfirm;
+  const showPasswordError = (touched.password || submitted) && errors.password;
+  const showPasswordConfirmError = (touched.passwordConfirm || submitted) && errors.passwordConfirm;
 
   const showFullNameError = (touched.fullName || submitted) && errors.usernameExists;
 
@@ -247,6 +262,7 @@ export default function RegisterPage() {
     !errors.email &&
     !errors.emailExists &&
     !errors.emailNotFound &&
+    !errors.password &&
     !errors.passwordConfirm &&
     !errors.usernameExists &&
     !errors.roleMissing &&
@@ -331,19 +347,29 @@ export default function RegisterPage() {
                 </div>
 
                 {/* PASSWORD */}
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Maak wachtwoord aan"
-                  className="w-full h-[52px] px-3.5 border-2 border-[#23BD92] rounded-lg text-gray-700 focus:outline-none font-normal text-base"
-                  required
-                  minLength={6}
-                />
+                <div className={`relative w-full border-2 rounded-lg ${showPasswordError ? "bg-[#E94F4F] border-[#E94F4F]" : "border-[#23BD92]"}`}>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Maak wachtwoord aan"
+                    className={`w-full h-[52px] px-3.5 rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
+                      showPasswordError ? "bg-[#F0C8C8]" : "bg-white"
+                    }`}
+                    required
+                    minLength={6}
+                  />
+                  {showPasswordError && (
+                    <div className="text-center text-white text-sm py-2 px-4">
+                      {errors.password}
+                    </div>
+                  )}
+                </div>
 
                 {/* PASSWORD CONFIRM */}
-                <div className={`relative w-full border-2 rounded-lg ${showPasswordError ? "bg-[#E94F4F] border-[#E94F4F]" : "border-[#23BD92]"}`}>
+                <div className={`relative w-full border-2 rounded-lg ${showPasswordConfirmError ? "bg-[#E94F4F] border-[#E94F4F]" : "border-[#23BD92]"}`}>
                   <input
                     type="password"
                     name="passwordConfirm"
@@ -352,11 +378,11 @@ export default function RegisterPage() {
                     onBlur={handleBlur}
                     placeholder="Wachtwoord herhalen"
                     className={`w-full h-[52px] px-3.5 rounded-lg text-gray-700 focus:outline-none font-normal text-base ${
-                      showPasswordError ? "bg-[#F0C8C8]" : "bg-white"
+                      showPasswordConfirmError ? "bg-[#F0C8C8]" : "bg-white"
                     }`}
                     required
                   />
-                  {showPasswordError && (
+                  {showPasswordConfirmError && (
                     <div className="text-center text-white text-sm py-2 px-4">
                       {errors.passwordConfirm}
                     </div>

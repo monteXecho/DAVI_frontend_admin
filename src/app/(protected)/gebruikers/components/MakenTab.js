@@ -64,10 +64,10 @@ export default function MakenTab({ roles = [], onAddUser }) {
         <span className="mt-[23px] font-montserrat font-normal text-[16px] leading-normal tracking-normal">
           E-mail adres
         </span>
-        <div className="mt-2 flex gap-[14px] items-center">
+        <div className="mt-2 flex gap-3.5 items-center">
           <input
             type="text"
-            placeholder="info@creeert.net"
+            placeholder="E-mail adres..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"

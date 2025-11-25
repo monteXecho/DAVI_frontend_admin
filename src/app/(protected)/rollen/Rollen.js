@@ -41,7 +41,7 @@ export default function Rollen() {
         setRoles(res.roles)
       }
     } catch (err) {
-      console.error("❌ Failed to fetch roles:", err)
+      console.error("Failed to fetch roles:", err)
     } finally {
       setLoading(false)
     }
@@ -57,7 +57,7 @@ export default function Rollen() {
       await deleteRoles(Array.isArray(role_names) ? role_names : [role_names])
       await fetchRoles()
     } catch (err) {
-      console.error("❌ Failed to delete role(s):", err)
+      console.error("Failed to delete role(s):", err)
     }
   }
 

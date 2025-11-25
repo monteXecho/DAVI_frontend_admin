@@ -28,7 +28,7 @@ export default function MijnTab() {
       console.log(' --- DOCUMENTS ---', docsRes)
       if (docsRes?.data?.documents) setDocuments(docsRes.data.documents)
     } catch (err) {
-      console.error("❌ Failed to refresh data:", err)
+      console.error("Failed to refresh data:", err)
     }
   }, [getPrivateDocuments])
 
@@ -37,7 +37,7 @@ export default function MijnTab() {
       try {
         await refreshData()
       } catch (err) {
-        console.error("❌ Initialization failed:", err)
+        console.error("Initialization failed:", err)
       } finally {
       }
     }
@@ -210,7 +210,7 @@ export default function MijnTab() {
                       onChange={handleSelectAll}
                       color="#23BD92" 
                     />
-                    Bestand
+                    Document
                   </div>
                 </SortableHeader>
 

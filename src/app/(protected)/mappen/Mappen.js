@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 
 import UsersTab from "./components/UsersTab"
 import MappenTab from "./components/MappenTab"
@@ -22,6 +23,8 @@ export default function Mappen() {
 
   const { getRoles, getAdminDocuments, deleteFolders } = useApi()
 
+  const router = useRouter()
+
   const isDocSelected = !!selectedDocName
 
   const dynamicTabs = tabsConfig.map(tab => {
@@ -42,7 +45,7 @@ export default function Mappen() {
       if (rolesRes?.roles) setRoles(rolesRes.roles)
       if (docsRes?.data) setDocuments(docsRes.data)
     } catch (err) {
-      console.error("❌ Failed to refresh data:", err)
+      console.error("Failed to refresh data:", err)
     }
   }, [getRoles, getAdminDocuments]) 
 
@@ -51,7 +54,7 @@ export default function Mappen() {
       try {
         await refreshData()
       } catch (err) {
-        console.error("❌ Initialization failed:", err)
+        console.error("Initialization failed:", err)
       } finally {
         setLoading(false)
       }
@@ -71,17 +74,19 @@ export default function Mappen() {
     try {
       const res = await deleteFolders(payload)
       if (res?.success) {
-        console.log("✅ Folders deleted successfully", res)
+        console.log("Folders deleted successfully", res)
         await refreshData()
         return res
       }
     } catch (err) {
-      console.error("❌ Failed to delete documents:", err)
+      console.error("Failed to delete documents:", err)
       throw err
     }
   }
 
-  const handleUploadTab = () => setActiveIndex(1)
+  const handleUploadTab = () => {
+    router.push('/documenten?tab=1')
+  }
 
   const handleTabClick = (index) => {
     const tab = dynamicTabs[index]

@@ -56,7 +56,7 @@ export default function Gebruikers() {
       }
       if (docsRes?.data) setDocuments(docsRes.data)
     } catch (err) {
-      console.error("❌ Failed to refresh data:", err)
+      console.error("Failed to refresh data:", err)
     }
   }, [getRoles, getAdminDocuments])
 
@@ -220,7 +220,7 @@ export default function Gebruikers() {
         return res
       }
     } catch (err) {
-      console.error("❌ Failed to delete documents:", err)
+      console.error("Failed to delete documents:", err)
       throw err
     }
   }

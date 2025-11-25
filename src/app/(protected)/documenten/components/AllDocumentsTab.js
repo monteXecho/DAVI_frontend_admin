@@ -29,7 +29,7 @@ export default function AllDocumentsTab({
   const [allOptions2, setAllOptions2] = useState([])
   const [selectedRole, setSelectedRole] = useState("Alle Rollen")
   const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
-  const allOptions3 = ["Bulkacties", "Verwijderen", "Vervang"] 
+  const allOptions3 = ["Bulkacties", "Verwijder document", "Vervang document"] 
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)

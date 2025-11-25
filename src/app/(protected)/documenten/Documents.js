@@ -48,16 +48,27 @@ export default function Documents() {
       if (rolesRes?.roles) setRoles(rolesRes.roles)
       if (docsRes?.data) setDocuments(docsRes.data)
     } catch (err) {
-      console.error("❌ Failed to refresh data:", err)
+      console.error("Failed to refresh data:", err)
     }
   }, [getRoles, getAdminDocuments]) 
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tabParam = searchParams.get('tab');
+      
+      if (tabParam) {
+        setActiveIndex(parseInt(tabParam, 10));
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const init = async () => {
       try {
         await refreshData()
       } catch (err) {
-        console.error("❌ Initialization failed:", err)
+        console.error("Initialization failed:", err)
       } finally {
         setLoading(false)
       }
@@ -73,7 +84,7 @@ export default function Documents() {
       }
       return res
     } catch (err) {
-      console.error("❌ Failed to upload doc:", err)
+      console.error("Failed to upload doc:", err)
     }
   }
 
@@ -143,7 +154,7 @@ export default function Documents() {
         return res
       }
     } catch (err) {
-      console.error("❌ Failed to delete documents:", err)
+      console.error("Failed to delete documents:", err)
       throw err
     }
   }
