@@ -110,10 +110,10 @@ export default function RegisterPage() {
   };
 
   const parseBackendError = (errorData) => {
-    console.log("🔍 Raw error data for parsing:", errorData);
+    console.log("Raw error data for parsing:", errorData);
     
     if (errorData?.detail) {
-      console.log("📦 Found detail field:", errorData.detail);
+      console.log("Found detail field:", errorData.detail);
       
       if (typeof errorData.detail === 'string') {
         if (errorData.detail.includes("User exists with same username")) {
@@ -133,27 +133,27 @@ export default function RegisterPage() {
     }
 
     if (typeof errorData === "string") {
-      console.log("📝 Processing string error:", errorData);
+      console.log("Processing string error:", errorData);
       
       if (errorData.includes('User exists with same username')) {
-        console.log("🎯 Detected USERNAME_EXISTS from Keycloak error string");
+        console.log("Detected USERNAME_EXISTS from Keycloak error string");
         return "USERNAME_EXISTS";
       }
       if (errorData.includes("EMAIL_EXISTS")) {
-        console.log("🎯 Detected EMAIL_EXISTS from string");
+        console.log("Detected EMAIL_EXISTS from string");
         return "EMAIL_EXISTS";
       }
       if (errorData.includes("EMAIL_NOT_FOUND")) {
-        console.log("🎯 Detected EMAIL_NOT_FOUND from string");
+        console.log("Detected EMAIL_NOT_FOUND from string");
         return "EMAIL_NOT_FOUND";
       }
       if (errorData.includes("ROLE_MISSING")) {
-        console.log("🎯 Detected ROLE_MISSING from string");
+        console.log("Detected ROLE_MISSING from string");
         return "ROLE_MISSING";
       }
     }
 
-    console.log("❓ Unknown error format, returning UNKNOWN_ERROR");
+    console.log("Unknown error format, returning UNKNOWN_ERROR");
     return "UNKNOWN_ERROR";
   };
 
@@ -182,22 +182,22 @@ export default function RegisterPage() {
 
     try {
       const result = await register(form);
-      console.log("📨 Register API result:", result);
+      console.log("Register API result:", result);
 
       if (result.ok) {
-        console.log("✅ Registration successful");
+        console.log("Registration successful");
         setLoggedin(true);
         setForm({ fullName: "", email: "", password: "", passwordConfirm: "" });
       } else {
         const errorData = result.data;
-        console.log("🚨 Registration failed with data:", errorData);
+        console.log("Registration failed with data:", errorData);
         
         const errorDetail = parseBackendError(errorData);
-        console.log("🎯 Parsed error detail:", errorDetail);
+        console.log("Parsed error detail:", errorDetail);
 
         switch (errorDetail) {
           case "EMAIL_NOT_FOUND":
-            console.log("📧 Handling EMAIL_NOT_FOUND");
+            console.log("Handling EMAIL_NOT_FOUND");
             setErrors(prev => ({
               ...prev,
               emailNotFound: "E-mailadres niet bekend.\nVraag bij je organisatie om je uit te nodigen."
@@ -205,7 +205,7 @@ export default function RegisterPage() {
             break;
             
           case "EMAIL_EXISTS":
-            console.log("📧 Handling EMAIL_EXISTS");
+            console.log("Handling EMAIL_EXISTS");
             setErrors(prev => ({
               ...prev,
               emailExists: "Dit e-mailadres is al geregistreerd. Log in of gebruik een ander e-mailadres."
@@ -213,7 +213,7 @@ export default function RegisterPage() {
             break;
             
           case "USERNAME_EXISTS":
-            console.log("👤 Handling USERNAME_EXISTS");
+            console.log("Handling USERNAME_EXISTS");
             setErrors(prev => ({
               ...prev,
               usernameExists: "Deze gebruikersnaam bestaat al. Probeer een andere voor- en achternaam combinatie."
@@ -221,7 +221,7 @@ export default function RegisterPage() {
             break;
             
           case "ROLE_MISSING":
-            console.log("⚙️ Handling ROLE_MISSING");
+            console.log("Handling ROLE_MISSING");
             setErrors(prev => ({
               ...prev,
               roleMissing: "Er is een configuratieprobleem bij jouw organisatie."
