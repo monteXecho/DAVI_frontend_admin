@@ -49,10 +49,10 @@ export default function DeleteDocumentFromFoldersModal({
         /* SINGLE DELETE */
         <p className="text-center text-[17px] leading-6 text-black px-4">
           Weet je zeker dat je het document<br />
-          <span className="font-semibold">"{documentName}"</span><br />
+          <span className="font-semibold">&quot;{documentName}&quot;</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">"{folderName}"</span> voor rol{" "}
-          <span className="font-semibold">"{roleName}"</span>?
+          <span className="font-semibold">&quot;{folderName}&quot;</span> voor rol{" "}
+          <span className="font-semibold">&quot;{roleName}&quot;</span>?
         </p>
       )}
 

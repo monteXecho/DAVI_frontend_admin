@@ -205,7 +205,7 @@ export default function AllDocumentsTab({
 
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action)
-    if (action === "Verwijderen") {
+    if (action === "Verwijder document") {
       if (selectedDocuments.size > 0) {
         setDeleteMode("bulk")
         setIsDeleteModalOpen(true)
@@ -214,7 +214,7 @@ export default function AllDocumentsTab({
         setSelectedBulkAction("Bulkacties")
       }
     }
-    if (action === "Vervang") {
+    if (action === "Vervang document") {
       if (selectedDocuments.size > 0) {
         setIsReplaceModalOpen(true)
       } else {

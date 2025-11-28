@@ -47,11 +47,11 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
         /* SINGLE DOCUMENT */
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je het document<br />
-          <span className="font-semibold">"{single?.file}"</span><br />
+          <span className="font-semibold">&quot;{single?.file}&quot;</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">"{single?.folder}"</span><br />
+          <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
           voor rol<br />
-          <span className="font-semibold">"{single?.role}"</span>?
+          <span className="font-semibold">&quot;{single?.role}&quot;</span>?
         </p>
       )}
 

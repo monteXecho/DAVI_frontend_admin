@@ -151,7 +151,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px]">
-        {filteredRoles.length} rol{filteredRoles.length !== 1 ? "len" : ""} waar "{selectedDocName}" in voorkomt
+        {filteredRoles.length} rol{filteredRoles.length !== 1 ? "len" : ""} waar &quot;{selectedDocName}&quot; in voorkomt
         {selectedRolesSet.size > 0 && (
           <span className="ml-2 text-gray-600">({selectedRolesSet.size} geselecteerd)</span>
         )}

@@ -63,9 +63,9 @@ export default function DeleteDocumentModal({
         /* SINGLE FOLDER */
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je de map<br />
-          <span className="font-semibold">"{single?.folder}"</span><br />
+          <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
           wilt verwijderen uit de rol<br />
-          <span className="font-semibold">"{single?.role}"</span>?
+          <span className="font-semibold">&quot;{single?.role}&quot;</span>?
           <br />
         </p>
       )}

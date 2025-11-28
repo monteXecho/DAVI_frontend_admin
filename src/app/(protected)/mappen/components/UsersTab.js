@@ -44,7 +44,7 @@ export default function UsersTab({
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {filteredUsers.length} gebruiker{filteredUsers.length !== 1 ? 's' : ''} toegewezen aan de map "{selectedDocFolder}" van rol "{selectedDocRole}"
+        {filteredUsers.length} gebruiker{filteredUsers.length !== 1 ? 's' : ''} toegewezen aan de map &quot;{selectedDocFolder}&quot; van rol &quot;{selectedDocRole}&quot;
         {selectedUsersSet.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedUsersSet.size} geselecteerd)

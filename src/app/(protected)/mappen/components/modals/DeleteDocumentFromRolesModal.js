@@ -29,7 +29,7 @@ export default function DeleteDocumentFromRolesModal({
         <div className="text-center text-[18px] leading-6 text-black">
           <p className="mb-4">
             Weet je zeker dat je het document<br />
-            <span className="font-semibold">"{documentName}"</span><br />
+            <span className="font-semibold">&quot;{documentName}&quot;</span><br />
             wilt verwijderen uit<br />
             <span className="font-semibold">{roles.length} rollen</span>?
           </p>
@@ -51,11 +51,11 @@ export default function DeleteDocumentFromRolesModal({
         /* SINGLE ROLE */
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je het document<br />
-          <span className="font-semibold">"{documentName}"</span><br />
+          <span className="font-semibold">&quot;{documentName}&quot;</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">"{single?.folders?.join(", ")}"</span><br />
+          <span className="font-semibold">&quot;{single?.folders?.join(", ")}&quot;</span><br />
           voor rol<br />
-          <span className="font-semibold">"{single?.role}"</span>?
+          <span className="font-semibold">&quot;{single?.role}&quot;</span>?
         </p>
       )}
 
