@@ -17,16 +17,17 @@ const tabsConfig = [
 ]
 
 export default function Documents() {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [roles, setRoles] = useState([])
-  const [documents, setDocuments] = useState(null)
-  const [selectedUsers, setSelectedUsers] = useState([]) 
-  const [selectedRoles, setSelectedRoles] = useState([])
-  const [selectedFolders, setSelectedFolders] = useState([])
-  const [selectedDocName, setSelectedDocName] = useState("") 
-  const [loading, setLoading] = useState(true)
+  const [ activeIndex, setActiveIndex ] = useState(0)
+  const [ roles, setRoles ] = useState([])
+  const [ documents, setDocuments ] = useState(null)
+  const [ folders, setFolders ] = useState([])
+  const [ selectedUsers, setSelectedUsers ] = useState([]) 
+  const [ selectedRoles, setSelectedRoles ] = useState([])
+  const [ selectedFolders, setSelectedFolders ] = useState([])
+  const [ selectedDocName, setSelectedDocName ] = useState("") 
+  const [ loading, setLoading ] = useState(true)
 
-  const { getRoles, uploadDocumentForRole, getAdminDocuments, deleteDocuments } = useApi()
+  const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments } = useApi()
 
   const isDocSelected = !!selectedDocName
 
@@ -41,12 +42,14 @@ export default function Documents() {
 
   const refreshData = useCallback(async () => {
     try {
-      const [rolesRes, docsRes] = await Promise.all([
+      const [rolesRes, docsRes, foldersRes] = await Promise.all([
         getRoles(),
-        getAdminDocuments()
+        getAdminDocuments(),
+        getFolders()
       ])
       if (rolesRes?.roles) setRoles(rolesRes.roles)
       if (docsRes?.data) setDocuments(docsRes.data)
+      if (foldersRes?.folders) setFolders(foldersRes.folders)
     } catch (err) {
       console.error("Failed to refresh data:", err)
     }
@@ -76,9 +79,9 @@ export default function Documents() {
     init()
   }, [refreshData])  
 
-  const handleUploadDocument = async (selectedRole, selectedFolder, formData) => {
+  const handleUploadDocument = async (selectedFolder, formData) => {
     try {
-      const res = await uploadDocumentForRole(selectedRole, selectedFolder, formData)
+      const res = await uploadDocumentForRole(selectedFolder, formData)
       if (res?.success) {
         await refreshData()
       }
@@ -103,7 +106,7 @@ export default function Documents() {
           formData.append('file', file)
           
           uploadPromises.push(
-            uploadDocumentForRole(target.role, target.folder, formData)
+            uploadDocumentForRole(target.folder, formData)
           )
         }
       }
@@ -220,6 +223,7 @@ export default function Documents() {
             <ActiveComponent
               roles={roles}
               documents={documents}
+              folders={folders}
               onUploadDocument={handleUploadDocument}
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 

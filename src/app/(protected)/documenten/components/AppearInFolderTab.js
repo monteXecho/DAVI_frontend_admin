@@ -128,7 +128,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
           if (doc) {
             return {
               fileName: doc.file_name,
-              role: roleName,
+              folderName: folderName,
               path: doc.path
             };
           }
@@ -246,7 +246,6 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
                       />
                       <div className="flex gap-3 items-center">
                         <span>{folder.name}</span>
-                        <span className="text-gray-500 text-sm">({folder.role})</span>
                       </div>
                     </div>
                   </td>

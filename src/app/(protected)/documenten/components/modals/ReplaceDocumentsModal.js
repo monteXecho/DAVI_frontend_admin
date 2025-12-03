@@ -86,7 +86,7 @@ export default function ReplaceDocumentsModal({
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           {documents.map((doc, index) => (
             <div key={index} className="text-red-700 text-sm">
-              • {doc.file} ({doc.role} / {doc.folder})
+              • {doc.file} ( {doc.folder} )
             </div>
           ))}
         </div>
@@ -100,7 +100,7 @@ export default function ReplaceDocumentsModal({
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           {uploadTargets.map((target, index) => (
             <div key={index} className="text-green-700 text-sm">
-              • {target.role} / {target.folder}
+              • {target.folder}
             </div>
           ))}
         </div>

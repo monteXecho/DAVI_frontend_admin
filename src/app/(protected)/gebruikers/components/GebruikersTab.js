@@ -67,10 +67,15 @@ export default function GebruikersTab({
 
   const allAvailableRoles = roles.map((r) => r.name ?? r.role ?? String(r));
 
+  // Check if user is an admin (has "Beheerder" role)
+  const isUserAdmin = (user) => {
+    return user.Rol?.includes("Beheerder") || false;
+  };
+
   const allRoles = useMemo(() => {
     const set = new Set();
     sortedUsers.forEach((u) => u.Rol?.forEach((r) => set.add(r)));
-    return ["Alle rollen", "Zonder rol", ...Array.from(set)];
+    return ["Alle rollen", "Beheerder", "Zonder rol", ...Array.from(set).filter(role => role !== "Beheerder")];
   }, [sortedUsers]);
 
   const [expandedFolders, setExpandedFolders] = useState(new Set());
@@ -173,17 +178,21 @@ export default function GebruikersTab({
   };
 
   const userHasAssignedRoles = (user) => {
-    return user.Rol && user.Rol.length > 0;
+    return user.Rol && user.Rol.length > 0 && !isUserAdmin(user);
   };
 
   const filteredData = useMemo(() => {
     let data = sortedUsers;
     
     if (selectedRole !== "Alle rollen") {
-      data =
-        selectedRole === "Zonder rol"
-          ? data.filter((u) => !u.Rol || u.Rol.length === 0)
-          : data.filter((u) => u.Rol?.includes(selectedRole));
+      if (selectedRole === "Beheerder") {
+        // Filter for admin users (users with "Beheerder" role)
+        data = data.filter((u) => u.Rol?.includes("Beheerder"));
+      } else if (selectedRole === "Zonder rol") {
+        data = data.filter((u) => !u.Rol || u.Rol.length === 0);
+      } else {
+        data = data.filter((u) => u.Rol?.includes(selectedRole));
+      }
     }
 
     if (searchQuery.trim()) {
@@ -194,10 +203,15 @@ export default function GebruikersTab({
     return data;
   }, [sortedUsers, selectedRole, searchQuery, roleMap]);
 
-  const titleText =
-    selectedRole !== "Alle rollen"
-      ? `${filteredData.length} gebruiker${filteredData.length !== 1 ? "s" : ""} met de rol "${selectedRole}"`
-      : `${filteredData.length} gebruikers`;
+  const titleText = useMemo(() => {
+    if (selectedRole === "Beheerder") {
+      return `${filteredData.length} beheerder${filteredData.length !== 1 ? "s" : ""}`;
+    } else if (selectedRole !== "Alle rollen") {
+      return `${filteredData.length} gebruiker${filteredData.length !== 1 ? "s" : ""} met de rol "${selectedRole}"`;
+    } else {
+      return `${filteredData.length} gebruikers`;
+    }
+  }, [filteredData.length, selectedRole]);
 
   const allBulkActions = ["Bulkacties", "Verwijder gebruiker", "Verwijder rol", "Rol toevoegen"];
 
@@ -230,10 +244,25 @@ export default function GebruikersTab({
     if (action === "Verwijder rol") {
       if (selectedRole === "Alle rollen") return alert("Kies eerst een specifieke rol.");
       if (selectedUsers.size === 0) return alert("Selecteer eerst gebruikers.");
+      
+      // Don't allow removing "Beheerder" role from admins via bulk action
+      if (selectedRole === "Beheerder") {
+        return alert("De 'Beheerder' rol kan niet via bulk acties verwijderd worden. Gebruik individuele bewerking.");
+      }
+      
       handleDeleteRoleFromUsersConfirm();
     }
     if (action === "Rol toevoegen") {
       if (selectedUsers.size === 0) return alert("Selecteer eerst gebruikers.");
+      
+      // Check if any selected users are admins
+      const selectedUserData = getSelectedUsersData();
+      const hasAdmins = selectedUserData.some(user => isUserAdmin(user));
+      
+      if (hasAdmins) {
+        return alert("Beheerders kunnen geen rollen toegewezen krijgen. Selecteer alleen gewone gebruikers.");
+      }
+      
       setIsAddRoleModalOpen(true);
     }
   };
@@ -263,6 +292,13 @@ export default function GebruikersTab({
 
   const handleAddRoleConfirm = async (roleName) => {
     if (!roleName) return;
+    
+    // Don't allow adding "Beheerder" role via bulk action
+    if (roleName === "Beheerder") {
+      alert("De 'Beheerder' rol kan niet via bulk acties toegevoegd worden. Gebruik individuele bewerking of voeg een nieuwe beheerder toe.");
+      return;
+    }
+    
     await onAddRoleToUsers(Array.from(selectedUsers), roleName);
     alert(`Rol "${roleName}" toegevoegd.`);
     setIsAddRoleModalOpen(false);
@@ -331,14 +367,15 @@ export default function GebruikersTab({
     const isExpanded = expandedFolders.has(`${userId}::${roleName}`);
     const searchTerm = searchQuery.toLowerCase();
     const hasSearchMatch = roleHasSearchMatch(roleName);
+    const isBeheerderRole = roleName === "Beheerder";
 
     return (
-      <div className="flex flex-col gap-1 mb-2">
+      <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className={`inline-block ${hasSearchMatch ? 'bg-yellow-100 border border-yellow-300' : 'bg-[#23BD92]/10'} text-[#23BD92] font-semibold text-sm px-2 py-1 rounded-md`}>
+          <span className={`inline-block ${hasSearchMatch ? 'bg-yellow-100 border border-yellow-300 text-[#23BD92]' : 'bg-[#23BD92]/10 text-[#23BD92]'} font-semibold text-sm px-2 py-1 rounded-md`}>
             {searchQuery ? highlightText(roleName, searchTerm) : roleName}
           </span>
-          {folders.length > 0 && (
+          {folders.length > 0 && !isBeheerderRole && (
             <button
               onClick={() => toggleFolderExpand(userId, roleName)}
               className="text-gray-600 text-xs hover:text-gray-800 hover:underline transition-colors"
@@ -348,7 +385,7 @@ export default function GebruikersTab({
             </button>
           )}
         </div>
-        {(isExpanded || hasSearchMatch) && folders.length > 0 && (
+        {(isExpanded || hasSearchMatch) && folders.length > 0 && !isBeheerderRole && (
           <div className="ml-3 flex flex-col gap-1 text-gray-700 text-xs">
             {folders.map((f, i) => {
               const folderMatches = searchTerm && f.toLowerCase().includes(searchTerm);
@@ -378,6 +415,7 @@ export default function GebruikersTab({
       user.Naam?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.Email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const isAdmin = isUserAdmin(user);
 
     const shouldShowAllRoles = isExpanded || hasRoleOrFolderMatch;
     const rolesToShow = shouldShowAllRoles ? user.Rol : user.Rol.slice(0, 1);
@@ -394,8 +432,7 @@ export default function GebruikersTab({
           ))}
         </div>
 
-        {/* Expand/Collapse button - only show when not in search mode or when user only has name/email match */}
-        {user.Rol.length > 1 && !hasRoleOrFolderMatch && !searchQuery.trim() && (
+        {user.Rol.length > 1 && !hasRoleOrFolderMatch && !searchQuery.trim() && !isAdmin && (
           <div className="flex items-center">
             <button
               onClick={() => toggleUserRoles(user.id)}
@@ -411,6 +448,11 @@ export default function GebruikersTab({
                 ▼
               </span>
             </button>
+          </div>
+        )}
+        {isAdmin && user.Rol.length > 1 && (
+          <div className="text-xs text-gray-500 italic">
+            Beheerders hebben volledige toegang tot alle functies
           </div>
         )}
       </div>
@@ -474,15 +516,18 @@ export default function GebruikersTab({
           <tbody>
             {filteredData.map((user) => {
               const hasRoles = userHasAssignedRoles(user);
+              const isAdmin = isUserAdmin(user);
               
               return (
                 <tr key={user.id} className="border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-5">
                       <CheckBox toggle={selectedUsers.has(user.id)} onChange={(v) => handleUserSelect(user.id, v)} color="#23BD92" />
-                      <span className="font-medium">
-                        {searchQuery ? highlightText(user.Naam, searchQuery) : user.Naam}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {searchQuery ? highlightText(user.Naam, searchQuery) : user.Naam}
+                        </span>
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -495,7 +540,7 @@ export default function GebruikersTab({
                     <div className="flex justify-end items-center gap-3">
                       <button
                         className={`relative w-[19px] h-5 ${hasRoles ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}`}
-                        title={hasRoles ? "Documenten" : "Geen rollen toegewezen"}
+                        title={isAdmin ? "Beheerders hebben geen documententoegang nodig" : (hasRoles ? "Documenten" : "Geen rollen toegewezen")}
                         onClick={() => {
                           if (hasRoles) {
                             onDocumentenForUser?.(user); 
@@ -586,7 +631,7 @@ export default function GebruikersTab({
         <AddRoleModal
           isOpen={isAddRoleModalOpen}
           onClose={() => setIsAddRoleModalOpen(false)}
-          allRoles={allAvailableRoles}
+          allRoles={allAvailableRoles.filter(role => role !== "Beheerder")} 
           selectedUsersCount={selectedUsers.size}
           onConfirm={handleAddRoleConfirm}
         />

@@ -10,10 +10,8 @@ import { useRouter } from "next/navigation"
 export default function UsersTab({ selectedUsers = [], selectedDocName }) {
   const router = useRouter()
   const [users, setUsers] = useState(selectedUsers)
-  const [selected, setSelected] = useState("Bulkacties")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedUsersSet, setSelectedUsersSet] = useState(new Set())
-  const allOptions = ["Bulkacties", "Option 01", "Option 02"]
 
   useEffect(() => {
     setUsers(selectedUsers)

@@ -47,11 +47,11 @@ export function useApi() {
   );
 
   const uploadDocumentForRole = useCallback(
-    (roleName, folderPath, formData) =>
+    (folderPath, formData) =>
       withAuth((token) =>
         apiClient
           .post(
-            `/company-admin/roles/upload/${roleName}/${folderPath}`,
+            `/company-admin/roles/upload/${folderPath}`,
             formData,
             createAuthHeaders(token, {
               'Content-Type': 'multipart/form-data',
@@ -298,7 +298,10 @@ export function useApi() {
       withAuth((token) =>
         apiClient
           .get('/company-admin/users', createAuthHeaders(token))
-          .then((res) => res.data)
+          .then((res) => {
+            console.log(' --- USERS --- :', res.data)
+            return res.data
+          })
       ),
     [withAuth]
   );
@@ -332,7 +335,7 @@ export function useApi() {
       ),
     [withAuth]
   );
-
+  
   const deleteUsers = useCallback(
     (user_ids) =>
       withAuth((token) =>
@@ -384,13 +387,15 @@ export function useApi() {
     );
 
   const addOrUpdateRole = useCallback(
-    (role_name, folders, modules) =>
+    (role_name, folders, modules, action) =>
       withAuth((token) => {
-        console.log('Sending modules:', modules);
-
-        apiClient
-          .post(`/company-admin/roles`, { role_name, folders, modules }, createAuthHeaders(token))
-          .then((res) => res.data)
+        return apiClient
+          .post(`/company-admin/roles`, { role_name, folders, modules, action }, createAuthHeaders(token))
+          .then((res) => {
+            console.log(' -- RESULT --- :', res.data)
+            return res.data
+          }
+        )
       }
       ),
     [withAuth]
@@ -400,7 +405,7 @@ export function useApi() {
     (role_names) =>
       withAuth((token) => {
         console.log('Sending role_names:', role_names); 
-        return apiClient
+        apiClient
           .post(`/company-admin/roles/delete`, 
             { role_names }, 
             createAuthHeaders(token)
@@ -414,11 +419,57 @@ export function useApi() {
     [withAuth]
   );
 
+  const addFolders = useCallback(
+    (folders) =>
+      withAuth((token) => {
+        console.log('Sending folder_names:', folders);
+        return apiClient
+          .post("/company-admin/folders", 
+            { folder_names: folders }, 
+            createAuthHeaders(token)
+          )
+          .then((res) => {
+            console.log('Add folders response:', res.data);
+            return res.data;
+          })
+          .catch((err) => {
+            console.error('[useApi] Add folders failed:', err.response?.data || err);
+            
+            const error = new Error(err.response?.data?.message || 'Failed to add folders');
+            error.response = err.response;
+            throw error;
+          })
+      }),
+    [withAuth]
+  );
+
+  const getFolders = useCallback(
+    () =>
+      withAuth((token) => {
+        return apiClient
+          .get("/company-admin/folders", 
+            createAuthHeaders(token)
+          )
+          .then((res) => {
+            console.log('Get folders response:', res.data);
+            return res.data;
+          })
+          .catch((err) => {
+            console.error('[useApi] Get folders failed:', err.response?.data || err);
+            
+            const error = new Error(err.response?.data?.message || 'Failed to get folders');
+            error.response = err.response;
+            throw error;
+          })
+      }),
+    [withAuth]
+  );
+
   const deleteFolders = useCallback(
     (payload) =>
       withAuth((token) => {
         console.log('Sending role_name,and folder_names:', payload.role_names,payload.folder_names);
-        return apiClient
+        apiClient
           .post(`/company-admin/folders/delete`, 
             { role_names:payload.role_names, folder_names:payload.folder_names }, 
             createAuthHeaders(token)
@@ -478,6 +529,8 @@ export function useApi() {
     getRoles,
     addOrUpdateRole,
     deleteRoles,
+    addFolders,
+    getFolders,
     deleteFolders,
     assignRole,
 

@@ -14,11 +14,13 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getUser, getRoles, addOrUpdateRole, deleteRoles } = useApi()
+  const { getUser, getRoles, getFolders, addOrUpdateRole, deleteRoles } = useApi()
   const [roles, setRoles] = useState([])
+  const [folders, setFolders] = useState([])
   const [selectedRole, setSelectedRole] = useState(null) 
-  const [ user, setUser ] = useState()
+  const [user, setUser] = useState()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null) // Add error state
   
   const ActiveComponent = tabsConfig[activeIndex].component
 
@@ -47,10 +49,24 @@ export default function Rollen() {
     }
   }, [getRoles])
 
+  const fetchFolders = useCallback(async () => {
+    try {
+      const res = await getFolders()
+      if (res?.folders) {
+        setFolders(res.folders)
+      }
+    } catch (err) {
+      console.error("Failed to fetch folders:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [getFolders])
+
   useEffect(() => {
     fetchRoles()
     fetchUser()
-  }, [fetchRoles, fetchUser])
+    fetchFolders()
+  }, [fetchRoles, fetchUser, fetchFolders])
 
   const handleDeleteRoles = async (role_names) => {
     try {
@@ -61,12 +77,24 @@ export default function Rollen() {
     }
   }
 
-  const handleAddOrUpdateRole = async (role_name, folders, modules) => {
+  const handleAddOrUpdateRole = async (role_name, folders, modules, action) => {
     try {
-      await addOrUpdateRole(role_name, folders, modules)
+      setError(null) 
+      const result = await addOrUpdateRole(role_name, folders, modules, action)
+      
+      if (result.status === "error") {
+        if (result.error_type === "duplicate_role") {
+          setError(result.message || `Rol '${role_name}' bestaat al.`)
+        } else {
+          setError(result.message || "Er is een fout opgetreden.")
+        }
+        throw new Error(result.message || "API error")
+      }
+      
       await fetchRoles()
+      return result 
     } catch (err) {
-      console.log("Failed to update role.", err)
+      throw err
     }
   }
 
@@ -74,6 +102,11 @@ export default function Rollen() {
     setSelectedRole(role)
     setActiveIndex(2) 
   }
+  
+  // Clear error when switching tabs
+  useEffect(() => {
+    setError(null)
+  }, [activeIndex])
   
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
@@ -117,17 +150,20 @@ export default function Rollen() {
             <div className="flex justify-center items-center h-[200px]">
               <span className="animate-spin rounded-full h-10 w-10 border-4 border-b-[#23BD92] border-gray-200"></span>
             </div>
-            ) : (
-          <ActiveComponent 
-            user={user}
-            roles={roles} 
-            refreshRoles={fetchRoles} 
-            onDeleteRoles={handleDeleteRoles} 
-            onAddOrUpdateRole={handleAddOrUpdateRole}
-            onMoveToMaken={() => {setActiveIndex(1)}}
-            onEditRole={handleEditRole} 
-            selectedRole={selectedRole} 
-          />
+          ) : (
+            <>
+              <ActiveComponent 
+                user={user}
+                roles={roles} 
+                folders={folders}
+                refreshRoles={fetchRoles} 
+                onDeleteRoles={handleDeleteRoles} 
+                onAddOrUpdateRole={handleAddOrUpdateRole}
+                onMoveToMaken={() => {setActiveIndex(1)}}
+                onEditRole={handleEditRole} 
+                selectedRole={selectedRole} 
+              />
+            </>
           )}
         </div>
       </div>

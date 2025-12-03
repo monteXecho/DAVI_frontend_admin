@@ -229,7 +229,7 @@ export default function AllDocumentsTab({
       if (onDeleteDocuments && selectedDocuments.size > 0) {
         const docsToDelete = getSelectedDocumentsData().map(doc => ({
           fileName: doc.file,
-          role: doc.role,
+          folderName: doc.folder,
           path: doc.path
         }))
         await onDeleteDocuments(docsToDelete)
@@ -248,9 +248,8 @@ export default function AllDocumentsTab({
       if (onReplaceDocuments && selectedDocuments.size > 0 && files.length > 0) {
         const docsToDelete = getSelectedDocumentsData().map(doc => ({
           fileName: doc.file,
-          role: doc.role,
+          folderName: doc.folder,
           path: doc.path,
-          folder: doc.folder
         }))
         
         const uploadTargets = getSelectedRoleFolderCombinations()

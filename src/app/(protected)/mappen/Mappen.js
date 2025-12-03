@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation"
 
 import UsersTab from "./components/UsersTab"
 import MappenTab from "./components/MappenTab"
+import MakenTab from "./components/MakenTab"
 import { useApi } from "@/lib/useApi"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
+  { label: 'Maken', component: MakenTab, selectable: true },
   { label: 'Gebruikers', component: UsersTab, selectable: false }
 ]
 
@@ -21,7 +23,7 @@ export default function Mappen() {
   const [selectedDocRole, setSelectedDocRole] = useState("")
   const [loading, setLoading] = useState(true)
 
-  const { getRoles, getAdminDocuments, deleteFolders } = useApi()
+  const { getRoles, getAdminDocuments, addFolders, deleteFolders } = useApi()
 
   const router = useRouter()
 
@@ -95,6 +97,19 @@ export default function Mappen() {
     }
   }
 
+  const handleAddFolders = async (folders) => {
+    try {
+      const res = await addFolders(folders)
+      if (res?.success) {
+        console.log("Folders added successfully", res)
+        await refreshData()
+        return res
+      }
+    } catch (err) {
+      console.error("Failed to add folders:", err)
+      throw err
+    }
+  }
 
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
@@ -149,6 +164,7 @@ export default function Mappen() {
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 
               onDeleteFolders={handleDeleteFolders}
+              onAddFolders={handleAddFolders}
               selectedUsers={selectedUsers} 
               selectedDocFolder={selectedDocFolder} 
               selectedDocRole={selectedDocRole} 

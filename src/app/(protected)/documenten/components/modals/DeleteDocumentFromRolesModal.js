@@ -1,14 +1,13 @@
 import { X } from "lucide-react";
 
 export default function DeleteDocumentFromRolesModal({
-  roles,
+  entries,
   documentName,
   onConfirm,
   onClose,
   isMultiple,
 }) {
-
-  const single = !isMultiple ? roles?.[0] : null;
+  const single = !isMultiple ? entries?.[0] : null;
 
   return (
     <div className="relative w-fit h-fit py-7 px-13 bg-white shadow-md rounded-2xl flex flex-col items-center justify-center gap-10">
@@ -24,36 +23,36 @@ export default function DeleteDocumentFromRolesModal({
         <span className="text-white text-3xl leading-none">×</span>
       </div>
 
-      {/* MULTIPLE ROLES */}
+      {/* MULTIPLE ENTRIES */}
       {isMultiple ? (
         <div className="text-center text-[18px] leading-6 text-black">
           <p className="mb-4">
             Weet je zeker dat je het document<br />
             <span className="font-semibold">&quot;{documentName}&quot;</span><br />
             wilt verwijderen uit<br />
-            <span className="font-semibold">{roles.length} rollen</span>?
+            <span className="font-semibold">{entries.length} combinaties</span>?
           </p>
 
           <div className="h-fit overflow-y-auto scrollbar-hide text-sm mt-2">
-            {roles.slice(0, 5).map((r, idx) => (
+            {entries.slice(0, 5).map((entry, idx) => (
               <div key={idx}>
-                • {r.role} — map: {r.folders.join(", ")}
+                • {entry.role} — map: {entry.folder}
               </div>
             ))}
-            {roles.length > 5 && (
+            {entries.length > 5 && (
               <div className="text-gray-500">
-                ... en {roles.length - 5} meer
+                ... en {entries.length - 5} meer
               </div>
             )}
           </div>
         </div>
       ) : (
-        /* SINGLE ROLE */
+        /* SINGLE ENTRY */
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je het document<br />
           <span className="font-semibold">&quot;{documentName}&quot;</span><br />
           wilt verwijderen uit de map<br />
-          <span className="font-semibold">&quot;{single?.folders?.join(", ")}&quot;</span><br />
+          <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
           voor rol<br />
           <span className="font-semibold">&quot;{single?.role}&quot;</span>?
         </p>
@@ -64,7 +63,7 @@ export default function DeleteDocumentFromRolesModal({
         className="bg-[#E94F4F] hover:bg-red-600 text-white font-bold text-base rounded-lg w-fit px-4 py-2 flex items-center justify-center"
       >
         {isMultiple
-          ? `Verwijder uit ${roles.length} rollen`
+          ? `Verwijder uit ${entries.length} combinaties`
           : "Verwijder uit rol"}
       </button>
     </div>

@@ -6,16 +6,27 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
 
 export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, onResetPass }) {
-   const allRoles = useMemo(
+  const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
   )
   
-  const [ name, setName ] = useState("")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [updatedRoles, setUpdatedRoles] = useState([]) 
   const [selected, setSelected] = useState("") 
   const [isSaving, setIsSaving] = useState(false)
+
+  const isAdmin = useMemo(() => {
+    if (!user) return false
+    
+    const userRoles = user.roles || user.Rol || []
+    const hasBeheerderRole = Array.isArray(userRoles) 
+      ? userRoles.includes("Beheerder")
+      : userRoles === "Beheerder"
+    
+    return hasBeheerderRole
+  }, [user])
 
   useEffect(() => {
     if (!user) {
@@ -40,9 +51,10 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
   }, [user])
 
   const availableRoles = useMemo(() => {
+    if (isAdmin) return [] 
     const setAssigned = new Set(updatedRoles)
     return allRoles.filter((r) => !setAssigned.has(r))
-  }, [allRoles, updatedRoles])
+  }, [allRoles, updatedRoles, isAdmin])
 
   useEffect(() => {
     if (!selected) {
@@ -85,13 +97,16 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
     setIsSaving(true)
     try {
+      const userType = isAdmin ? "admin" : "user"
+      
       const payload = {
         id: user.id,
         name: name.trim(),
         email: email.trim(),
         assigned_roles: updatedRoles,
+        user_type: userType 
       }
-      
+      console.log(' --- Updted admin data --- :', payload)
       await onUpdateUser(payload)
       alert("Gebruiker succesvol bijgewerkt!")
     } catch (err) {
@@ -123,49 +138,52 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
           </div>
         </div>
 
-        {/* Roles section */}
-        <div className="flex flex-col gap-2">
-          <span className="font-montserrat text-[16px]">Rol</span>
+        {/* Roles section - Only show for non-admin users */}
+        {!isAdmin && (
+          <div className="flex flex-col gap-2">
+            <span className="font-montserrat text-[16px]">Rol</span>
 
-          <div className="flex flex-wrap gap-3 mt-2">
-            {updatedRoles.length > 0 ? (
-              updatedRoles.map((r, i) => (
-                <div key={r + i} className="flex items-center gap-2">
-                  <SuccessBttn text={r} />
-                  <button
-                    onClick={() => handleRemoveRole(r)}
-                    aria-label={`Remove ${r}`}
-                    className="hover:opacity-80 transition-opacity"
-                  >
-                    <RedCancelIcon />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="text-gray-500 italic">Geen rollen toegewezen</div>
-            )}
-          </div>
-
-          {/* Add new role */}
-          <div className="flex gap-2 mt-4 items-center">
-            <div className="w-1/3">
-              <DropdownMenu
-                value={selected}
-                onChange={setSelected}
-                allOptions={availableRoles}
-              />
+            <div className="flex flex-wrap gap-3 mt-2">
+              {updatedRoles.length > 0 ? (
+                updatedRoles.map((r, i) => (
+                  <div key={r + i} className="flex items-center gap-2">
+                    <SuccessBttn text={r} />
+                    <button
+                      onClick={() => handleRemoveRole(r)}
+                      aria-label={`Remove ${r}`}
+                      className="hover:opacity-80 transition-opacity"
+                    >
+                      <RedCancelIcon />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 italic">Geen rollen toegewezen</div>
+              )}
             </div>
 
-            <button
-              onClick={handleAddRole}
-              aria-label="Add role"
-              className={`hover:opacity-80 transition-opacity ${availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
-              disabled={availableRoles.length === 0}
-            >
-              <AddIcon />
-            </button>
+            {/* Add new role */}
+            <div className="flex gap-2 mt-4 items-center">
+              <div className="w-1/3">
+                <DropdownMenu
+                  value={selected}
+                  onChange={setSelected}
+                  allOptions={availableRoles}
+                  disabled={availableRoles.length === 0}
+                />
+              </div>
+
+              <button
+                onClick={handleAddRole}
+                aria-label="Add role"
+                className={`hover:opacity-80 transition-opacity ${availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
+                disabled={availableRoles.length === 0}
+              >
+                <AddIcon />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Email + Reset Password */}
         <span className="mt-[23px] font-montserrat text-[16px]">E-mail adres</span>
