@@ -20,7 +20,7 @@ export default function Rollen() {
   const [selectedRole, setSelectedRole] = useState(null) 
   const [user, setUser] = useState()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null) // Add error state
+  const [error, setError] = useState(null) 
   
   const ActiveComponent = tabsConfig[activeIndex].component
 
