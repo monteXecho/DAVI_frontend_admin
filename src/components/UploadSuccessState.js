@@ -9,7 +9,7 @@ export default function UploadSuccessBttn ( {uploadedFileName} ) {
                 De BKR-regeling is in de getoetste periode correct toegepast!
             </div>
 
-            <div className="w-full h-[1px] bg-[#C5BEBE]"></div>
+            <div className="w-full h-px bg-[#C5BEBE]"></div>
         </div>
     )
 }

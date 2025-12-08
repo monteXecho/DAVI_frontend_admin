@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function MainLayout({ children }) {
   return (
-        <div className="flex flex-col lg:flex-row w-full h-full">
+      <div className="flex flex-col lg:flex-row w-full h-full">
           <div className='lg:block hidden'> <LeftSidebar /> </div>
           <div className='lg:hidden'> <Header /> </div>
 
@@ -18,6 +18,6 @@ export default function MainLayout({ children }) {
                 {children}                
           </main>
           <div className='lg:hidden'> <Footer /> </div>
-        </div>
+      </div>
   )
 }

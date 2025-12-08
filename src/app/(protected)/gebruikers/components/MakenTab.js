@@ -2,22 +2,28 @@
 import { useState, useMemo } from "react"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import { ToastContainer, toast } from "react-toastify"
+import Toggle from "@/components/buttons/Toggle"
 import "react-toastify/dist/ReactToastify.css"
 
-export default function MakenTab({ roles = [], onAddUser }) {
+export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
   )
 
   const allOptions = useMemo(
-    () => ["Beheerder", ...allRoles],
+    () => ["Beheerder", "Teamlid", ...allRoles],
     [allRoles]
-)
+  )
 
   const [selected, setSelected] = useState(allOptions[0])
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
+  
+  // Team permissions states - only for Teamlid role
+  const [roleFolderPermission, setRoleFolderPermission] = useState(false)
+  const [userPermission, setUserPermission] = useState(false)
+  const [documentPermission, setDocumentPermission] = useState(false)
 
   const handleSave = async () => {
     if (!email.trim()) {
@@ -25,20 +31,38 @@ export default function MakenTab({ roles = [], onAddUser }) {
       return
     }
 
-    const isBeheerder = selected === "Beheerder"
-    const company_role = isBeheerder ? "company_admin" : "company_user"
-    const assigned_role = isBeheerder ? "" : selected 
+    let company_role = "company_user"
+    if (selected === "Beheerder") {
+      company_role = "company_admin"
+    } else if (selected === "Teamlid") {
+      company_role = "team_member"
+    }
+    
+    const assigned_role = (selected === "Beheerder" || selected === "Teamlid") 
+      ? "" 
+      : selected
+
+    const team_permissions = selected === "Teamlid" ? {
+      role_folder_modify_permission: roleFolderPermission,
+      user_create_modify_permission: userPermission,
+      document_modify_permission: documentPermission
+    } : undefined
 
     try {
       setLoading(true)
-      if (onAddUser) {
+      if (onAddUser && selected !== "Teamlid") {
         await onAddUser(email.trim(), company_role, assigned_role)
+      } else if (onAssignTeamlidPermissions && selected === "Teamlid") {
+        await onAssignTeamlidPermissions(email.trim(), team_permissions)
       }
 
       toast.success(`Gebruiker toegevoegd als ${selected}`)
 
       setEmail("")
       setSelected(allOptions[0])
+      setRoleFolderPermission(false)
+      setUserPermission(false)
+      setDocumentPermission(false)
     } catch (err) {
       console.error("Failed to add user:", err)
       toast.error("Er is een fout opgetreden bij het toevoegen van de gebruiker.")
@@ -74,6 +98,63 @@ export default function MakenTab({ roles = [], onAddUser }) {
           />
         </div>
       </div>
+
+      {/* Conditional Teamlid Permissions Section */}
+      {selected === "Teamlid" && (
+        <div className="flex flex-col w-fit gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <h3 className="font-montserrat font-semibold text-lg text-gray-700 mb-2">
+            Teamlid Permissies
+          </h3>
+          
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">
+                Rollen-Mappen
+              </span>
+              <Toggle
+                checked={roleFolderPermission}
+                onChange={setRoleFolderPermission}
+                activeColor="#23BD92"
+              />
+              <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                {roleFolderPermission ? "Maken en wijzigen" : "Alleen lezen"} 
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">
+                Gebruikers
+              </span>
+              <Toggle
+                checked={userPermission}
+                onChange={setUserPermission}
+                activeColor="#23BD92"
+              />
+              <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                {userPermission ? "Maken en wijzigen" : "Alleen lezen"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">
+                Documenten
+              </span>
+              <Toggle
+                checked={documentPermission}
+                onChange={setDocumentPermission}
+                activeColor="#23BD92"
+              />
+              <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                {documentPermission ? "Maken en wijzigen" : "Alleen lezen"}
+              </span>
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-500 mt-2">
+            Deze permissies zijn alleen van toepassing op gebruikers met de 'Teamlid' rol.
+          </p>
+        </div>
+      )}
 
       <button
         onClick={handleSave}

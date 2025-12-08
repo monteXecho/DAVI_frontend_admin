@@ -15,7 +15,7 @@ const tabsConfig = [
 ]
 
 export default function Gebruikers() {
-  const { getUsers, addUser, addRoleToUsers, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword } = useApi()
+  const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword } = useApi()
 
   const [documents, setDocuments] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -116,8 +116,13 @@ export default function Gebruikers() {
     setActiveIndex(3)
   }
 
-  const handleAddUser = async (email, role, assigend_role) => {
-    await addUser(email, role, assigend_role)
+  const handleAddUser = async (email, role, assigend_role,) => {
+    await addUser(email, role, assigend_role,)
+    await refreshUsers()
+  }
+
+  const handleAssignTeamlidPermissions = async (email, permissions) => {
+    await assignTeamlidPermissions(email, permissions)
     await refreshUsers()
   }
 
@@ -290,6 +295,7 @@ export default function Gebruikers() {
               onDocumenten={handleDocumenten}
               onDocumentenForUser={handleDocumentenForUser}
               onAddUser={handleAddUser}
+              onAssignTeamlidPermissions={handleAssignTeamlidPermissions}
               onUpdateUser={handleUpdateUser}
               onDeleteUsers={handleDeleteUsers}
               onDeleteRoleFromUsers={handleDeleteRoleFromUsers}

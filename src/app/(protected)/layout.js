@@ -1,13 +1,16 @@
-"use client"
-import ProtectedRoute from "@/components/ProtectedRoute"
-import MainLayout from "@/components/layout/mainLayout"
+"use client";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import MainLayout from "@/components/layout/mainLayout";
+import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
 export default function ProtectedLayout({ children }) {
-  return (    
+  return (
     <MainLayout>
       <ProtectedRoute>
-        {children}
+        <WorkspaceProvider>
+          {children}
+        </WorkspaceProvider>
       </ProtectedRoute>
     </MainLayout>
-  )
+  );
 }

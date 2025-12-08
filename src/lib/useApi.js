@@ -1,9 +1,12 @@
 import { useKeycloak } from '@react-keycloak/web';
 import { useCallback, useState } from 'react';
 import { apiClient, createAuthHeaders } from './apiClient';
+import { useWorkspace } from '@/context/WorkspaceContext';
+
 
 export function useApi() {
   const { keycloak } = useKeycloak();
+  const { selectedOwnerId } = useWorkspace();   // NEW
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,6 +20,13 @@ export function useApi() {
     }
     return token;
   }, [keycloak]);
+
+  const authHeaders = (token, extraHeaders = {}) =>
+    createAuthHeaders(token, {
+      ...(selectedOwnerId ? { 'X-Acting-Owner-Id': selectedOwnerId } : {}),
+      ...extraHeaders,
+    });
+
 
   const withAuth = useCallback(
     async (callback) => {
@@ -40,7 +50,7 @@ export function useApi() {
     (question) =>
       withAuth((token) =>
         apiClient
-          .post('/ask/run', {question}, createAuthHeaders(token))
+          .post('/ask/run', {question}, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -53,7 +63,7 @@ export function useApi() {
           .post(
             `/company-admin/roles/upload/${folderPath}`,
             formData,
-            createAuthHeaders(token, {
+            authHeaders(token, {
               'Content-Type': 'multipart/form-data',
             })
           )
@@ -82,7 +92,7 @@ export function useApi() {
     (documentsToDelete) =>
       withAuth((token) =>
         apiClient
-          .post(`/company-admin/documents/delete`, { documents: documentsToDelete }, createAuthHeaders(token))
+          .post(`/company-admin/documents/delete`, { documents: documentsToDelete }, authHeaders(token))
           .then((res) => ({ success: true, data: res.data }))
           .catch((err) => {
             console.error('[useApi] Delete documents failed:', err);
@@ -96,7 +106,7 @@ export function useApi() {
     (documentsToDelete) =>
       withAuth((token) =>
         apiClient
-          .post(`/company-admin/documents/delete/private`, { documents: documentsToDelete }, createAuthHeaders(token))
+          .post(`/company-admin/documents/delete/private`, { documents: documentsToDelete }, authHeaders(token))
           .then((res) => ({ success: true, data: res.data }))
           .catch((err) => {
             console.error('[useApi] Delete documents failed:', err);
@@ -110,7 +120,7 @@ export function useApi() {
     (formData, uploadType) =>
       withAuth((token) =>
         apiClient
-          .post(`/upload/${uploadType}`, formData, createAuthHeaders(token, {
+          .post(`/upload/${uploadType}`, formData, authHeaders(token, {
             'Content-Type': 'multipart/form-data',
           }))
           .then((res) => ({ success: true, data: res.data }))
@@ -127,7 +137,7 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          .get('/super-admin/companies', createAuthHeaders(token))
+          .get('/super-admin/companies', authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -137,7 +147,7 @@ export function useApi() {
     (company) =>
       withAuth((token) =>
         apiClient
-          .post('/super-admin/companies', company, createAuthHeaders(token))
+          .post('/super-admin/companies', company, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -147,7 +157,7 @@ export function useApi() {
     (companyId) =>
       withAuth((token) =>
         apiClient
-          .delete(`/super-admin/companies/${companyId}`, createAuthHeaders(token))
+          .delete(`/super-admin/companies/${companyId}`, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -158,7 +168,7 @@ export function useApi() {
     (companyId) =>
       withAuth((token) =>
         apiClient
-          .get(`/super-admin/companies/${companyId}/admins`, createAuthHeaders(token))
+          .get(`/super-admin/companies/${companyId}/admins`, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -168,7 +178,7 @@ export function useApi() {
     (companyId, name, email, modules) =>
       withAuth((token) =>
         apiClient
-          .post(`/super-admin/companies/${companyId}/admins`, { name, email, modules }, createAuthHeaders(token))
+          .post(`/super-admin/companies/${companyId}/admins`, { name, email, modules }, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -178,7 +188,7 @@ export function useApi() {
     (companyId, adminId, name, email) =>
       withAuth((token) =>
         apiClient
-          .patch(`/super-admin/companies/${companyId}/admins/${adminId}`, {name, email}, createAuthHeaders(token))
+          .patch(`/super-admin/companies/${companyId}/admins/${adminId}`, {name, email}, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -188,7 +198,7 @@ export function useApi() {
     (companyId, adminId, modules) =>
       withAuth((token) =>
         apiClient
-          .post(`/super-admin/companies/${companyId}/admins/${adminId}/modules`, modules, createAuthHeaders(token))
+          .post(`/super-admin/companies/${companyId}/admins/${adminId}/modules`, modules, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -198,7 +208,7 @@ export function useApi() {
     (companyId, adminId) =>
       withAuth((token) =>
         apiClient
-          .delete(`/super-admin/companies/${companyId}/admins/${adminId}`, createAuthHeaders(token))
+          .delete(`/super-admin/companies/${companyId}/admins/${adminId}`, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -231,7 +241,7 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/documents', createAuthHeaders(token))
+          .get('/company-admin/documents', authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -241,7 +251,7 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/documents/private', createAuthHeaders(token))
+          .get('/company-admin/documents/private', authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -254,7 +264,7 @@ export function useApi() {
           .post(
             `/company-admin/users/upload`,
             formData,
-            createAuthHeaders(token, {
+            authHeaders(token, {
               'Content-Type': 'multipart/form-data',
             })
           )
@@ -275,7 +285,7 @@ export function useApi() {
     (email) =>
       withAuth((token) =>
         apiClient
-          .post(`/company-admin/users/reset-password`, { email }, createAuthHeaders(token))
+          .post(`/company-admin/users/reset-password`, { email }, authHeaders(token))
           .then((res) => ({ success: true}))
           .catch((err) => {
             console.error('[useApi] Reset password request sending failed:', err);
@@ -297,7 +307,7 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/users', createAuthHeaders(token))
+          .get('/company-admin/users', authHeaders(token))
           .then((res) => {
             console.log(' --- USERS --- :', res.data)
             return res.data
@@ -308,20 +318,36 @@ export function useApi() {
 
   const addUser = useCallback(
     (email, company_role, assigned_role) =>
-      withAuth((token) =>
-        apiClient
-          .post('/company-admin/users', { email, company_role, assigned_role }, createAuthHeaders(token))
+      withAuth((token) => { 
+        console.log('Adding user with:', email, company_role, assigned_role)
+        return apiClient
+          .post('/company-admin/users', { email, company_role, assigned_role }, authHeaders(token))
           .then((res) => res.data)
+      }
       ),
     [withAuth]
   );  
+
+  const assignTeamlidPermissions = useCallback(
+    (email, team_permissions) =>
+      withAuth((token) => {
+        console.log('Assigning team member permissions:', email, team_permissions)
+        return apiClient
+          .post('/company-admin/users/teamlid', { email, team_permissions }, authHeaders(token))
+          .then((res) => res.data)
+      }
+      ),
+    [withAuth]
+  );
 
   const getUser = useCallback(
     () =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/user', createAuthHeaders(token))
-          .then((res) => res.data)
+          .get('/company-admin/user', authHeaders(token))
+          .then((res) => {
+            console.log(' --- USER --- :', res.data)
+            return res.data})
       ),
     [withAuth]
   );
@@ -330,7 +356,7 @@ export function useApi() {
     (payload) =>
       withAuth((token) =>
         apiClient
-          .put(`/company-admin/users/${payload.id}`, payload, createAuthHeaders(token))
+          .put(`/company-admin/users/${payload.id}`, payload, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -340,7 +366,7 @@ export function useApi() {
     (user_ids) =>
       withAuth((token) =>
         apiClient
-          .delete(`/company-admin/users?user_ids=${user_ids.join(',')}`, createAuthHeaders(token))
+          .delete(`/company-admin/users?user_ids=${user_ids.join(',')}`, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -350,7 +376,7 @@ export function useApi() {
     (user_ids, role_name) =>
       withAuth((token) =>
         apiClient
-          .post('/company-admin/users/role/delete', {user_ids, role_name}, createAuthHeaders(token))
+          .post('/company-admin/users/role/delete', {user_ids, role_name}, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -360,7 +386,7 @@ export function useApi() {
     (user_ids, role_name) =>
       withAuth((token) =>
         apiClient
-          .post('/company-admin/users/role/add', {user_ids, role_name}, createAuthHeaders(token))
+          .post('/company-admin/users/role/add', {user_ids, role_name}, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -370,7 +396,7 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          .get(`/company-admin/stats`, createAuthHeaders(token))
+          .get(`/company-admin/stats`, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -380,7 +406,7 @@ export function useApi() {
       () =>
         withAuth((token) =>
           apiClient
-            .get(`/company-admin/roles`, createAuthHeaders(token))
+            .get(`/company-admin/roles`, authHeaders(token))
             .then((res) => res.data)
         ),
       [withAuth]
@@ -390,7 +416,7 @@ export function useApi() {
     (role_name, folders, modules, action) =>
       withAuth((token) => {
         return apiClient
-          .post(`/company-admin/roles`, { role_name, folders, modules, action }, createAuthHeaders(token))
+          .post(`/company-admin/roles`, { role_name, folders, modules, action }, authHeaders(token))
           .then((res) => {
             console.log(' -- RESULT --- :', res.data)
             return res.data
@@ -408,7 +434,7 @@ export function useApi() {
         apiClient
           .post(`/company-admin/roles/delete`, 
             { role_names }, 
-            createAuthHeaders(token)
+            authHeaders(token)
           )
           .then((res) => res.data)
           .catch((err) => {
@@ -426,7 +452,7 @@ export function useApi() {
         return apiClient
           .post("/company-admin/folders", 
             { folder_names: folders }, 
-            createAuthHeaders(token)
+            authHeaders(token)
           )
           .then((res) => {
             console.log('Add folders response:', res.data);
@@ -448,7 +474,7 @@ export function useApi() {
       withAuth((token) => {
         return apiClient
           .get("/company-admin/folders", 
-            createAuthHeaders(token)
+            authHeaders(token)
           )
           .then((res) => {
             console.log('Get folders response:', res.data);
@@ -472,7 +498,7 @@ export function useApi() {
         apiClient
           .post(`/company-admin/folders/delete`, 
             { role_names:payload.role_names, folder_names:payload.folder_names }, 
-            createAuthHeaders(token)
+            authHeaders(token)
           )
           .then((res) => {
             console.log('Delete folders response:', res.data);
@@ -490,7 +516,7 @@ export function useApi() {
     (user_id, role_name) =>
       withAuth((token) =>
         apiClient
-          .post(`/company-admin/roles/assign`, { user_id, role_name }, createAuthHeaders(token))
+          .post(`/company-admin/roles/assign`, { user_id, role_name }, authHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -518,6 +544,7 @@ export function useApi() {
     getUsers,
     getUser,
     addUser,
+    assignTeamlidPermissions,
     addRoleToUsers,
     updateUser,
     deleteUsers,
