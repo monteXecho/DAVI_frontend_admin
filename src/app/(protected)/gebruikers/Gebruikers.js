@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from "react"
 import { useApi } from "@/lib/useApi"
+import { canWriteUsers } from "@/lib/permissions"
 
 import GebruikersTab from "./components/GebruikersTab"
 import MakenTab from "./components/MakenTab"
@@ -15,7 +16,7 @@ const tabsConfig = [
 ]
 
 export default function Gebruikers() {
-  const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword } = useApi()
+  const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword, getUser } = useApi()
 
   const [documents, setDocuments] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -24,6 +25,8 @@ export default function Gebruikers() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [uploadLoading, setUploadLoading] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [canWrite, setCanWrite] = useState(true)
 
   const [userDocumentFilters, setUserDocumentFilters] = useState({
     roles: [],
@@ -63,6 +66,11 @@ export default function Gebruikers() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        // Fetch current user to check permissions
+        const userData = await getUser()
+        setCurrentUser(userData)
+        setCanWrite(canWriteUsers(userData))
+
         const data = await getRoles()
         const formattedRole =
           data.roles?.map((r) => ({
@@ -85,11 +93,15 @@ export default function Gebruikers() {
       }
     }
     loadUsers()
-  }, [getUsers, getRoles, getAdminDocuments])
+  }, [getUsers, getRoles, getAdminDocuments, getUser])
 
   const dynamicTabs = tabsConfig.map(tab => {
     if (['Wijzigen', 'Documenten'].includes(tab.label)) {
       return { ...tab, selectable: !!selectedUser }
+    }
+    // Disable "Toevoegen" tab if user doesn't have write permission
+    if (tab.label === 'Toevoegen' && !canWrite) {
+      return { ...tab, selectable: false }
     }
     return tab
   })
@@ -308,6 +320,7 @@ export default function Gebruikers() {
               uploadLoading={uploadLoading}
               onResetPass={handleResetPass}
               userDocumentFilters={userDocumentFilters}
+              canWrite={canWrite}
             />
           )}
         </div>

@@ -7,6 +7,7 @@ import AppearInRoleTab from "./components/AppearInRoleTab"
 import GekoppeldDocumentTab from "./components/AppearInFolderTab"
 import ToevoegenTab from "./components/ToevoegenTab"
 import { useApi } from "@/lib/useApi"
+import { canWriteDocuments } from "@/lib/permissions"
 
 const tabsConfig = [
   { label: 'Alle documenten', component: AlleDocumentenTab, selectable: true },
@@ -26,14 +27,20 @@ export default function Documents() {
   const [ selectedFolders, setSelectedFolders ] = useState([])
   const [ selectedDocName, setSelectedDocName ] = useState("") 
   const [ loading, setLoading ] = useState(true)
+  const [ currentUser, setCurrentUser ] = useState(null)
+  const [ canWrite, setCanWrite ] = useState(true)
 
-  const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments } = useApi()
+  const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments, getUser } = useApi()
 
   const isDocSelected = !!selectedDocName
 
   const dynamicTabs = tabsConfig.map(tab => {
     if (["Gebruikers", "Komt voor bij rol", "Komt voor in map"].includes(tab.label)) {
       return { ...tab, selectable: isDocSelected }
+    }
+    // Disable "Toevoegen" tab if user doesn't have write permission
+    if (tab.label === 'Toevoegen' && !canWrite) {
+      return { ...tab, selectable: false }
     }
     return tab
   })
@@ -69,6 +76,11 @@ export default function Documents() {
   useEffect(() => {
     const init = async () => {
       try {
+        // Fetch current user to check permissions
+        const userData = await getUser()
+        setCurrentUser(userData)
+        setCanWrite(canWriteDocuments(userData))
+        
         await refreshData()
       } catch (err) {
         console.error("Initialization failed:", err)
@@ -77,7 +89,7 @@ export default function Documents() {
       }
     }
     init()
-  }, [refreshData])  
+  }, [refreshData, getUser])  
 
   const handleUploadDocument = async (selectedFolder, formData) => {
     try {
@@ -236,6 +248,7 @@ export default function Documents() {
               selectedDocName={selectedDocName}
               selectedRoles={selectedRoles}
               selectedFolders={selectedFolders}
+              canWrite={canWrite}
             />
           )}
         </div>

@@ -5,12 +5,12 @@ import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
 export default function ProtectedLayout({ children }) {
   return (
-    <MainLayout>
-      <ProtectedRoute>
-        <WorkspaceProvider>
+    <ProtectedRoute>
+      <WorkspaceProvider>
+        <MainLayout>
           {children}
-        </WorkspaceProvider>
-      </ProtectedRoute>
-    </MainLayout>
+        </MainLayout>
+      </WorkspaceProvider>
+    </ProtectedRoute>
   );
 }

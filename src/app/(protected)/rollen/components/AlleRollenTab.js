@@ -12,7 +12,7 @@ import DeleteRoleModal from './modals/DeleteRoleModal'
 import SortableHeader from '@/components/SortableHeader'
 import { useSortableData } from '@/lib/useSortableData'
 
-export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole }) {
+export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole, canWrite = true }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlRole = searchParams.get('role')
@@ -255,11 +255,20 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
       <div className="flex w-full h-[60px] bg-[#F9FBFA] items-center justify-between px-4">
         <div className="flex w-2/3 gap-4">
           <div className="w-1/3">
-            <DropdownMenu
-              value={selectedBulkAction}
-              onChange={handleBulkAction}
-              allOptions={allOptions}
-            />
+            {canWrite ? (
+              <DropdownMenu
+                value={selectedBulkAction}
+                onChange={handleBulkAction}
+                allOptions={allOptions}
+              />
+            ) : (
+              <DropdownMenu
+                value="Bulkacties"
+                onChange={() => {}}
+                allOptions={["Bulkacties"]}
+                disabled={true}
+              />
+            )}
           </div>
 
           <div className="w-1/3">
@@ -271,7 +280,8 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
           </div>
         </div>
 
-        <AddButton onClick={() => onMoveToMaken()} text="Toevoegen" />
+        {canWrite && <AddButton onClick={() => onMoveToMaken()} text="Toevoegen" />}
+        {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
       {/* Table */}
@@ -286,12 +296,14 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                 className="px-4 py-2"
               >
                 <div className="flex items-center gap-3">
-                  <CheckBox
-                    toggle={allSelected}
-                    indeterminate={someSelected}
-                    onChange={handleSelectAll}
-                    color="#23BD92"
-                  />
+                  {canWrite && (
+                    <CheckBox
+                      toggle={allSelected}
+                      indeterminate={someSelected}
+                      onChange={handleSelectAll}
+                      color="#23BD92"
+                    />
+                  )}
                   Rol
                 </div>
               </SortableHeader>
@@ -337,11 +349,13 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
               >
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-3 font-montserrat text-[16px] text-black">
-                    <CheckBox
-                      toggle={selectedRoles.has(role.name)}
-                      onChange={(sel) => handleRoleSelect(role.name, sel)}
-                      color="#23BD92"
-                    />
+                    {canWrite && (
+                      <CheckBox
+                        toggle={selectedRoles.has(role.name)}
+                        onChange={(sel) => handleRoleSelect(role.name, sel)}
+                        color="#23BD92"
+                      />
+                    )}
                     {search ? highlightText(role.name, search) : role.name}
                   </div>
                 </td>
@@ -382,21 +396,25 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
                 <td className="px-4 py-2">
                   <div className="flex justify-center items-center gap-3">
-                    <button
-                      className="hover:opacity-80 transition-opacity"
-                      onClick={() => handleEditClick(role)}
-                      title="Bewerken"
-                    >
-                      <EditIcon />
-                    </button>
+                    {canWrite && (
+                      <>
+                        <button
+                          className="hover:opacity-80 transition-opacity"
+                          onClick={() => handleEditClick(role)}
+                          title="Bewerken"
+                        >
+                          <EditIcon />
+                        </button>
 
-                    <button
-                      className="hover:opacity-80 transition-opacity"
-                      onClick={() => handleDeleteClick(role)}
-                      title="Verwijderen"
-                    >
-                      <RedCancelIcon />
-                    </button>
+                        <button
+                          className="hover:opacity-80 transition-opacity"
+                          onClick={() => handleDeleteClick(role)}
+                          title="Verwijderen"
+                        >
+                          <RedCancelIcon />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

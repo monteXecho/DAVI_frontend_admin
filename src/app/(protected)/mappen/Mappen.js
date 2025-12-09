@@ -6,6 +6,7 @@ import UsersTab from "./components/UsersTab"
 import MappenTab from "./components/MappenTab"
 import MakenTab from "./components/MakenTab"
 import { useApi } from "@/lib/useApi"
+import { canWriteFolders } from "@/lib/permissions"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
@@ -22,8 +23,10 @@ export default function Mappen() {
   const [selectedDocFolder, setSelectedDocFolder] = useState("")
   const [selectedDocRole, setSelectedDocRole] = useState("")
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [canWrite, setCanWrite] = useState(true)
 
-  const { getRoles, getAdminDocuments, addFolders, deleteFolders } = useApi()
+  const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser } = useApi()
 
   const router = useRouter()
 
@@ -32,6 +35,10 @@ export default function Mappen() {
   const dynamicTabs = tabsConfig.map(tab => {
     if (["Gebruikers", "Komt voor bij rol", "Komt voor in map"].includes(tab.label)) {
       return { ...tab, selectable: isDocSelected }
+    }
+    // Disable "Maken" tab if user doesn't have write permission
+    if (tab.label === 'Maken' && !canWrite) {
+      return { ...tab, selectable: false }
     }
     return tab
   })
@@ -54,6 +61,11 @@ export default function Mappen() {
   useEffect(() => {
     const init = async () => {
       try {
+        // Fetch current user to check permissions
+        const userData = await getUser()
+        setCurrentUser(userData)
+        setCanWrite(canWriteFolders(userData))
+        
         await refreshData()
       } catch (err) {
         console.error("Initialization failed:", err)
@@ -62,7 +74,7 @@ export default function Mappen() {
       }
     }
     init()
-  }, [refreshData])  
+  }, [refreshData, getUser])  
 
   const handleShowUsers = (users, docName, folderName, roleName) => {
     setSelectedUsers(users)
@@ -167,7 +179,8 @@ export default function Mappen() {
               onAddFolders={handleAddFolders}
               selectedUsers={selectedUsers} 
               selectedDocFolder={selectedDocFolder} 
-              selectedDocRole={selectedDocRole} 
+              selectedDocRole={selectedDocRole}
+              canWrite={canWrite}
             />
           )}
         </div>

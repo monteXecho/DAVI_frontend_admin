@@ -6,7 +6,7 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 
-export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, onDeleteRoles, selectedRole, user }) {
+export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, onDeleteRoles, selectedRole, user, canWrite = true }) {
   const [roleNames, setRoleNames] = useState([])
   const [selected, setSelected] = useState("")
   const [selectedFolders, setSelectedFolders] = useState([""])
@@ -132,6 +132,10 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
   }
 
   const handleSave = async () => {
+    if (!canWrite) {
+      setError("U heeft geen toestemming om rollen te wijzigen.")
+      return
+    }
     if (error) return
 
     if (!selected) {
@@ -166,6 +170,10 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
   }
 
   const handleDeleteRole = async () => {
+    if (!canWrite) {
+      alert("U heeft geen toestemming om rollen te verwijderen.")
+      return
+    }
     if (!selected) return alert("Geen rol geselecteerd.")
     if (!confirm(`Weet je zeker dat je de rol "${selected}" wilt verwijderen?`)) return
 
@@ -201,14 +209,16 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
             )}
           </div>
 
-          <button 
-            onClick={handleDeleteRole} 
-            type="button"
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            aria-label="Rol verwijderen"
-          >
-            <RedCancelIcon />
-          </button>
+          {canWrite && (
+            <button 
+              onClick={handleDeleteRole} 
+              type="button"
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              aria-label="Rol verwijderen"
+            >
+              <RedCancelIcon />
+            </button>
+          )}
         </div>
 
         {/* Folders Section */}
@@ -328,10 +338,10 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
         </div>
 
         <button
-          disabled={saving || loading || editableModules.length === 0 || !!error || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
+          disabled={saving || loading || !canWrite || editableModules.length === 0 || !!error || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
           onClick={handleSave}
           className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white transition-colors ${
-            saving || loading || error || selectedFolders.filter(f => f).length === 0 || folders.length === 0
+            saving || loading || !canWrite || error || selectedFolders.filter(f => f).length === 0 || folders.length === 0
               ? "bg-gray-400 cursor-not-allowed" 
               : "bg-[#23BD92] hover:bg-[#1ea87c]"
           }`}

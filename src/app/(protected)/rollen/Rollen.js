@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
 import { useApi } from "@/lib/useApi"
+import { canWriteRoles } from "@/lib/permissions"
 
 import AlleRollenTab from "./components/AlleRollenTab"
 import MakenTab from "./components/MakenTab"
@@ -20,14 +21,18 @@ export default function Rollen() {
   const [selectedRole, setSelectedRole] = useState(null) 
   const [user, setUser] = useState()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null) 
+  const [error, setError] = useState(null)
+  const [canWrite, setCanWrite] = useState(true) 
   
   const ActiveComponent = tabsConfig[activeIndex].component
 
   const fetchUser = useCallback(async () => {
     try {
       const loginUser = await getUser()
-      if(loginUser) setUser(loginUser)
+      if(loginUser) {
+        setUser(loginUser)
+        setCanWrite(canWriteRoles(loginUser))
+      }
       console.log("Current logged in user:", loginUser)
     } catch (err) {
       console.log("Failed to fetch user info: ", err)
@@ -120,12 +125,18 @@ export default function Rollen() {
           <div className="pl-24 flex gap-2">
             {tabsConfig.map((tab, index) => {
               const isActive = activeIndex === index
+              // Disable "Maken" and "Wijzigen" tabs if user doesn't have write permission
+              const isWriteTab = ['Maken', 'Wijzigen'].includes(tab.label)
+              const isSelectable = !isWriteTab || canWrite
               return (
                 <button
                   key={tab.label}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => isSelectable && setActiveIndex(index)}
+                  disabled={!isSelectable}
+                  title={!isSelectable ? "Geen schrijfrechten" : ""}
                   className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
                     ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
+                    ${isSelectable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-60'}
                     w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
                   `}
                 >
@@ -161,7 +172,8 @@ export default function Rollen() {
                 onAddOrUpdateRole={handleAddOrUpdateRole}
                 onMoveToMaken={() => {setActiveIndex(1)}}
                 onEditRole={handleEditRole} 
-                selectedRole={selectedRole} 
+                selectedRole={selectedRole}
+                canWrite={canWrite}
               />
             </>
           )}

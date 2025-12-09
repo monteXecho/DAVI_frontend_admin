@@ -5,7 +5,7 @@ import { ToastContainer, toast } from "react-toastify"
 import Toggle from "@/components/buttons/Toggle"
 import "react-toastify/dist/ReactToastify.css"
 
-export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions }) {
+export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions, canWrite = true }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
@@ -26,6 +26,11 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
   const [documentPermission, setDocumentPermission] = useState(false)
 
   const handleSave = async () => {
+    if (!canWrite) {
+      toast.error("U heeft geen toestemming om gebruikers toe te voegen.")
+      return
+    }
+    
     if (!email.trim()) {
       toast.warning("Voer een geldig e-mailadres in.")
       return
@@ -158,9 +163,9 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
 
       <button
         onClick={handleSave}
-        disabled={loading}
+        disabled={loading || !canWrite}
         className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base leading-[100%] tracking-normal text-center text-white ${
-          loading
+          loading || !canWrite
             ? "bg-[#1e9c79]/70 cursor-not-allowed"
             : "bg-[#23BD92] hover:bg-[#1e9c79]"
         }`}

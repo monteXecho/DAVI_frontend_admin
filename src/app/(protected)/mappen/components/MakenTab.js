@@ -6,7 +6,7 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import SuccessBttn from "@/components/buttons/SuccessBttn"
 import IssueBttn from "@/components/buttons/IssueBttn"
 
-export default function MakenTab({ onAddFolders }) {
+export default function MakenTab({ onAddFolders, canWrite = true }) {
   const [folders, setFolders] = useState([""])
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -214,9 +214,9 @@ export default function MakenTab({ onAddFolders }) {
           </div>
           <button
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || !canWrite}
             className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white transition-colors ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#23BD92] hover:bg-[#1ea87c]"
+              loading || !canWrite ? "bg-gray-400 cursor-not-allowed" : "bg-[#23BD92] hover:bg-[#1ea87c]"
             }`}
           >
             {loading ? "Opslaan..." : "Opslaan"}

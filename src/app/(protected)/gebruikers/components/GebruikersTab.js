@@ -29,6 +29,7 @@ export default function GebruikersTab({
   onMoveToMaken,
   onBulkImport,
   uploadLoading,
+  canWrite = true,
 }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteSuccessModalOpen, setIsDeleteSuccessModalOpen] = useState(false);
@@ -471,19 +472,29 @@ export default function GebruikersTab({
 
       {/* Action bar */}
       <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-        <button
-          className="w-[127px] h-10 border-2 border-[#23BD92] rounded-lg font-bold text-[16px] text-[#23BD92] hover:bg-[#23BD92] hover:text-white transition-colors"
-          onClick={() => setIsBulkImportModalOpen(true)}
-        >
-          Bulk import
-        </button>
-        <AddButton onClick={onMoveToMaken} text="Toevoegen" />
+        {canWrite ? (
+          <>
+            <button
+              className="w-[127px] h-10 border-2 border-[#23BD92] rounded-lg font-bold text-[16px] text-[#23BD92] hover:bg-[#23BD92] hover:text-white transition-colors"
+              onClick={() => setIsBulkImportModalOpen(true)}
+            >
+              Bulk import
+            </button>
+            <AddButton onClick={onMoveToMaken} text="Toevoegen" />
+          </>
+        ) : (
+          <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>
+        )}
       </div>
 
       {/* Filters */}
       <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
         <div className="w-32/99">
-          <DropdownMenu value={bulkAction} onChange={handleBulkAction} allOptions={allBulkActions} />
+          {canWrite ? (
+            <DropdownMenu value={bulkAction} onChange={handleBulkAction} allOptions={allBulkActions} />
+          ) : (
+            <DropdownMenu value="Bulkacties" onChange={() => {}} allOptions={["Bulkacties"]} disabled={true} />
+          )}
         </div>
         <div className="w-32/99">
           <DropdownMenu value={selectedRole} onChange={setSelectedRole} allOptions={allRoles} />
@@ -504,7 +515,9 @@ export default function GebruikersTab({
             <tr className="h-[51px] border-b border-[#C5BEBE]">
               <SortableHeader sortKey="Naam" onSort={requestSort} currentSort={sortConfig} className="px-2">
                 <div className="flex items-center gap-5">
-                  <CheckBox toggle={allSelected} indeterminate={someSelected} onChange={handleSelectAll} color="#23BD92" />
+                  {canWrite && (
+                    <CheckBox toggle={allSelected} indeterminate={someSelected} onChange={handleSelectAll} color="#23BD92" />
+                  )}
                   Naam
                 </div>
               </SortableHeader>
@@ -522,7 +535,9 @@ export default function GebruikersTab({
                 <tr key={user.id} className="border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-5">
-                      <CheckBox toggle={selectedUsers.has(user.id)} onChange={(v) => handleUserSelect(user.id, v)} color="#23BD92" />
+                      {canWrite && (
+                        <CheckBox toggle={selectedUsers.has(user.id)} onChange={(v) => handleUserSelect(user.id, v)} color="#23BD92" />
+                      )}
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
                           {searchQuery ? highlightText(user.Naam, searchQuery) : user.Naam}
@@ -557,20 +572,24 @@ export default function GebruikersTab({
                         />
                         <div className={`absolute inset-0 ${hasRoles ? 'bg-[#23BD92] mix-blend-overlay' : 'bg-gray-100 mix-blend-overlay'}`}></div>
                       </button>
-                      <button 
-                        onClick={() => onEditUser?.(user)} 
-                        className="hover:opacity-70 transition-opacity"
-                        title="Bewerken"
-                      >
-                        <EditIcon />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(user)} 
-                        className="hover:opacity-70 transition-opacity"
-                        title="Verwijderen"
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {canWrite && (
+                        <>
+                          <button 
+                            onClick={() => onEditUser?.(user)} 
+                            className="hover:opacity-70 transition-opacity"
+                            title="Bewerken"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteClick(user)} 
+                            className="hover:opacity-70 transition-opacity"
+                            title="Verwijderen"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

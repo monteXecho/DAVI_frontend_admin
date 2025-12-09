@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-
-import { useUser } from "@/lib/context/UserContext";
+import { useKeycloak } from "@react-keycloak/web";
+import { useApi } from "@/lib/useApi";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 
 import logoutItem from "@/assets/Vector.png";
 import MenuButton from "@/components/buttons/MenuButton";
@@ -14,146 +15,284 @@ import RollenItem from "@/assets/rollen_item.png";
 import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
 import CompanyItem from "@/assets/company_item.png";
-import GrayFolderIcon from "@/components/icons/GrayFolderIcon";
+import GrayFolderIcon from "@/components/icons/GrayFolderIcon"
 
 const MENU_CONFIG = {
   publicModules: [
     {
-      id: "documentenchat",
-      label: "Documentenchat",
+      id: 'documentenchat',
+      label: 'Documentenchat',
       icon: ChatItem,
-      path: "/documentchat",
-      moduleKey: "Documenten chat",
+      path: '/documentchat',
+      moduleKey: 'Documenten chat'
     },
     {
-      id: "ggd-checks",
-      label: "GGD Checks",
+      id: 'ggd-checks',
+      label: 'GGD Checks',
       icon: VGCItem,
-      path: "/GGD",
-      moduleKey: "GGD Checks",
-    },
+      path: '/GGD',
+      moduleKey: 'GGD Checks'
+    }
   ],
   adminModules: [
     {
-      id: "companies",
-      label: "Compagnies",
+      id: 'companies',
+      label: 'Compagnies',
       icon: CompanyItem,
-      path: "/compagnies",
-      requiredRole: "super_admin",
+      path: '/compagnies',
+      requiredRole: 'super_admin'
     },
     {
-      id: "roles",
-      label: "Rollen",
+      id: 'roles',
+      label: 'Rollen',
       icon: RollenItem,
-      path: "/rollen",
-      requiredRoles: ["super_admin", "company_admin"],
+      path: '/rollen',
+      requiredRoles: ['super_admin', 'company_admin']
     },
     {
-      id: "users",
-      label: "Gebruikers",
+      id: 'users',
+      label: 'Gebruikers',
       icon: GebruikersItem,
-      path: "/gebruikers",
-      requiredRoles: ["super_admin", "company_admin"],
+      path: '/gebruikers',
+      requiredRoles: ['super_admin', 'company_admin']
     },
     {
-      id: "documents",
-      label: "Documenten",
+      id: 'documents',
+      label: 'Documenten',
       icon: DocumentenItem,
-      path: "/documenten",
-      requiredRoles: ["super_admin", "company_admin"],
+      path: '/documenten',
+      requiredRoles: ['super_admin', 'company_admin']
     },
     {
-      id: "mappen",
-      label: "Mappen",
+      id: 'mappen',
+      label: 'Mappen',
       icon: GrayFolderIcon,
-      path: "/mappen",
-      requiredRoles: ["super_admin", "company_admin"],
-    },
-  ],
+      path: '/mappen',
+      requiredRoles: ['super_admin', 'company_admin']
+    }
+  ]
+};
+
+const useStableCallbacks = () => {
+  const map = useRef(new Map());
+  const getStable = useCallback((key, fn) => {
+    if (!map.current.has(key)) map.current.set(key, fn);
+    return map.current.get(key);
+  }, []);
+  return getStable;
 };
 
 export default function LeftSidebar() {
+
   const router = useRouter();
   const pathname = usePathname();
+  const { keycloak, initialized } = useKeycloak();
+  const { getUser } = useApi();
 
-  const userCtx = useUser();
-  if (!userCtx) return null;
+  const [user, setUser] = useState(null);
+  const userRef = useRef(null);          
+  const [loading, setLoading] = useState(true);
+  const getStable = useStableCallbacks();
+  const [activeTab, setActiveTab] = useState("Documentenchat");
 
-  const { user, roles, loading, isAuthenticated, logout } = userCtx;
+  const isAuthenticated = useMemo(
+    () => initialized && keycloak?.authenticated,
+    [initialized, keycloak?.authenticated]
+  );
 
-  const [activeTab, setActiveTab] = useState(null);
+  const userRoles = useMemo(() => {
+    if (!isAuthenticated) return {
+      isSuperAdmin: false,
+      isCompanyAdmin: false,
+      isCompanyUser: false
+    };
 
-  // ------------------------------------------------------------
-  // MODULE FILTERING
-  // ------------------------------------------------------------
+    const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
+
+    return {
+      isSuperAdmin: roles.includes("super_admin"),
+      isCompanyAdmin: roles.includes("company_admin"),
+      isCompanyUser: roles.includes("company_user")
+    };
+  }, [isAuthenticated, keycloak?.tokenParsed]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
+    // Super admins don't need profile data for workspace routing; skip fetch
+    if (userRoles.isSuperAdmin) {
+      setLoading(false);
+      return;
+    }
+
+    if (userRef.current) {
+      setUser(userRef.current);
+      setLoading(false);
+      return;
+    }
+
+    const loadUserOnce = async () => {
+      setLoading(true);
+      try {
+        const loginUser = await getUser();
+        if (loginUser) {
+          userRef.current = loginUser;           
+          setUser(prev => prev ?? loginUser);    
+        }
+      } catch (err) {
+        console.error("User fetch failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserOnce();
+  }, [isAuthenticated, getUser, userRoles.isSuperAdmin]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let storedOwnerId = null;
+    let storedOwnerUserId = null;
+    let sessionChoiceMade = false;
+    if (typeof window !== "undefined") {
+      try {
+        storedOwnerId = window.localStorage.getItem("daviActingOwnerId");
+        storedOwnerUserId = window.localStorage.getItem("daviActingOwnerUserId");
+        sessionChoiceMade = window.sessionStorage.getItem("daviActingOwnerSelectedForSession") === "true";
+      } catch (e) {
+        // ignore storage issues
+      }
+    }
+
+    // Teamlid must pick a workspace/role first; allow through once a choice exists and was selected this session
+    // Super admins should never be forced into user switch
+    if (user.is_teamlid && !userRoles.isSuperAdmin) {
+      const ownerBelongsToThisUser =
+        storedOwnerUserId && String(storedOwnerUserId) === String(user.user_id);
+
+      if (!storedOwnerId || !ownerBelongsToThisUser || !sessionChoiceMade) {
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.removeItem("daviActingOwnerId");
+            window.localStorage.removeItem("daviActingOwnerLabel");
+            window.localStorage.removeItem("daviActingOwnerUserId");
+            window.sessionStorage.removeItem("daviActingOwnerSelectedForSession");
+          } catch (e) {
+            // ignore storage issues
+          }
+        }
+        if (pathname !== "/userswitch") {
+          const redirect = encodeURIComponent(pathname || "/");
+          router.replace(`/userswitch?redirect=${redirect}`);
+        }
+        return;
+      }
+    }
+
+    // Ensure default acting owner id is persisted for normal users
+    if (!user.is_teamlid && typeof window !== "undefined") {
+      try {
+        if (!storedOwnerId && user.user_id) {
+          window.localStorage.setItem("daviActingOwnerId", user.user_id);
+        }
+      } catch (e) {
+        // storage unavailable; ignore
+      }
+    }
+  }, [user, pathname, router, userRoles.isSuperAdmin]);
+
+  const stableUser = userRef.current;  
+
   const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
-    if (!user) return { filteredPublicModules: [], filteredAdminModules: [] };
-
-    const publicModules = roles.isSuperAdmin
+    const publicModules = userRoles.isSuperAdmin
       ? MENU_CONFIG.publicModules
-      : MENU_CONFIG.publicModules.filter((mod) => {
-          return user?.modules?.[mod.moduleKey]?.enabled === true;
+      : MENU_CONFIG.publicModules.filter(module => {
+          const moduleInfo = stableUser?.modules?.[module.moduleKey];
+          return moduleInfo?.enabled === true;
         });
 
-    const adminModules = roles.isSuperAdmin
+    const adminModules = !isAuthenticated
+      ? []
+      : userRoles.isSuperAdmin
       ? MENU_CONFIG.adminModules
-      : MENU_CONFIG.adminModules.filter((mod) => {
-          if (mod.requiredRole === "super_admin") {
-            return roles.isSuperAdmin;
-          }
-          if (mod.requiredRoles) {
-            return mod.requiredRoles.some((role) => {
-              return (
-                (role === "super_admin" && roles.isSuperAdmin) ||
-                (role === "company_admin" && roles.isCompanyAdmin)
-              );
-            });
-          }
+      : MENU_CONFIG.adminModules.filter(module => {
+          if (module.requiredRole === "super_admin")
+            return userRoles.isSuperAdmin;
+          if (module.requiredRoles)
+            return module.requiredRoles.some(role =>
+              role === "super_admin"
+                ? userRoles.isSuperAdmin
+                : role === "company_admin"
+                ? userRoles.isCompanyAdmin
+                : false
+            );
           return true;
         });
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [user, roles]);
+  }, [stableUser, userRoles, isAuthenticated]);
 
-  // ------------------------------------------------------------
-  // FIX: REDIRECT "/" SAFELY IN useEffect
-  // ------------------------------------------------------------
+  const routeToTab = useMemo(() => {
+    const map = {
+      "/documentchat": "Documentenchat",
+      "/documentchat/mijn": "Documentenchat",
+      "/GGD": "GGD Checks",
+      "/compagnies": "Compagnies",
+      "/rollen": "Rollen",
+      "/rol-pz": "Rollen",
+      "/gebruikers": "Gebruikers",
+      "/documenten": "Documenten",
+      "/mappen": "Mappen"
+    };
+
+    map["/"] =
+      filteredPublicModules[0]?.label ||
+      filteredAdminModules[0]?.label ||
+      "Documentenchat";
+
+    return map;
+  }, [filteredPublicModules, filteredAdminModules]);
+
   useEffect(() => {
-    if (loading || !isAuthenticated) return;
+    if (pathname === "/" && !userRoles.isSuperAdmin) {
+      const defaultRoute =
+        filteredPublicModules[0]?.path ||
+        filteredAdminModules[0]?.path ||
+        "/documentchat";
 
-    // prevent running multiple times with same pathname
-    if (pathname !== "/") return;
-
-    if (!filteredPublicModules.length && !filteredAdminModules.length) return;
-
-    const defaultRoute =
-      filteredPublicModules[0]?.path ||
-      filteredAdminModules[0]?.path ||
-      "/documentchat";
-
-    // Defer to next tick to avoid "update during render"
-    setTimeout(() => {
       router.push(defaultRoute);
-    }, 0);
-  }, [
-    pathname,
-    loading,
-    isAuthenticated,
-    filteredPublicModules,
-    filteredAdminModules,
-    router,
-  ]);
+    }
+  }, [pathname, filteredPublicModules, filteredAdminModules, userRoles.isSuperAdmin, router]);
 
-  // ------------------------------------------------------------
-  // NAVIGATION HANDLERS
-  // ------------------------------------------------------------
-  const handleNavigation = useCallback(
-    (path, label) => {
-      setActiveTab(label);
-      router.push(path);
-    },
-    [router]
-  );
+  useEffect(() => {
+    setActiveTab(routeToTab[pathname] || null);
+  }, [pathname, routeToTab]);
+
+  const handleNavigation = useCallback((path, label) => {
+    setActiveTab(label);
+    router.push(path);
+  }, [router]);
+
+  const handleLogout = useCallback(() => {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+      }
+    } catch (e) {
+      // ignore storage errors on logout
+    }
+
+    if (keycloak?.authenticated) {
+      keycloak.logout({ redirectUri: window.location.origin });
+    } else {
+      router.push("/");
+    }
+  }, [keycloak, router]);
 
   const handleHomeClick = useCallback(() => {
     const path =
@@ -165,104 +304,152 @@ export default function LeftSidebar() {
     setActiveTab(null);
   }, [filteredPublicModules, filteredAdminModules, router]);
 
-  // ------------------------------------------------------------
-  // LOADING STATE
-  // ------------------------------------------------------------
-  if (loading) {
+  const publicMenuSection = useMemo(() => {
+    if (filteredPublicModules.length === 0) return null;
+
     return (
-      <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
-        <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <div className="font-extrabold text-[40px] leading-none font-montserrat text-[#23BD92]">
+      <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
+        {filteredPublicModules.map(module => {
+          const handler = getStable(`nav-${module.id}`, () =>
+            handleNavigation(module.path, module.label)
+          );
+          return (
+            <MenuButton
+              key={module.id}
+              text={module.label}
+              image={module.icon}
+              isActive={activeTab === module.label}
+              onClick={handler}
+            />
+          );
+        })}
+      </div>
+    );
+  }, [filteredPublicModules, activeTab, handleNavigation, getStable]);
+
+  const adminMenuSection = useMemo(() => {
+    if (filteredAdminModules.length === 0) return null;
+
+    return (
+      <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
+        {filteredAdminModules.map(module => {
+          const handler = getStable(`nav-${module.id}`, () =>
+            handleNavigation(module.path, module.label)
+          );
+          return (
+            <MenuButton
+              key={module.id}
+              text={module.label}
+              image={module.icon}
+              isActive={activeTab === module.label}
+              onClick={handler}
+            />
+          );
+        })}
+      </div>
+    );
+  }, [filteredAdminModules, activeTab, handleNavigation, getStable]);
+
+  const logoutButton = useMemo(() => {
+    const handler = getStable("logout", handleLogout);
+    return (
+      <MenuButton
+        text="Afmelden"
+        image={logoutItem}
+        isActive={false}
+        onClick={handler}
+      />
+    );
+  }, [handleLogout, getStable]);
+
+  if (!initialized || loading) {
+    return (
+      <div className="flex flex-col h-screen w-[320px] max-w-[360px] bg-white border-r border-slate-200 shadow-sm">
+        <div className="px-8 pt-10 pb-6 border-b border-slate-200">
+          <div className="font-extrabold text-3xl leading-none font-montserrat text-[#23BD92]">
             DAVI
           </div>
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <div className="mt-3 flex items-center gap-2 text-gray-600 text-sm">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#23BD92]"></div>
-            Loading...
+            Laden...
           </div>
         </div>
       </div>
     );
   }
 
-  // ------------------------------------------------------------
-  // NOT AUTHENTICATED
-  // ------------------------------------------------------------
   if (!isAuthenticated) {
+    const loginHandler = getStable("login", () => router.push("/"));
     return (
-      <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
-        <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-          <div className="font-extrabold text-[40px] leading-none text-[#23BD92]">
+      <div className="flex flex-col h-screen w-[320px] max-w-[360px] bg-white border-r border-slate-200 shadow-sm">
+        <div className="px-8 pt-10 pb-6 border-b border-slate-200">
+          <div className="font-extrabold text-3xl leading-none text-[#23BD92]">
             DAVI
           </div>
-          <div className="text-gray-500 text-sm text-center">Please log in</div>
+          <div className="mt-2 text-gray-500 text-sm">Log in om verder te gaan</div>
+        </div>
+        <div className="px-8 py-6">
+          <MenuButton text="Login" image={logoutItem} isActive={false} onClick={loginHandler} />
         </div>
       </div>
     );
   }
 
-  // ------------------------------------------------------------
-  // RENDER UI
-  // ------------------------------------------------------------
   return (
-    <div className="flex flex-col justify-between items-center w-[29.93vw] xl:w-[431px] h-full bg-[#F9FBFA] pb-[147px]">
-      {/* TOP */}
-      <div className="w-full flex flex-col gap-[33px] pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
+    <div className="flex flex-col h-screen w-[320px] max-w-[360px] bg-white border-r border-slate-200 shadow-sm">
+      <div className="px-8 pt-10 pb-6 border-b border-slate-200">
         <div
-          className="font-extrabold text-[40px] leading-none text-[#23BD92] cursor-pointer"
+          className="font-extrabold text-3xl leading-none text-[#23BD92] cursor-pointer"
           onClick={handleHomeClick}
         >
           DAVI
         </div>
-
-        <div className="flex flex-col gap-6">
-          {/* Public Modules */}
-          {filteredPublicModules.length > 0 && (
-            <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-              {filteredPublicModules.map((module) => (
-                <MenuButton
-                  key={module.id}
-                  text={module.label}
-                  image={module.icon}
-                  isActive={activeTab === module.label}
-                  onClick={() => handleNavigation(module.path, module.label)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Divider */}
-          {filteredPublicModules.length > 0 && filteredAdminModules.length > 0 && (
-            <div className="w-full h-px bg-[#C5BEBE]"></div>
-          )}
-
-          {/* Admin Modules */}
-          {filteredAdminModules.length > 0 && (
-            <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
-              {filteredAdminModules.map((module) => (
-                <MenuButton
-                  key={module.id}
-                  text={module.label}
-                  image={module.icon}
-                  isActive={activeTab === module.label}
-                  onClick={() => handleNavigation(module.path, module.label)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* No Modules */}
-          {filteredPublicModules.length === 0 &&
-            filteredAdminModules.length === 0 && (
-              <div className="text-gray-500 text-sm text-center py-4 border rounded bg-gray-50">
-                No modules available.
-              </div>
-            )}
+        {user?.name || user?.email ? (
+          <div className="mt-2 text-xs text-gray-500">
+            {user?.name || user?.email}
+          </div>
+        ) : null}
+        {user?.assigned_teamlid_by_name ? (
+          <div className="mt-1 text-[11px] text-amber-600">
+            Teamlid voor {user.assigned_teamlid_by_name}
+          </div>
+        ) : null}
+        
+        {/* Workspace/Role Switcher - Only shows for users with multiple roles */}
+        <div className="mt-4">
+          <WorkspaceSwitcher />
         </div>
       </div>
 
-      {/* LOGOUT */}
-      <div className="w-full pt-[60px] pl-[9.02vw] xl:pl-[130px] pr-[21px]">
-        <MenuButton text="Afmelden" image={logoutItem} onClick={logout} />
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        <div className="space-y-4">
+          <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
+            Modules
+          </div>
+          {publicMenuSection}
+        </div>
+
+        {filteredPublicModules.length > 0 && filteredAdminModules.length > 0 && (
+          <div className="h-px bg-slate-200" />
+        )}
+
+        <div className="space-y-4">
+          <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
+            Beheer
+          </div>
+          {adminMenuSection}
+        </div>
+
+        {filteredPublicModules.length === 0 &&
+          filteredAdminModules.length === 0 && (
+            <div className="text-gray-500 text-sm text-center py-4 border rounded bg-gray-50">
+              Geen modules beschikbaar.
+            </div>
+          )}
+      </div>
+
+      <div className="px-6 py-6 border-t border-slate-200">
+        {logoutButton}
       </div>
     </div>
   );

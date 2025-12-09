@@ -17,15 +17,25 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
           2) Kies compagnie admin
         </span>
 
-        {admins.map((item) => (
-          <Section
-            key={item.id}
-            Name={item.name}
-            ID={item.email}
-            selected={selectedId === item.id}
-            onClick={() => onSelect(item.id)}
-          />
-        ))}
+        {admins.map((item) => {
+          // Safely convert to strings - handle objects, null, undefined
+          const name = item.name != null && typeof item.name === 'object' 
+            ? (item.name.email || item.name.name || item.name.toString?.() || '') 
+            : (item.name || '');
+          const email = item.email != null && typeof item.email === 'object'
+            ? (item.email.email || item.email.name || item.email.toString?.() || '')
+            : (item.email || '');
+          
+          return (
+            <Section
+              key={item.id}
+              Name={String(name)}
+              ID={String(email)}
+              selected={selectedId === item.id}
+              onClick={() => onSelect(item.id)}
+            />
+          );
+        })}
       </div>
 
       <div className="flex flex-col justify-end xl:flex-row gap-3">

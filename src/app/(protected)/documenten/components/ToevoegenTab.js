@@ -16,7 +16,7 @@ const UploadStates = {
   ERROR: 'error'
 }
 
-export default function ToevoegenTab({ folders = [], onUploadDocument }) {
+export default function ToevoegenTab({ folders = [], onUploadDocument, canWrite = true }) {
   const [selectedFolder, setSelectedFolder] = useState("")
   const [uploadedFiles, setUploadedFiles] = useState([]) 
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE)

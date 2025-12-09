@@ -5,7 +5,7 @@ import SuccessBttn from "@/components/buttons/SuccessBttn"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
 
-export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, onResetPass }) {
+export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, onResetPass, canWrite = true }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
@@ -94,6 +94,10 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
   const handleSave = async () => {
     if (!user) return
+    if (!canWrite) {
+      alert("U heeft geen toestemming om gebruikers te wijzigen.")
+      return
+    }
 
     setIsSaving(true)
     try {
@@ -133,7 +137,10 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Carsten Altena"
-              className="mb-5 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none"
+              disabled={!canWrite}
+              className={`mb-5 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none ${
+                !canWrite ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
             />
           </div>
         </div>
@@ -148,13 +155,15 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
                 updatedRoles.map((r, i) => (
                   <div key={r + i} className="flex items-center gap-2">
                     <SuccessBttn text={r} />
-                    <button
-                      onClick={() => handleRemoveRole(r)}
-                      aria-label={`Remove ${r}`}
-                      className="hover:opacity-80 transition-opacity"
-                    >
-                      <RedCancelIcon />
-                    </button>
+                    {canWrite && (
+                      <button
+                        onClick={() => handleRemoveRole(r)}
+                        aria-label={`Remove ${r}`}
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        <RedCancelIcon />
+                      </button>
+                    )}
                   </div>
                 ))
               ) : (
@@ -168,6 +177,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
                 <DropdownMenu
                   value={selected}
                   onChange={setSelected}
+                  disabled={!canWrite}
                   allOptions={availableRoles}
                   disabled={availableRoles.length === 0}
                 />
@@ -175,8 +185,9 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
               <button
                 onClick={handleAddRole}
+                disabled={!canWrite || availableRoles.length === 0}
                 aria-label="Add role"
-                className={`hover:opacity-80 transition-opacity ${availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
+                className={`hover:opacity-80 transition-opacity ${!canWrite || availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
                 disabled={availableRoles.length === 0}
               >
                 <AddIcon />
@@ -215,8 +226,9 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
       <button
         disabled={isSaving || loading}
         onClick={handleSave}
+        disabled={isSaving || loading || !canWrite}
         className={`w-[110px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white ${
-          isSaving || loading
+          isSaving || loading || !canWrite
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-[#23BD92] hover:bg-[#1fa87c]"
         }`}

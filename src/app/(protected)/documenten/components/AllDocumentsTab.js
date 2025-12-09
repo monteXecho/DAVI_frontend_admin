@@ -23,7 +23,8 @@ export default function AllDocumentsTab({
   onShowRoles, 
   onShowFolders, 
   onDeleteDocuments,
-  onReplaceDocuments 
+  onReplaceDocuments,
+  canWrite = true 
 }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [allOptions2, setAllOptions2] = useState([])

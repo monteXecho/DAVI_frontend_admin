@@ -1,21 +1,17 @@
+"use client";
 import MainLayout from "@/components/layout/mainLayout"
 import DocumentClient from "./(protected)/documentchat/DocumentClient";
 import ProtectedRoute from "@/components/ProtectedRoute";
-// import { UserProvider } from "@/lib/context/UserContext";
-
-export const metadata = {
-  title: 'DAVI',
-  description: 'RAG_DAVI',
-}
+import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
 export default function Home() {
   return (
     <ProtectedRoute>
-      {/* <UserProvider> */}
+      <WorkspaceProvider>
         <MainLayout>
           <DocumentClient />
         </MainLayout>
-      {/* </UserProvider> */}
+      </WorkspaceProvider>
     </ProtectedRoute>
   );
 }

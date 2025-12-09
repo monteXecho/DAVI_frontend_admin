@@ -8,7 +8,7 @@ import SuccessRoleModal from "./modals/SuccessRoleModal"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import IssueBttn from "@/components/buttons/IssueBttn"
 
-export default function MakenTab({ user, folders, onAddOrUpdateRole }) {
+export default function MakenTab({ user, folders, onAddOrUpdateRole, canWrite = true }) {
   const [roleName, setRoleName] = useState("")
   const [selectedFolders, setSelectedFolders] = useState([""])
   const [modules, setModules] = useState([])
@@ -81,6 +81,11 @@ export default function MakenTab({ user, folders, onAddOrUpdateRole }) {
 
   const handleSave = async () => {
     setErrorMessage("")
+    
+    if (!canWrite) {
+      setErrorMessage("U heeft geen toestemming om rollen toe te voegen.")
+      return
+    }
     
     if (!roleName.trim()) {
       setErrorMessage("Voer een rolnaam in.")
@@ -278,9 +283,9 @@ export default function MakenTab({ user, folders, onAddOrUpdateRole }) {
 
           <button
             onClick={handleSave}
-            disabled={loading || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
+            disabled={loading || !canWrite || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
             className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white transition-colors ${
-              loading || selectedFolders.filter(f => f).length === 0 || folders.length === 0
+              loading || !canWrite || selectedFolders.filter(f => f).length === 0 || folders.length === 0
                 ? "bg-gray-400 cursor-not-allowed" 
                 : "bg-[#23BD92] hover:bg-[#1ea87c]"
             }`}

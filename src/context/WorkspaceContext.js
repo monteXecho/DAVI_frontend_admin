@@ -13,8 +13,18 @@ export function WorkspaceProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
 
   useEffect(() => {
+    const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
+    const isSuperAdmin = roles.includes('super_admin');
+
     const fetchWorkspaces = async () => {
       if (!keycloak?.authenticated) return;
+      if (isSuperAdmin) {
+        // Super admins don't need workspace selection; skip fetching to avoid 403s
+        setWorkspaces(null);
+        setSelectedOwnerId(null);
+        setPermissions(null);
+        return;
+      }
       const token = keycloak.token;
       if (!token) return;
 
@@ -23,13 +33,7 @@ export function WorkspaceProvider({ children }) {
           '/company-admin/guest-workspaces',
           createAuthHeaders(token)
         );
-        const data = res.data;
-        setWorkspaces(data);
-
-        // Default: self workspace
-        if (data?.self?.ownerId) {
-          setSelectedOwnerId(data.self.ownerId);
-        }
+        setWorkspaces(res.data);
       } catch (err) {
         console.error('[WorkspaceProvider] Failed to fetch workspaces:', err);
       }
@@ -37,6 +41,45 @@ export function WorkspaceProvider({ children }) {
 
     fetchWorkspaces();
   }, [keycloak]);
+
+  useEffect(() => {
+    if (!workspaces) return;
+
+    const optionIds = [
+      workspaces.self?.ownerId,
+      ...(workspaces.guestOf || []).map((ws) => ws.ownerId),
+    ].filter(Boolean);
+
+    if (!optionIds.length) return;
+
+    let stored = null;
+    if (typeof window !== 'undefined') {
+      try {
+        stored = window.localStorage.getItem('daviActingOwnerId');
+      } catch (e) {
+        // ignore storage read errors
+      }
+    }
+
+    const nextOwnerId = optionIds.includes(stored)
+      ? stored
+      : workspaces.self?.ownerId || optionIds[0];
+
+    if (nextOwnerId && nextOwnerId !== selectedOwnerId) {
+      setSelectedOwnerId(nextOwnerId);
+    }
+  }, [workspaces, selectedOwnerId]);
+
+  useEffect(() => {
+    if (!selectedOwnerId || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('daviActingOwnerId', selectedOwnerId);
+      // Also update session storage to indicate selection was made
+      window.sessionStorage.setItem('daviActingOwnerSelectedForSession', 'true');
+    } catch (e) {
+      // ignore storage write errors
+    }
+  }, [selectedOwnerId]);
 
   useEffect(() => {
     if (!workspaces || !selectedOwnerId) {

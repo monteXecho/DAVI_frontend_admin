@@ -17,7 +17,8 @@ export default function MappenTab({
   roles = [],
   onUploadTab, 
   onShowUsers,
-  onDeleteFolders      
+  onDeleteFolders,
+  canWrite = true
 }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [allOptions2, setAllOptions2] = useState([])
@@ -476,19 +477,21 @@ export default function MappenTab({
                       </button>
 
                       {/* Delete button for the folder */}
-                      <button 
-                        onClick={() => {
-                          const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
-                          if (folderDocs.length > 0) {
-                            setSelectedDocuments(new Set(folderDocs.map(doc => doc.id)))
-                            setIsDeleteModalOpen(true)
-                          }
-                        }}
-                        className="hover:opacity-80 transition-opacity"
-                        title="Verwijder"
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {canWrite && (
+                        <button 
+                          onClick={() => {
+                            const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
+                            if (folderDocs.length > 0) {
+                              setSelectedDocuments(new Set(folderDocs.map(doc => doc.id)))
+                              setIsDeleteModalOpen(true)
+                            }
+                          }}
+                          className="hover:opacity-80 transition-opacity"
+                          title="Verwijder"
+                        >
+                          <RedCancelIcon />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
