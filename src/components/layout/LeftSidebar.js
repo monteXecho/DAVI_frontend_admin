@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useKeycloak } from "@react-keycloak/web";
 import { useApi } from "@/lib/useApi";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 
 import logoutItem from "@/assets/Vector.png";
@@ -88,6 +89,7 @@ export default function LeftSidebar() {
   const pathname = usePathname();
   const { keycloak, initialized } = useKeycloak();
   const { getUser } = useApi();
+  const { workspaces, selectedOwnerId } = useWorkspace();
 
   const [user, setUser] = useState(null);
   const userRef = useRef(null);          
@@ -409,11 +411,35 @@ export default function LeftSidebar() {
             {user?.name || user?.email}
           </div>
         ) : null}
-        {user?.assigned_teamlid_by_name ? (
-          <div className="mt-1 text-[11px] text-amber-600">
-            Teamlid voor {user.assigned_teamlid_by_name}
-          </div>
-        ) : null}
+        {(() => {
+          // Determine current role state based on selected workspace
+          if (!workspaces || !selectedOwnerId || !user) return null;
+          
+          const isDefaultRole = workspaces.self?.ownerId === selectedOwnerId;
+          
+          if (isDefaultRole) {
+            // User is acting on their own workspace (default role)
+            return (
+              <div className="mt-1 text-[11px] text-gray-600">
+                Standaard rol
+              </div>
+            );
+          } else {
+            // User is acting as a teamlid (guest mode)
+            const guestWorkspace = (workspaces.guestOf || []).find(
+              (ws) => ws.ownerId === selectedOwnerId
+            );
+            if (guestWorkspace?.owner) {
+              const adminName = guestWorkspace.owner.name || guestWorkspace.owner.email || 'beheerder';
+              return (
+                <div className="mt-1 text-[11px] text-amber-600">
+                  Teamlid voor {adminName}
+                </div>
+              );
+            }
+          }
+          return null;
+        })()}
         
         {/* Workspace/Role Switcher - Only shows for users with multiple roles */}
         <div className="mt-4">
@@ -421,7 +447,7 @@ export default function LeftSidebar() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-8">
         <div className="space-y-4">
           <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
             Modules

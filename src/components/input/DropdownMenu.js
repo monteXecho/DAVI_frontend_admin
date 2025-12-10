@@ -1,10 +1,11 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import UpArrow from "../icons/UpArrow";
 import DownArrow from "../icons/DownArrowIcon";
 
 export default function DropdownMenu ({ value, onChange, allOptions }) {
     const [open, setOpen] = useState(false);
+    const dropdownRef = useRef(null);
 
     const dropdownOptions = allOptions.filter(opt => opt !== value);
 
@@ -17,8 +18,25 @@ export default function DropdownMenu ({ value, onChange, allOptions }) {
         setOpen(false);
     }
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setOpen(false);
+            }
+        }
+
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [open]);
+
     return (
-        <div className="relative w-full">
+        <div className="relative w-full" ref={dropdownRef}>
             <div
                 className="flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-lg px-4 cursor-pointer select-none"
                 onClick={toggleDropdown}

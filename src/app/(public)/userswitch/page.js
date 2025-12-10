@@ -86,6 +86,11 @@ export default function UserSwitchPage() {
         window.localStorage.setItem("daviActingOwnerUserId", String(userMeta.user_id));
       }
       window.sessionStorage.setItem("daviActingOwnerSelectedForSession", "true");
+      
+      // Dispatch custom event to notify WorkspaceContext of the change
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('daviWorkspaceChange'));
+      }
     } catch (e) {
       // ignore storage issues
     }

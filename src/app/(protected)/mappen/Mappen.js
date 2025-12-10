@@ -81,7 +81,7 @@ export default function Mappen() {
     setSelectedDocName(docName)
     setSelectedDocFolder(folderName)
     setSelectedDocRole(roleName) 
-    setActiveIndex(1) 
+    setActiveIndex(2) 
   }
 
   const handleDeleteFolders = async (payload) => {

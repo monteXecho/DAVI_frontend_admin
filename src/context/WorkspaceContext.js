@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useKeycloak } from '@react-keycloak/web';
 import { apiClient, createAuthHeaders } from '@/lib/apiClient';
 
@@ -42,7 +42,8 @@ export function WorkspaceProvider({ children }) {
     fetchWorkspaces();
   }, [keycloak]);
 
-  useEffect(() => {
+  // Function to sync selectedOwnerId with localStorage
+  const syncWithLocalStorage = useCallback(() => {
     if (!workspaces) return;
 
     const optionIds = [
@@ -69,6 +70,30 @@ export function WorkspaceProvider({ children }) {
       setSelectedOwnerId(nextOwnerId);
     }
   }, [workspaces, selectedOwnerId]);
+
+  useEffect(() => {
+    syncWithLocalStorage();
+  }, [syncWithLocalStorage]);
+
+  // Listen for storage changes (e.g., when user switches on /userswitch page)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'daviActingOwnerId') {
+        syncWithLocalStorage();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom events (for same-tab updates)
+    window.addEventListener('daviWorkspaceChange', syncWithLocalStorage);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('daviWorkspaceChange', syncWithLocalStorage);
+    };
+  }, [syncWithLocalStorage]);
 
   useEffect(() => {
     if (!selectedOwnerId || typeof window === 'undefined') return;

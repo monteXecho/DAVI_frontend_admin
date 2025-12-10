@@ -159,7 +159,7 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
 
       const allModules = editableModules.map(({ name, enabled }) => ({ name, enabled }))
 
-      await onAddOrUpdateRole(selected, cleanFolders, allModules, action='update')
+      await onAddOrUpdateRole(selected, cleanFolders, allModules, 'update')
       alert(`Rol "${selected}" is bijgewerkt.`)
     } catch (err) {
       console.error("Error updating role:", err)
