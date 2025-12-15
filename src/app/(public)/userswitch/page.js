@@ -220,8 +220,8 @@ function RoleCard({ option, onClick }) {
         {permissions ? (
           <>
             <PermissionLine label="Rollen" value={permissions.role_write ? "Schrijven" : "Lezen"} />
-            <PermissionLine label="Gebruikers" value={permissions.user_read ? "Lezen" : "Geen toegang"} />
-            <PermissionLine label="Documenten" value={permissions.document_read ? "Lezen" : "Geen toegang"} />
+            <PermissionLine label="Gebruikers" value={permissions.user_write ? "Schrijven" : "Lezen"} />
+            <PermissionLine label="Documenten" value={permissions.document_write ? "Schrijven" : "Lezen"} />
             <PermissionLine label="Mappen" value={permissions.folder_write ? "Schrijven" : "Lezen"} />
           </>
         ) : (
