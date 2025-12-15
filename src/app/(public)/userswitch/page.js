@@ -47,22 +47,41 @@ export default function UserSwitchPage() {
         setUserMeta(user);
 
         const normalized = [];
+        const seenOwnerIds = new Set();
+        
         if (workspaces?.self) {
-          normalized.push({
+          const selfOption = {
             ownerId: workspaces.self.ownerId,
             label: workspaces.self.label || "Mijn werkruimte",
             permissions: null,
             badge: user?.is_teamlid ? "Eigen" : "Standaard",
-          });
+            uniqueKey: `self-${workspaces.self.ownerId}`,
+            isSelf: true,
+          };
+          normalized.push(selfOption);
+          // Don't add to seenOwnerIds yet - allow guest workspaces with same ownerId for company users
         }
 
-        (workspaces?.guestOf || []).forEach((ws) => {
+        (workspaces?.guestOf || []).forEach((ws, index) => {
+          // For company users: if guest workspace has same ownerId as self, still show it
+          // (it represents teamlid permissions vs default permissions)
+          // For company admins: skip if it matches self (they're the same workspace)
+          const isCompanyUser = user && !user.is_teamlid && workspaces?.self?.ownerId === ws.ownerId;
+          
+          if (!isCompanyUser && seenOwnerIds.has(ws.ownerId)) {
+            return; // Skip duplicate for company admins
+          }
+          
+          seenOwnerIds.add(ws.ownerId);
+          
           normalized.push({
             ownerId: ws.ownerId,
             label: ws.label,
             permissions: ws.permissions,
             owner: ws.owner,
             badge: "Gast",
+            uniqueKey: `guest-${ws.ownerId}-${index}`,
+            isGuest: true,
           });
         });
 
@@ -81,6 +100,8 @@ export default function UserSwitchPage() {
   const handleRoleSelect = (option) => {
     try {
       window.localStorage.setItem("daviActingOwnerId", option.ownerId);
+      // Store isGuest flag to distinguish between self and guest workspaces with same ownerId
+      window.localStorage.setItem("daviActingOwnerIsGuest", String(option.isGuest || false));
       window.localStorage.setItem("daviActingOwnerLabel", option.label || "");
       if (userMeta?.user_id) {
         window.localStorage.setItem("daviActingOwnerUserId", String(userMeta.user_id));
@@ -174,7 +195,7 @@ export default function UserSwitchPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {options.map((option) => (
                 <RoleCard
-                  key={option.ownerId}
+                  key={option.uniqueKey || option.ownerId || `option-${option.label}`}
                   option={option}
                   onClick={() => handleRoleSelect(option)}
                 />

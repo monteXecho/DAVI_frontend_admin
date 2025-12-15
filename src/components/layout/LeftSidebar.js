@@ -209,10 +209,48 @@ export default function LeftSidebar() {
 
   const stableUser = userRef.current;  
 
+  // Check if company user has teamlid permissions (from workspaces)
+  // Only return true when actually acting on a guest workspace, not just because they have one available
+  const hasTeamlidAccess = useMemo(() => {
+    if (userRoles.isSuperAdmin || userRoles.isCompanyAdmin) return true;
+    if (!userRoles.isCompanyUser) return false;
+    
+    if (!selectedOwnerId || !workspaces) return false;
+    
+    // For company users, check if they're acting on a guest workspace
+    // Case 1: selectedOwnerId is different from self.ownerId - definitely a guest workspace
+    if (workspaces.self?.ownerId !== selectedOwnerId) {
+      const isGuestWorkspace = workspaces?.guestOf?.some(ws => ws.ownerId === selectedOwnerId);
+      return isGuestWorkspace || false;
+    }
+    
+    // Case 2: selectedOwnerId matches self.ownerId - could be self OR guest with same ownerId
+    // Check the isGuest flag from localStorage to distinguish
+    if (typeof window !== 'undefined') {
+      try {
+        const isGuest = window.localStorage.getItem('daviActingOwnerIsGuest') === 'true';
+        if (isGuest) {
+          // Check if there's actually a guest workspace with this ownerId
+          const hasGuestWorkspace = workspaces?.guestOf?.some(ws => ws.ownerId === selectedOwnerId);
+          return hasGuestWorkspace || false;
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+    
+    // If selectedOwnerId matches self.ownerId and isGuest flag is not set, it's the self workspace
+    return false;
+  }, [userRoles, workspaces, selectedOwnerId]);
+
   const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
+    // For public modules (Document Chat, GGD Checks):
+    // Always use the user's own modules, not guest workspace modules
+    // This ensures company admins acting as teamlid still see their own modules
     const publicModules = userRoles.isSuperAdmin
       ? MENU_CONFIG.publicModules
       : MENU_CONFIG.publicModules.filter(module => {
+          // Always check against the user's own modules, regardless of guest mode
           const moduleInfo = stableUser?.modules?.[module.moduleKey];
           return moduleInfo?.enabled === true;
         });
@@ -229,14 +267,14 @@ export default function LeftSidebar() {
               role === "super_admin"
                 ? userRoles.isSuperAdmin
                 : role === "company_admin"
-                ? userRoles.isCompanyAdmin
+                ? (userRoles.isCompanyAdmin || hasTeamlidAccess)  // Allow company users with teamlid access
                 : false
             );
           return true;
         });
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, userRoles, isAuthenticated]);
+  }, [stableUser, userRoles, isAuthenticated, hasTeamlidAccess]);
 
   const routeToTab = useMemo(() => {
     const map = {

@@ -54,15 +54,70 @@ export default function WorkspaceSwitcher() {
   // Calculate options with useMemo - MUST be defined before useCallback that uses it
   const options = useMemo(() => {
     if (!workspaces) return [];
-    return [
+    
+    const selfOwnerId = workspaces.self?.ownerId;
+    const allOptions = [
       workspaces.self,
       ...(workspaces.guestOf || []),
     ].filter(Boolean);
+    
+    // Remove duplicates based on ownerId - but allow same ownerId for company users
+    // (self workspace = default access, guest workspace = teamlid permissions)
+    const seen = new Set();
+    const uniqueOptions = [];
+    
+    allOptions.forEach((ws, index) => {
+      if (!ws.ownerId) return; // Skip if no ownerId
+      
+      // If this is the self workspace, always add it
+      if (ws.ownerId === selfOwnerId && workspaces.self === ws) {
+        seen.add(ws.ownerId);
+        uniqueOptions.push({
+          ...ws,
+          uniqueKey: `self-${ws.ownerId}`,
+          isSelf: true,
+        });
+        return;
+      }
+      
+      // For guest workspaces with same ownerId as self:
+      // - For company users: allow both (self = default, guest = teamlid permissions)
+      // - For company admins: skip (they're the same workspace)
+      // We can't easily detect user type here, so we'll allow both if they have different permissions
+      // The key difference: self has permissions: null, guest has permissions object
+      const isGuestWithSameOwner = ws.ownerId === selfOwnerId && workspaces.self !== ws;
+      if (isGuestWithSameOwner) {
+        // Allow it - represents teamlid permissions vs default permissions
+        uniqueOptions.push({
+          ...ws,
+          uniqueKey: `guest-${ws.ownerId}-${index}`,
+          isGuest: true,
+        });
+        return;
+      }
+      
+      // Add guest workspace if not seen before
+      if (!seen.has(ws.ownerId)) {
+        seen.add(ws.ownerId);
+        uniqueOptions.push({
+          ...ws,
+          uniqueKey: ws.ownerId || `workspace-${index}`,
+          isGuest: true,
+        });
+      }
+    });
+    
+    return uniqueOptions;
   }, [workspaces]);
 
   // Get display info for workspace - MUST be useCallback and defined before any conditional logic
-  const getWorkspaceInfo = useCallback((ws) => {
-    const isDefault = ws.ownerId === currentUser?.user_id;
+  const getWorkspaceInfo = useCallback((ws, workspaces) => {
+    // Check if this is the "self" workspace (not a guest workspace)
+    // For company users: self workspace has permissions: null, guest workspace has permissions object
+    const isSelf = ws.isSelf || (workspaces?.self?.ownerId === ws.ownerId && !ws.permissions);
+    const isGuest = ws.isGuest || (ws.permissions !== null && ws.permissions !== undefined);
+    const isDefault = isSelf || (ws.ownerId === currentUser?.user_id && !isGuest);
+    
     return {
       title: isDefault ? 'Standaard rol' : 'Teamlid rol',
       subtitle: isDefault 
@@ -77,24 +132,57 @@ export default function WorkspaceSwitcher() {
         ? currentUser?.email 
         : ws.owner?.email,
       isDefault,
+      isSelf,
+      isGuest,
       icon: isDefault ? '👤' : '👥'
     };
   }, [currentUser]);
 
   // Handle workspace change - must be defined before useEffect hooks
-  const handleWorkspaceChange = useCallback(async (newOwnerId) => {
-    if (newOwnerId === selectedOwnerId) {
+  const handleWorkspaceChange = useCallback(async (newOwnerId, isGuest = false) => {
+    // For company users with same ownerId: distinguish by isGuest flag
+    const newWorkspace = options.find(ws => {
+      if (ws.ownerId === newOwnerId) {
+        // If both self and guest exist with same ownerId, match by isGuest flag
+        const hasBoth = options.some(w => w.ownerId === newOwnerId && w.isSelf) && 
+                       options.some(w => w.ownerId === newOwnerId && w.isGuest);
+        if (hasBoth) {
+          return (ws.isGuest && isGuest) || (ws.isSelf && !isGuest);
+        }
+        return true;
+      }
+      return false;
+    });
+    
+    if (!newWorkspace) return;
+    
+    // Check if already selected (considering isGuest for same ownerId)
+    const currentWorkspace = options.find(ws => {
+      if (ws.ownerId === selectedOwnerId) {
+        const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
+                       options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
+        if (hasBoth) {
+          // Need to check which one is currently selected
+          const storedIsGuest = typeof window !== 'undefined' 
+            ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+            : false;
+          return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
+        }
+        return true;
+      }
+      return false;
+    });
+    
+    if (currentWorkspace && currentWorkspace.ownerId === newWorkspace.ownerId && 
+        currentWorkspace.isSelf === newWorkspace.isSelf && 
+        currentWorkspace.isGuest === newWorkspace.isGuest) {
       setIsOpen(false);
       return;
     }
     
-    // Get role names for transition display
-    const currentWorkspace = options.find(ws => ws.ownerId === selectedOwnerId);
-    const newWorkspace = options.find(ws => ws.ownerId === newOwnerId);
-    
     const getRoleDisplayName = (ws) => {
       if (!ws) return 'Onbekende rol';
-      if (ws.ownerId === currentUser?.user_id) {
+      if (ws.isSelf || (ws.ownerId === currentUser?.user_id && !ws.isGuest)) {
         return 'Standaard rol';
       }
       if (ws.owner) {
@@ -115,6 +203,7 @@ export default function WorkspaceSwitcher() {
       // Update localStorage
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('daviActingOwnerId', newOwnerId);
+        window.localStorage.setItem('daviActingOwnerIsGuest', String(newWorkspace.isGuest || false));
         if (newWorkspace?.label) {
           window.localStorage.setItem('daviActingOwnerLabel', newWorkspace.label);
         }
@@ -170,7 +259,7 @@ export default function WorkspaceSwitcher() {
   if (!options.length || options.length < 2) return null;
 
   const selectedWorkspace = options.find(ws => ws.ownerId === selectedOwnerId);
-  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace) : null;
+  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace, workspaces) : null;
 
   return (
     <>
@@ -327,13 +416,29 @@ export default function WorkspaceSwitcher() {
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
           <div className="py-1">
             {options.map((ws) => {
-              const info = getWorkspaceInfo(ws);
-              const isSelected = ws.ownerId === selectedOwnerId;
+              const info = getWorkspaceInfo(ws, workspaces);
+              // For selection: check if this workspace matches selectedOwnerId
+              // For company users with same ownerId: distinguish by isSelf vs isGuest
+              let isSelected = false;
+              if (ws.ownerId === selectedOwnerId) {
+                // Check if both self and guest exist with same ownerId
+                const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
+                               options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
+                if (hasBoth) {
+                  // Need to check which one is currently selected using stored flag
+                  const storedIsGuest = typeof window !== 'undefined' 
+                    ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                    : false;
+                  isSelected = (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
+                } else {
+                  isSelected = true;
+                }
+              }
               
               return (
                 <button
-                  key={ws.ownerId}
-                  onClick={() => handleWorkspaceChange(ws.ownerId)}
+                  key={ws.uniqueKey || ws.ownerId || `workspace-${ws.label}`}
+                  onClick={() => handleWorkspaceChange(ws.ownerId, ws.isGuest)}
                   className={`
                     w-full flex items-center gap-3 px-3 py-2.5
                     transition-colors duration-150
