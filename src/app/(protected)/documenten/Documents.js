@@ -30,7 +30,7 @@ export default function Documents() {
   const [ currentUser, setCurrentUser ] = useState(null)
   const [ canWrite, setCanWrite ] = useState(true)
 
-  const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments, getUser } = useApi()
+  const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments, getUser, addFolders } = useApi()
 
   const isDocSelected = !!selectedDocName
 
@@ -100,6 +100,19 @@ export default function Documents() {
       return res
     } catch (err) {
       console.error("Failed to upload doc:", err)
+    }
+  }
+
+  const handleAddFolders = async (folderNames) => {
+    try {
+      const res = await addFolders(folderNames)
+      if (res?.success) {
+        await refreshData()
+      }
+      return res
+    } catch (err) {
+      console.error("Failed to add folders:", err)
+      return { success: false, message: err.response?.data?.detail || err.message || 'Kon mappen niet aanmaken' }
     }
   }
 
@@ -237,6 +250,7 @@ export default function Documents() {
               documents={documents}
               folders={folders}
               onUploadDocument={handleUploadDocument}
+              onAddFolders={handleAddFolders}
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 
               onShowRoles={handleShowRoles}

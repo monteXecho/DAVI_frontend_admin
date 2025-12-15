@@ -5,13 +5,68 @@ import Script from 'next/script';
 
 export default function ThirdPartyScripts() {
   const [isHydrated, setIsHydrated] = useState(false);
+  const isProduction = process.env.NODE_ENV === 'production';
 
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
+
+    // In development, unregister any existing service workers to prevent issues
+    if (!isProduction && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().catch((err) => {
+            console.warn('Failed to unregister service worker:', err);
+          });
+        }
+      });
+    }
+
+    // Prevent service worker registration errors from breaking the app
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Override serviceWorker.register to catch and handle errors gracefully
+      const originalRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+      
+      navigator.serviceWorker.register = function(...args) {
+        return originalRegister(...args).catch((error) => {
+          // Log warning but don't break the app
+          if (error.message && !error.message.includes('404')) {
+            console.warn('Service worker registration failed (non-critical):', error.message);
+          }
+          // Return a rejected promise but don't throw
+          return Promise.reject(error);
+        });
+      };
+    }
+
+    // Handle unhandled service worker errors
+    window.addEventListener('error', (event) => {
+      if (event.message && (
+        event.message.includes('ServiceWorker') ||
+        event.message.includes('service worker') ||
+        event.message.includes('progressier')
+      )) {
+        event.preventDefault();
+        console.warn('Service worker error caught (non-critical):', event.message);
+        return false;
+      }
+    }, true);
+
+    // Handle unhandled promise rejections from service workers
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason && (
+        event.reason.message?.includes('ServiceWorker') ||
+        event.reason.message?.includes('service worker') ||
+        event.reason.message?.includes('progressier')
+      )) {
+        event.preventDefault();
+        console.warn('Service worker promise rejection caught (non-critical):', event.reason);
+      }
+    });
+  }, [isProduction]);
 
   useEffect(() => {
-    if (!isHydrated) return;
+    // Only load third-party scripts in production
+    if (!isHydrated || !isProduction) return;
 
     const loadCookiebot = (attempt = 1, maxAttempts = 3) => {
       if (typeof window === 'undefined') return;
@@ -54,12 +109,14 @@ export default function ThirdPartyScripts() {
                 window.Cookiebot.show();
               } catch (e) {
                 // Silent fail
+                console.warn('Cookiebot show failed:', e);
               }
             } else if (typeof window.Cookiebot.renew === 'function') {
               try {
                 window.Cookiebot.renew();
               } catch (e) {
                 // Silent fail
+                console.warn('Cookiebot renew failed:', e);
               }
             }
           } else if (attempt < maxAttempts) {
@@ -79,6 +136,8 @@ export default function ThirdPartyScripts() {
           setTimeout(() => {
             loadCookiebot(attempt + 1, maxAttempts);
           }, 1000 * attempt);
+        } else {
+          console.warn('Cookiebot failed to load after multiple attempts');
         }
       };
 
@@ -114,6 +173,7 @@ export default function ThirdPartyScripts() {
                 window.Cookiebot.show();
               } catch (e) {
                 // Silent fail
+                console.warn('Cookiebot show failed:', e);
               }
             }
           }
@@ -134,6 +194,7 @@ export default function ThirdPartyScripts() {
                   window.Cookiebot.show();
                 } catch (e) {
                   // Silent fail
+                  console.warn('Cookiebot show failed:', e);
                 }
               }
             }
@@ -146,12 +207,20 @@ export default function ThirdPartyScripts() {
       clearTimeout(timer);
       clearInterval(checkInterval);
     };
-  }, [isHydrated]);
+  }, [isHydrated, isProduction]);
+
+  // Only load Progressier in production
+  if (!isProduction) {
+    return null;
+  }
 
   return (
     <Script
       src="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/script.js"
       strategy="afterInteractive"
+      onError={(e) => {
+        console.warn('Progressier script failed to load:', e);
+      }}
     />
   );
 }

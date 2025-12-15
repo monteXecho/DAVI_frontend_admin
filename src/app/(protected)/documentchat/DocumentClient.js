@@ -7,11 +7,13 @@ import { useApi } from '@/lib/useApi';
 import UploadBttn from '@/components/buttons/UploadBttn';
 import UploadingBttn from '@/components/buttons/UploadingBttn';
 import SuccessBttn from '@/components/buttons/SuccessBttn';
+import { ToastContainer, toast } from 'react-toastify';
      
 const UploadStates = {
   IDLE: 'idle',
   UPLOADING: 'uploading',
   SUCCESS: 'success',
+  ERROR: 'error',
 };
 
 export default function DocumentClient() {
@@ -20,7 +22,10 @@ export default function DocumentClient() {
   const [response, setResponse] = useState('');
   const [documents, setDocuments] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE);
-  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [successfulUploads, setSuccessfulUploads] = useState([]);
+  const [failedUploads, setFailedUploads] = useState([]);
   const [loadingCardVisible, setLoadingCardVisible] = useState(false);
   const [submittedQuestion, setSubmittedQuestion] = useState('');
 
@@ -51,39 +56,140 @@ export default function DocumentClient() {
   };
 
   const handleDocumentUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-    setUploadedFileName(file.name);
+    // Reset states
+    setUploadedFiles(files);
     setUploadStatus(UploadStates.UPLOADING);
+    setSuccessfulUploads([]);
+    setFailedUploads([]);
+    setCurrentFileIndex(0);
 
-    const formData = new FormData();
-    formData.append('file', file);
+    await uploadAllFiles(files);
+  };
 
-    const { success, data } = await uploadDocument(formData, 'document');
-    if (success) {
+  const uploadAllFiles = async (files) => {
+    const successful = [];
+    const failed = [];
+    
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      setCurrentFileIndex(fileIndex);
+      const file = files[fileIndex];
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const { success, data, message } = await uploadDocument(formData, 'document');
+        
+        if (success) {
+          successful.push({
+            file: file.name,
+            data
+          });
+        } else {
+          const errorMessage = message || 'Upload mislukt';
+          failed.push({
+            file: file.name,
+            error: errorMessage
+          });
+          toast.warn(`Upload mislukt voor ${file.name}: ${errorMessage}`);
+        }
+      } catch (err) {
+        console.error(`Upload error for ${file.name}:`, err);
+        const errorMessage = err.message || 'Upload mislukt';
+        failed.push({
+          file: file.name,
+          error: errorMessage
+        });
+        toast.warn(`Upload van ${file.name} is mislukt: ${errorMessage}`);
+      }
+    }
+
+    // Update states
+    setSuccessfulUploads(successful);
+    setFailedUploads(failed);
+    
+    // Determine final status
+    if (failed.length === 0 && successful.length > 0) {
       setUploadStatus(UploadStates.SUCCESS);
+      if (successful.length > 1) {
+        toast.success(`${successful.length} documenten succesvol geüpload`);
+      }
+    } else if (successful.length > 0) {
+      setUploadStatus(UploadStates.ERROR);
+      toast.error("Sommige uploads zijn mislukt. Kijk in de notificaties voor details.");
     } else {
-      setUploadStatus(UploadStates.IDLE);
-      setUploadedFileName('');
+      setUploadStatus(UploadStates.ERROR);
+      toast.error("Alle uploads zijn mislukt.");
     }
   };
 
   const renderUploadSection = () => {
     switch (uploadStatus) {
       case UploadStates.IDLE:
-        return <UploadBttn onClick={handleUploadClick} text='Upload document' />
+        return <UploadBttn onClick={handleUploadClick} text='Upload documenten' />
 
       case UploadStates.UPLOADING:
-        return <UploadingBttn text={uploadedFileName} />
+        const currentFile = uploadedFiles[currentFileIndex];
+        const totalFiles = uploadedFiles.length;
+        
+        let progressText = "";
+        if (totalFiles > 1) {
+          progressText = `Bestand ${currentFileIndex + 1}/${totalFiles}: ${currentFile.name} - Bezig met uploaden...`;
+        } else {
+          progressText = `${currentFile.name} - Bezig met uploaden...`;
+        }
+        
+        return <UploadingBttn text={progressText} />
 
       case UploadStates.SUCCESS:
+        const uniqueFiles = [...new Set(successfulUploads.map(u => u.file))];
+        
         return (
-          <>
-            <SuccessBttn text={uploadedFileName} /> 
-            <UploadBttn onClick={handleUploadClick} text='Upload document' />
-          </>
+          <div className="flex flex-col gap-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-green-800 font-semibold mb-2">
+                Successvol geüpload ({uniqueFiles.length} documenten):
+              </div>
+              <div className="text-green-700 text-sm">
+                {uniqueFiles.map((fileName, index) => (
+                  <div key={index} className="ml-2">
+                    • {fileName}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <UploadBttn onClick={handleUploadClick} text='Meer documenten uploaden' />
+          </div>
         )
+
+      case UploadStates.ERROR:
+        if (successfulUploads.length > 0) {
+          const uniqueFiles = [...new Set(successfulUploads.map(u => u.file))];
+          return (
+            <div className="flex flex-col gap-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="text-yellow-800 font-semibold mb-2">
+                  Gedeeltelijk geüpload ({uniqueFiles.length} van {uploadedFiles.length} documenten):
+                </div>
+                <div className="text-yellow-700 text-sm">
+                  {uniqueFiles.map((fileName, index) => (
+                    <div key={index} className="ml-2">
+                      • {fileName}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-red-600 text-xs mt-2">
+                  {failedUploads.length} upload(s) mislukt. Kijk in de notificaties voor details.
+                </div>
+              </div>
+              <UploadBttn onClick={handleUploadClick} text='Meer documenten uploaden' />
+            </div>
+          );
+        }
+        return <UploadBttn onClick={handleUploadClick} text='Probeer opnieuw te uploaden'/>
 
       default:
         return null;
@@ -98,6 +204,8 @@ export default function DocumentClient() {
           ref={fileInputRef}
           className="hidden"
           onChange={handleDocumentUpload}
+          multiple
+          accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
         />
 
         {renderUploadSection()}
@@ -140,6 +248,17 @@ export default function DocumentClient() {
         )}
       </section>
 
+      <ToastContainer 
+        position="top-right" 
+        autoClose={5000} 
+        hideProgressBar={false} 
+        newestOnTop={false} 
+        closeOnClick 
+        rtl={false} 
+        pauseOnFocusLoss 
+        draggable 
+        pauseOnHover 
+      />
     </div>
   );
 }

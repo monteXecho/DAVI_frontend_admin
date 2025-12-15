@@ -48,10 +48,12 @@ export function useApi() {
 
   const uploadDocumentForRole = useCallback(
     (folderPath, formData) =>
-      withAuth((token) =>
-        apiClient
+      withAuth((token) => {
+        // URL encode the folder path to handle special characters
+        const encodedFolderPath = encodeURIComponent(folderPath);
+        return apiClient
           .post(
-            `/company-admin/roles/upload/${folderPath}`,
+            `/company-admin/roles/upload/${encodedFolderPath}`,
             formData,
             createAuthHeaders(token, {
               'Content-Type': 'multipart/form-data',
@@ -59,8 +61,6 @@ export function useApi() {
           )
           .then((res) => ({ success: true, message: 'File uploaded successfully' }))
           .catch((err) => {
-            console.error('[useApi] Upload failed:', err);
-
             const status = err.response?.status;
             const detail = err.response?.data?.detail;
 
@@ -69,12 +69,16 @@ export function useApi() {
             }
 
             if (status === 404) {
-              return { success: false, message: 'Target folder not found' };
+              return { success: false, message: detail || 'Target folder not found' };
             }
 
-            return { success: false, message: 'Upload failed. Please try again.' };
+            if (status === 500) {
+              return { success: false, message: detail || 'Server error during upload. Please try again.' };
+            }
+
+            return { success: false, message: detail || 'Upload failed. Please try again.' };
           })
-      ),
+      }),
     [withAuth]
   );
 
@@ -116,7 +120,15 @@ export function useApi() {
           .then((res) => ({ success: true, data: res.data }))
           .catch((err) => {
             console.error('[useApi] Upload failed:', err);
-            return { success: false };
+
+            const status = err.response?.status;
+            const detail = err.response?.data?.detail;
+
+            if (status === 409) {
+              return { success: false, message: detail || 'Dit document bestaat al!' };
+            }
+
+            return { success: false, message: detail || 'Upload mislukt. Probeer het opnieuw.' };
           })
       ),
     [withAuth]
