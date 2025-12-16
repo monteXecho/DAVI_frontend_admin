@@ -79,7 +79,7 @@ export default function UserSwitchPage() {
             label: ws.label,
             permissions: ws.permissions,
             owner: ws.owner,
-            badge: "Gast",
+            badge: "TEAMLID",
             uniqueKey: `guest-${ws.ownerId}-${index}`,
             isGuest: true,
           });
@@ -156,14 +156,6 @@ export default function UserSwitchPage() {
                 Toegevoegd als teamlid door {userMeta.assigned_teamlid_by_name}
               </div>
             )}
-            {userMeta?.teamlid_permissions && (
-              <div className="mt-1 text-xs text-slate-600">
-                Permissies:{" "}
-                {Object.entries(userMeta.teamlid_permissions || {})
-                  .map(([key, val]) => `${key.replace(/_/g, " ")}: ${val ? "aan" : "uit"}`)
-                  .join(" · ")}
-              </div>
-            )}
           </div>
 
           <button
@@ -220,7 +212,7 @@ function RoleCard({ option, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="group relative flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+      className="group relative flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer"
     >
       <div className="flex items-start justify-between">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E6F6F0] text-[#23BD92] font-semibold">
@@ -250,7 +242,7 @@ function RoleCard({ option, onClick }) {
         )}
       </div>
 
-      {badge === "Gast" && owner && (
+      {badge === "TEAMLID" && owner && (
         <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           <div className="font-semibold text-slate-900">Beheerder</div>
           {owner.name && <div>{owner.name}</div>}
