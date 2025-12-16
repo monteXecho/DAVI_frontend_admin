@@ -11,7 +11,7 @@ import DeleteDocumentFromFoldersModal from "./modals/DeleteDocumentFromFoldersMo
 import SortableHeader from "@/components/SortableHeader";
 import { useSortableData } from "@/lib/useSortableData";
 
-export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments, onMoveToToevoegen }) {
+export default function AppearInFolderTab({ documents = {}, selectedDocName, onDeleteDocuments, onMoveToToevoegen, canWrite = true }) {
   const allOptions = ["Bulkacties", "Verwijder uit map"];
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -181,6 +181,7 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
               value={selectedBulkAction}
               onChange={handleBulkAction}
               allOptions={allOptions}
+              disabled={!canWrite}
             />
           </div>
 
@@ -193,7 +194,8 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
           </div>
         </div>
 
-        <AddButton onClick={onMoveToToevoegen} text="Voeg toe aan map" />
+        {canWrite && <AddButton onClick={onMoveToToevoegen} text="Voeg toe aan map" />}
+        {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
       {/* Folders Table */}
@@ -208,12 +210,15 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
                 className="px-2 py-2"
               >
                 <div className="flex items-center gap-5">
-                  <CheckBox
-                    toggle={allSelected}
-                    indeterminate={someSelected}
-                    onChange={handleSelectAll}
-                    color='#23BD92'
-                  />
+                  {canWrite && (
+                    <CheckBox
+                      toggle={allSelected}
+                      indeterminate={someSelected}
+                      onChange={handleSelectAll}
+                      color='#23BD92'
+                    />
+                  )}
+                  {!canWrite && <div className="w-5" />}
                   Map
                 </div>
               </SortableHeader>
@@ -239,11 +244,14 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
                 >
                   <td className="px-4 py-2 font-montserrat font-normal text-[16px] leading-6 text-black">
                     <div className="flex items-center gap-5">
-                      <CheckBox
-                        toggle={selectedFoldersSet.has(folder.id)}
-                        onChange={(isSelected) => handleFolderSelect(folder.id, isSelected)}
-                        color='#23BD92'
-                      />
+                      {canWrite && (
+                        <CheckBox
+                          toggle={selectedFoldersSet.has(folder.id)}
+                          onChange={(isSelected) => handleFolderSelect(folder.id, isSelected)}
+                          color='#23BD92'
+                        />
+                      )}
+                      {!canWrite && <div className="w-5" />}
                       <div className="flex gap-3 items-center">
                         <span>{folder.name}</span>
                       </div>
@@ -252,19 +260,24 @@ export default function AppearInFolderTab({ documents = {}, selectedDocName, onD
 
                   <td className="px-4 py-2">
                     <div className="flex justify-center items-center gap-3">
-                      <button 
-                        className="hover:opacity-80 transition-opacity"
-                        aria-label={`Edit ${folder.name}`}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(folder)}
-                        className="hover:opacity-80 transition-opacity"
-                        aria-label={`Remove from ${folder.name}`}
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {canWrite && (
+                        <>
+                          <button 
+                            className="hover:opacity-80 transition-opacity"
+                            aria-label={`Edit ${folder.name}`}
+                          >
+                            <EditIcon />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteClick(folder)}
+                            className="hover:opacity-80 transition-opacity"
+                            aria-label={`Remove from ${folder.name}`}
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </>
+                      )}
+                      {!canWrite && <span className="text-xs text-gray-400 italic">-</span>}
                     </div>
                   </td>
                 </tr>

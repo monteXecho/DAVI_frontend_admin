@@ -15,11 +15,12 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getUser, getRoles, getFolders, addOrUpdateRole, deleteRoles } = useApi()
+  const { getUser, getRoles, getFolders, addOrUpdateRole, deleteRoles, getUsers } = useApi()
   const [roles, setRoles] = useState([])
   const [folders, setFolders] = useState([])
   const [selectedRole, setSelectedRole] = useState(null) 
   const [user, setUser] = useState()
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [canWrite, setCanWrite] = useState(true) 
@@ -67,11 +68,23 @@ export default function Rollen() {
     }
   }, [getFolders])
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await getUsers()
+      if (res?.members) {
+        setUsers(res.members)
+      }
+    } catch (err) {
+      console.error("Failed to fetch users:", err)
+    }
+  }, [getUsers])
+
   useEffect(() => {
     fetchRoles()
     fetchUser()
     fetchFolders()
-  }, [fetchRoles, fetchUser, fetchFolders])
+    fetchUsers()
+  }, [fetchRoles, fetchUser, fetchFolders, fetchUsers])
 
   const handleDeleteRoles = async (role_names) => {
     try {
@@ -165,6 +178,7 @@ export default function Rollen() {
             <>
               <ActiveComponent 
                 user={user}
+                users={users}
                 roles={roles} 
                 folders={folders}
                 refreshRoles={fetchRoles} 

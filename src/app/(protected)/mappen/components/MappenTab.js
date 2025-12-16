@@ -382,6 +382,7 @@ export default function MappenTab({
               value={selectedBulkAction}
               onChange={handleBulkAction}
               allOptions={allOptions3}
+              disabled={!canWrite}
             />
           </div>
           <div className="w-4/9">
@@ -392,7 +393,8 @@ export default function MappenTab({
             />
           </div>
         </div>
-        <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
+        {canWrite && <AddButton onClick={() => onUploadTab()} text="Toevoegen" />}
+        {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
       {filteredDocuments.length === 0 ? (
@@ -411,12 +413,15 @@ export default function MappenTab({
                   className="px-4 py-2"
                 >
                   <div className="flex items-center gap-3">
-                    <CheckBox 
-                      toggle={allSelected} 
-                      indeterminate={someSelected}
-                      onChange={handleSelectAll}
-                      color="#23BD92" 
-                    />
+                    {canWrite && (
+                      <CheckBox 
+                        toggle={allSelected} 
+                        indeterminate={someSelected}
+                        onChange={handleSelectAll}
+                        color="#23BD92" 
+                      />
+                    )}
+                    {!canWrite && <div className="w-5" />}
                     Map
                   </div>
                 </SortableHeader>
@@ -439,18 +444,21 @@ export default function MappenTab({
                 >
                   <td className="w-1/4 px-4 py-4 font-montserrat text-[16px] text-black font-normal">
                     <div className="flex items-center gap-3">
-                      <CheckBox 
-                        toggle={filteredDocuments
-                          .filter(doc => doc.folder === folderName)
-                          .every(doc => selectedDocuments.has(doc.id))}
-                        onChange={(isSelected) => {
-                          const folderDocIds = filteredDocuments
+                      {canWrite && (
+                        <CheckBox 
+                          toggle={filteredDocuments
                             .filter(doc => doc.folder === folderName)
-                            .map(doc => doc.id)
-                          folderDocIds.forEach(docId => handleDocumentSelect(docId, isSelected))
-                        }}
-                        color="#23BD92" 
-                      />
+                            .every(doc => selectedDocuments.has(doc.id))}
+                          onChange={(isSelected) => {
+                            const folderDocIds = filteredDocuments
+                              .filter(doc => doc.folder === folderName)
+                              .map(doc => doc.id)
+                            folderDocIds.forEach(docId => handleDocumentSelect(docId, isSelected))
+                          }}
+                          color="#23BD92" 
+                        />
+                      )}
+                      {!canWrite && <div className="w-5" />}
                       {folderName}
                     </div>
                   </td>

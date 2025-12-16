@@ -9,7 +9,7 @@ import DeleteDocumentFromRolesModal from "./modals/DeleteDocumentFromRolesModal"
 import SortableHeader from "@/components/SortableHeader";
 import { useSortableData } from "@/lib/useSortableData";
 
-export default function AppearInRoleTab({ documents = {}, selectedDocName, onDeleteDocuments }) {
+export default function AppearInRoleTab({ documents = {}, selectedDocName, onDeleteDocuments, canWrite = true }) {
   const allOptions = ["Bulkacties", "Verwijder document"]; 
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions[0]); 
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,6 +173,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
             value={selectedBulkAction}
             onChange={handleBulkAction}
             allOptions={allOptions}
+            disabled={!canWrite}
           />
           <SearchBox
             placeholderText="Zoek rol of map..."
@@ -180,6 +181,7 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
       {/* Entries Table */}
@@ -195,12 +197,15 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                 className="w-2/5 px-4 py-2"
               >
                 <div className="flex items-center gap-5 whitespace-nowrap">
-                  <CheckBox
-                    toggle={allSelected}
-                    indeterminate={someSelected}
-                    onChange={handleSelectAll}
-                    color="#23BD92"
-                  />
+                  {canWrite && (
+                    <CheckBox
+                      toggle={allSelected}
+                      indeterminate={someSelected}
+                      onChange={handleSelectAll}
+                      color="#23BD92"
+                    />
+                  )}
+                  {!canWrite && <div className="w-5" />}
                   Rol
                 </div>
               </SortableHeader>
@@ -243,13 +248,16 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                   {/* Checkbox */}
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-5">
-                      <CheckBox
-                        toggle={selectedEntriesSet.has(entry.id)}
-                        onChange={(isSelected) =>
-                          handleEntrySelect(entry.id, isSelected)
-                        }
-                        color="#23BD92"
-                      />
+                      {canWrite && (
+                        <CheckBox
+                          toggle={selectedEntriesSet.has(entry.id)}
+                          onChange={(isSelected) =>
+                            handleEntrySelect(entry.id, isSelected)
+                          }
+                          color="#23BD92"
+                        />
+                      )}
+                      {!canWrite && <div className="w-5" />}
                       <div className="py-2">
                         <span className="truncate">{entry.role}</span>
                       </div>
@@ -266,13 +274,16 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
                   {/* Actions */}
                   <td className="w-[120px] px-4 py-2">
                     <div className="flex justify-end">
-                      <button
-                        onClick={() => handleDeleteClick(entry)}
-                        className="hover:opacity-80"
-                        title="Verwijder document uit deze rol en map"
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {canWrite && (
+                        <button
+                          onClick={() => handleDeleteClick(entry)}
+                          className="hover:opacity-80"
+                          title="Verwijder document uit deze rol en map"
+                        >
+                          <RedCancelIcon />
+                        </button>
+                      )}
+                      {!canWrite && <span className="text-xs text-gray-400 italic">-</span>}
                     </div>
                   </td>
                 </tr>

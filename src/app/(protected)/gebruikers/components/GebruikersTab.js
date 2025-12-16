@@ -76,7 +76,17 @@ export default function GebruikersTab({
   const allRoles = useMemo(() => {
     const set = new Set();
     sortedUsers.forEach((u) => u.Rol?.forEach((r) => set.add(r)));
-    return ["Alle rollen", "Beheerder", "Zonder rol", ...Array.from(set).filter(role => role !== "Beheerder")];
+    
+    // Check if there are any teamlid users
+    const hasTeamlidUsers = sortedUsers.some(u => u.is_teamlid === true);
+    const rolesList = ["Alle rollen", "Beheerder", "Zonder rol", ...Array.from(set).filter(role => role !== "Beheerder")];
+    
+    // Add Teamlid option if there are teamlid users
+    if (hasTeamlidUsers && !rolesList.includes("Teamlid")) {
+      rolesList.push("Teamlid");
+    }
+    
+    return rolesList;
   }, [sortedUsers]);
 
   const [expandedFolders, setExpandedFolders] = useState(new Set());
@@ -207,6 +217,8 @@ export default function GebruikersTab({
   const titleText = useMemo(() => {
     if (selectedRole === "Beheerder") {
       return `${filteredData.length} beheerder${filteredData.length !== 1 ? "s" : ""}`;
+    } else if (selectedRole === "Teamlid") {
+      return `${filteredData.length} teamlid${filteredData.length !== 1 ? "leden" : ""}`;
     } else if (selectedRole !== "Alle rollen") {
       return `${filteredData.length} gebruiker${filteredData.length !== 1 ? "s" : ""} met de rol "${selectedRole}"`;
     } else {
@@ -369,14 +381,27 @@ export default function GebruikersTab({
     const searchTerm = searchQuery.toLowerCase();
     const hasSearchMatch = roleHasSearchMatch(roleName);
     const isBeheerderRole = roleName === "Beheerder";
+    const isTeamlidRole = roleName === "Teamlid";
+    // Teamlid and Beheerder don't show folders
+    const shouldShowFolders = folders.length > 0 && !isBeheerderRole && !isTeamlidRole;
+    
+    // Use red style for Beheerder and Teamlid, green for other roles
+    const isSpecialRole = isBeheerderRole || isTeamlidRole;
+    const badgeClass = hasSearchMatch 
+      ? isSpecialRole 
+        ? 'bg-yellow-100 border border-yellow-300 text-red-600' 
+        : 'bg-yellow-100 border border-yellow-300 text-[#23BD92]'
+      : isSpecialRole
+        ? 'bg-red-600/10 text-red-600'
+        : 'bg-[#23BD92]/10 text-[#23BD92]';
 
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className={`inline-block ${hasSearchMatch ? 'bg-yellow-100 border border-yellow-300 text-[#23BD92]' : 'bg-[#23BD92]/10 text-[#23BD92]'} font-semibold text-sm px-2 py-1 rounded-md`}>
+          <span className={`inline-block ${badgeClass} font-semibold text-sm px-2 py-1 rounded-md`}>
             {searchQuery ? highlightText(roleName, searchTerm) : roleName}
           </span>
-          {folders.length > 0 && !isBeheerderRole && (
+          {shouldShowFolders && (
             <button
               onClick={() => toggleFolderExpand(userId, roleName)}
               className="text-gray-600 text-xs hover:text-gray-800 hover:underline transition-colors"
@@ -386,7 +411,7 @@ export default function GebruikersTab({
             </button>
           )}
         </div>
-        {(isExpanded || hasSearchMatch) && folders.length > 0 && !isBeheerderRole && (
+        {(isExpanded || hasSearchMatch) && shouldShowFolders && (
           <div className="ml-3 flex flex-col gap-1 text-gray-700 text-xs">
             {folders.map((f, i) => {
               const folderMatches = searchTerm && f.toLowerCase().includes(searchTerm);
@@ -433,7 +458,7 @@ export default function GebruikersTab({
           ))}
         </div>
 
-        {user.Rol.length > 1 && !hasRoleOrFolderMatch && !searchQuery.trim() && !isAdmin && (
+        {user.Rol.length > 1 && !hasRoleOrFolderMatch && !searchQuery.trim() && (
           <div className="flex items-center">
             <button
               onClick={() => toggleUserRoles(user.id)}
@@ -449,11 +474,6 @@ export default function GebruikersTab({
                 ▼
               </span>
             </button>
-          </div>
-        )}
-        {isAdmin && user.Rol.length > 1 && (
-          <div className="text-xs text-gray-500 italic">
-            Beheerders hebben volledige toegang tot alle functies
           </div>
         )}
       </div>

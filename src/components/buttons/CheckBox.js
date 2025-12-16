@@ -1,13 +1,14 @@
-export default function CheckBox({ toggle, color, onChange, indeterminate = false }) {
+export default function CheckBox({ toggle, color, onChange, indeterminate = false, disabled = false }) {
     return (
         <div className="inline-flex items-center">
-            <label className="flex items-center relative cursor-pointer">
+            <label className={`flex items-center relative ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                 <input
                     type="checkbox"
                     checked={toggle}
                     onChange={(e) => onChange?.(e.target.checked)}
+                    disabled={disabled}
                     style={{ '--check-color': color }}
-                    className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[var(--check-color)] checked:border-[var(--check-color)]"
+                    className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[var(--check-color)] checked:border-[var(--check-color)] disabled:cursor-not-allowed disabled:opacity-50"
                     ref={(el) => {
                         if (el) {
                             el.indeterminate = indeterminate;

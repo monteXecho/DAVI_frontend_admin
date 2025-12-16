@@ -12,7 +12,7 @@ import DeleteRoleModal from './modals/DeleteRoleModal'
 import SortableHeader from '@/components/SortableHeader'
 import { useSortableData } from '@/lib/useSortableData'
 
-export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken, onEditRole, canWrite = true }) {
+export default function AlleRollenTab({ roles = [], users = [], user: currentUser, onDeleteRoles, onMoveToMaken, onEditRole, canWrite = true }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlRole = searchParams.get('role')
@@ -26,7 +26,48 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
   const [expandedFolders, setExpandedFolders] = useState(new Set())
   const [selectedRoleFromUrl, setSelectedRoleFromUrl] = useState(null)
 
-  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(roles)
+  // Add Admin and Teamlid roles if applicable
+  const enhancedRoles = useMemo(() => {
+    const enhanced = [...roles]
+    
+    if (!currentUser || !currentUser.user_id) {
+      return enhanced
+    }
+    
+    const currentAdminId = currentUser.user_id
+    
+    // Check if there are admins added by current admin
+    // Only show if there are admins with added_by_admin_id matching current admin's user_id
+    const addedAdmins = users.filter(u => u.type === "admin" && u.added_by_admin_id === currentAdminId)
+    if (addedAdmins.length > 0) {
+      enhanced.push({
+        name: "Admin",
+        folders: [],
+        user_count: addedAdmins.length,
+        document_count: 0,
+        isSpecial: true,
+        type: "admin"
+      })
+    }
+    
+    // Check if there are teamlid users/admins assigned by current admin
+    // Check guest_access where created_by = currentAdminId, or users with is_teamlid = true
+    const teamlidUsers = users.filter(u => u.is_teamlid === true)
+    if (teamlidUsers.length > 0) {
+      enhanced.push({
+        name: "Teamlid",
+        folders: [],
+        user_count: teamlidUsers.length,
+        document_count: 0,
+        isSpecial: true,
+        type: "teamlid"
+      })
+    }
+    
+    return enhanced
+  }, [roles, users, currentUser])
+
+  const { items: sortedRoles, requestSort, sortConfig } = useSortableData(enhancedRoles)
 
   useEffect(() => {
     if (urlRole) {
@@ -55,7 +96,14 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
   const handleUserCountClick = (role) => {
     if (role.user_count > 0) {
-      router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
+      // For special roles (Admin, Teamlid), use special handling
+      if (role.isSpecial && role.type === "admin") {
+        router.push(`/gebruikers?role=Beheerder`)
+      } else if (role.isSpecial && role.type === "teamlid") {
+        router.push(`/gebruikers?role=Teamlid`)
+      } else {
+        router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
+      }
     }
   }
 
@@ -96,6 +144,11 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
   }
 
   const renderFolders = (role) => {
+    // Special roles (Admin, Teamlid) don't have folders
+    if (role.isSpecial) {
+      return <span className="text-gray-400 text-sm italic">-</span>
+    }
+    
     const folders = role.folders || []
     const isExpanded = expandedFolders.has(role.name)
     const hasSearchMatch = search && folders.some(folder => 
@@ -174,7 +227,8 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      const allFilteredNames = new Set(filteredRoles.map(r => r.name))
+      // Only select non-special roles (exclude Admin and Teamlid)
+      const allFilteredNames = new Set(filteredRoles.filter(r => !r.isSpecial).map(r => r.name))
       setSelectedRoles(allFilteredNames)
     } else {
       setSelectedRoles(new Set())
@@ -349,13 +403,22 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
               >
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-3 font-montserrat text-[16px] text-black">
-                    {canWrite && (
+                    {canWrite && !role.isSpecial && (
                       <CheckBox
                         toggle={selectedRoles.has(role.name)}
                         onChange={(sel) => handleRoleSelect(role.name, sel)}
                         color="#23BD92"
                       />
                     )}
+                    {canWrite && role.isSpecial && (
+                      <CheckBox
+                        toggle={false}
+                        onChange={() => {}}
+                        color="#23BD92"
+                        disabled={true}
+                      />
+                    )}
+                    {!canWrite && <div className="w-5" />}
                     {search ? highlightText(role.name, search) : role.name}
                   </div>
                 </td>
@@ -396,7 +459,7 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
 
                 <td className="px-4 py-2">
                   <div className="flex justify-center items-center gap-3">
-                    {canWrite && (
+                    {canWrite && !role.isSpecial && (
                       <>
                         <button
                           className="hover:opacity-80 transition-opacity"
@@ -414,6 +477,9 @@ export default function AlleRollenTab({ roles = [], onDeleteRoles, onMoveToMaken
                           <RedCancelIcon />
                         </button>
                       </>
+                    )}
+                    {role.isSpecial && (
+                      <span className="text-xs text-gray-400 italic">-</span>
                     )}
                   </div>
                 </td>

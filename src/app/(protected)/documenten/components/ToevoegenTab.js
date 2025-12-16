@@ -87,6 +87,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   }
 
   const handleFolderUploadClick = () => {
+    if (!canWrite) return
     setUploadMode('folder')
     folderInputRef.current?.click()
   }
@@ -432,18 +433,20 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
                 value={selectedFolder}
                 onChange={setSelectedFolder}
                 allOptions={availableFolders}
-                disabled={availableFolders.length === 0}
+                disabled={!canWrite || availableFolders.length === 0}
                 placeholder="Selecteer een map..."
               />
             </div>
-            <button
-              onClick={handleAddUploadTarget}
-              title="Voeg map toe"
-              className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!selectedFolder || availableFolders.length === 0}
-            >
-              <AddIcon />
-            </button>
+            {canWrite && (
+              <button
+                onClick={handleAddUploadTarget}
+                title="Voeg map toe"
+                className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!selectedFolder || availableFolders.length === 0}
+              >
+                <AddIcon />
+              </button>
+            )}
           </div>
           
           {folders.length === 0 ? (
@@ -468,13 +471,15 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
                 <span className="font-montserrat text-[14px]">
                   {target.folder}
                 </span>
-                <button
-                  onClick={() => handleRemoveUploadTarget(index)}
-                  title="Verwijder"
-                  className="p-1 hover:bg-gray-200 rounded transition-colors"
-                >
-                  <RedCancelIcon />
-                </button>
+                {canWrite && (
+                  <button
+                    onClick={() => handleRemoveUploadTarget(index)}
+                    title="Verwijder"
+                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                  >
+                    <RedCancelIcon />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -500,9 +505,16 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
         multiple
       />
 
-      <div className="flex flex-col w-2/3 gap-4">
-        {renderUploadSection()}
-      </div>
+      {!canWrite && (
+        <div className="text-gray-500 text-sm italic py-4">
+          Alleen-lezen modus: U heeft geen schrijfrechten om documenten toe te voegen.
+        </div>
+      )}
+      {canWrite && (
+        <div className="flex flex-col w-2/3 gap-4">
+          {renderUploadSection()}
+        </div>
+      )}
       
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>

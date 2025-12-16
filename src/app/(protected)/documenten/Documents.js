@@ -54,8 +54,8 @@ export default function Documents() {
         getAdminDocuments(),
         getFolders()
       ])
-      if (rolesRes?.roles) setRoles(rolesRes.roles)
-      if (docsRes?.data) setDocuments(docsRes.data)
+      if (rolesRes?.roles){console.log('---roles---: ', rolesRes.roles); setRoles(rolesRes.roles)}
+      if (docsRes?.data) {console.log('---documents---: ', docsRes.data); setDocuments(docsRes.data)}
       if (foldersRes?.folders) setFolders(foldersRes.folders)
     } catch (err) {
       console.error("Failed to refresh data:", err)

@@ -503,23 +503,27 @@ export default function LeftSidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-8">
-        <div className="space-y-4">
-          <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
-            Modules
+        {filteredPublicModules.length > 0 && (
+          <div className="space-y-4">
+            <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
+              Modules
+            </div>
+            {publicMenuSection}
           </div>
-          {publicMenuSection}
-        </div>
+        )}
 
         {filteredPublicModules.length > 0 && filteredAdminModules.length > 0 && (
           <div className="h-px bg-slate-200" />
         )}
 
-        <div className="space-y-4">
-          <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
-            Beheer
+        {filteredAdminModules.length > 0 && (
+          <div className="space-y-4">
+            <div className="text-xs uppercase tracking-[0.12em] text-gray-500 font-semibold">
+              Beheer
+            </div>
+            {adminMenuSection}
           </div>
-          {adminMenuSection}
-        </div>
+        )}
 
         {filteredPublicModules.length === 0 &&
           filteredAdminModules.length === 0 && (

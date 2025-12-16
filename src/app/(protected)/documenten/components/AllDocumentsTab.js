@@ -324,6 +324,7 @@ export default function AllDocumentsTab({
               value={selectedBulkAction}
               onChange={handleBulkAction}
               allOptions={allOptions3}
+              disabled={!canWrite}
             />
           </div>
           <div className="w-4/9">
@@ -334,7 +335,8 @@ export default function AllDocumentsTab({
             />
           </div>
         </div>
-        <AddButton onClick={() => onUploadTab()} text="Toevoegen" />
+        {canWrite && <AddButton onClick={() => onUploadTab()} text="Toevoegen" />}
+        {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
       {/* Documents Table */}
@@ -359,12 +361,15 @@ export default function AllDocumentsTab({
                   className="px-4 py-2"
                 >
                   <div className="flex items-center gap-3">
-                    <CheckBox 
-                      toggle={allSelected} 
-                      indeterminate={someSelected}
-                      onChange={handleSelectAll}
-                      color="#23BD92" 
-                    />
+                    {canWrite && (
+                      <CheckBox 
+                        toggle={allSelected} 
+                        indeterminate={someSelected}
+                        onChange={handleSelectAll}
+                        color="#23BD92" 
+                      />
+                    )}
+                    {!canWrite && <div className="w-5" />}
                     Map
                   </div>
                 </SortableHeader>
@@ -403,11 +408,14 @@ export default function AllDocumentsTab({
                 >
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
                     <div className="flex items-center gap-3">
-                      <CheckBox 
-                        toggle={selectedDocuments.has(doc.id)} 
-                        onChange={(isSelected) => handleDocumentSelect(doc.id, isSelected)}
-                        color="#23BD92" 
-                      />
+                      {canWrite && (
+                        <CheckBox 
+                          toggle={selectedDocuments.has(doc.id)} 
+                          onChange={(isSelected) => handleDocumentSelect(doc.id, isSelected)}
+                          color="#23BD92" 
+                        />
+                      )}
+                      {!canWrite && <div className="w-5" />}
                       {doc.folder}
                     </div>
                   </td>
@@ -456,13 +464,15 @@ export default function AllDocumentsTab({
                         <GreenFolderIcon />
                       </button>
 
-                      <button 
-                        className="cursor-pointer transition-opacity"
-                        title="Verwijder"
-                        onClick={() => handleDeleteClick(doc)}
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {canWrite && (
+                        <button 
+                          className="cursor-pointer transition-opacity"
+                          title="Verwijder"
+                          onClick={() => handleDeleteClick(doc)}
+                        >
+                          <RedCancelIcon />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

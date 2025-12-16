@@ -1,10 +1,16 @@
 /**
  * Permission utility functions for teamlid users
  * 
- * Permissions structure:
- * - role_folder_modify_permission: Controls Rollen and Mappen (write if "True", read-only if "False")
- * - user_create_modify_permission: Controls Gebruikers (write if "True", read-only if "False")
- * - document_modify_permission: Controls Documenten (write if "True", read-only if "False")
+ * Permissions structure (guest_access format):
+ * - can_role_write: Controls Rollen (write if true, read-only if false)
+ * - can_folder_write: Controls Mappen (write if true, read-only if false)
+ * - can_user_write: Controls Gebruikers (write if true, read-only if false)
+ * - can_document_write: Controls Documenten (write if true, read-only if false)
+ * 
+ * Backward compatibility (teamlid_permissions format):
+ * - role_folder_modify_permission: Controls Rollen and Mappen
+ * - user_create_modify_permission: Controls Gebruikers
+ * - document_modify_permission: Controls Documenten
  */
 
 /**
@@ -31,7 +37,7 @@ function isActingOnOwnWorkspace(user) {
  * @param {string|boolean} permission - Permission value ("True"/"False" or boolean)
  * @returns {boolean} - True if write is allowed
  */
-export function canWrite(permission) {
+function canWrite(permission) {
   if (permission === undefined || permission === null) return false;
   if (typeof permission === 'boolean') return permission;
   if (typeof permission === 'string') {
@@ -50,7 +56,14 @@ export function canWriteRoles(user) {
   // CRITICAL: If acting on own workspace, always allow full access
   if (isActingOnOwnWorkspace(user)) return true;
   // If not teamlid, allow (company_admin has full access)
-  if (!user.is_teamlid) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  
+  // Check guest_access permissions first (new format)
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_role_write);
+  }
+  
+  // Fallback to old teamlid_permissions format
   const perms = user.teamlid_permissions || {};
   return canWrite(perms.role_folder_modify_permission);
 }
@@ -65,7 +78,14 @@ export function canWriteFolders(user) {
   // CRITICAL: If acting on own workspace, always allow full access
   if (isActingOnOwnWorkspace(user)) return true;
   // If not teamlid, allow (company_admin has full access)
-  if (!user.is_teamlid) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  
+  // Check guest_access permissions first (new format)
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_folder_write);
+  }
+  
+  // Fallback to old teamlid_permissions format
   const perms = user.teamlid_permissions || {};
   return canWrite(perms.role_folder_modify_permission);
 }
@@ -80,7 +100,14 @@ export function canWriteUsers(user) {
   // CRITICAL: If acting on own workspace, always allow full access
   if (isActingOnOwnWorkspace(user)) return true;
   // If not teamlid, allow (company_admin has full access)
-  if (!user.is_teamlid) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  
+  // Check guest_access permissions first (new format)
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_user_write);
+  }
+  
+  // Fallback to old teamlid_permissions format
   const perms = user.teamlid_permissions || {};
   return canWrite(perms.user_create_modify_permission);
 }
@@ -95,7 +122,14 @@ export function canWriteDocuments(user) {
   // CRITICAL: If acting on own workspace, always allow full access
   if (isActingOnOwnWorkspace(user)) return true;
   // If not teamlid, allow (company_admin has full access)
-  if (!user.is_teamlid) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  
+  // Check guest_access permissions first (new format)
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_document_write);
+  }
+  
+  // Fallback to old teamlid_permissions format
   const perms = user.teamlid_permissions || {};
   return canWrite(perms.document_modify_permission);
 }

@@ -136,7 +136,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Carsten Altena"
+              placeholder="Voor-en achternaam"
               disabled={!canWrite}
               className={`mb-5 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none ${
                 !canWrite ? 'bg-gray-100 cursor-not-allowed' : ''
@@ -177,9 +177,8 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
                 <DropdownMenu
                   value={selected}
                   onChange={setSelected}
-                  disabled={!canWrite}
+                  disabled={!canWrite || availableRoles.length === 0}
                   allOptions={availableRoles}
-                  disabled={availableRoles.length === 0}
                 />
               </div>
 
@@ -188,7 +187,6 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
                 disabled={!canWrite || availableRoles.length === 0}
                 aria-label="Add role"
                 className={`hover:opacity-80 transition-opacity ${!canWrite || availableRoles.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
-                disabled={availableRoles.length === 0}
               >
                 <AddIcon />
               </button>
@@ -224,9 +222,8 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
       {/* Save Button */}
       <button
-        disabled={isSaving || loading}
-        onClick={handleSave}
         disabled={isSaving || loading || !canWrite}
+        onClick={handleSave}
         className={`w-[110px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white ${
           isSaving || loading || !canWrite
             ? "bg-gray-400 cursor-not-allowed"

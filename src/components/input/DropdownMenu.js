@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import UpArrow from "../icons/UpArrow";
 import DownArrow from "../icons/DownArrowIcon";
 
-export default function DropdownMenu ({ value, onChange, allOptions }) {
+export default function DropdownMenu ({ value, onChange, allOptions, disabled = false }) {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     const dropdownOptions = allOptions.filter(opt => opt !== value);
 
     function toggleDropdown() {
+        if (disabled) return;
         setOpen(!open);
     }
 
@@ -38,15 +39,24 @@ export default function DropdownMenu ({ value, onChange, allOptions }) {
     return (
         <div className="relative w-full" ref={dropdownRef}>
             <div
-                className="flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-lg px-4 cursor-pointer select-none"
+                className={`flex items-center justify-between w-full h-10 bg-white border border-[#D9D9D9] rounded-lg px-4 select-none ${
+                    disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'cursor-pointer'
+                }`}
                 onClick={toggleDropdown}
-                tabIndex={0}
-                onKeyDown={e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDropdown(); } }}
+                tabIndex={disabled ? -1 : 0}
+                onKeyDown={e => { 
+                    if (disabled) return;
+                    if(e.key === "Enter" || e.key === " ") { 
+                        e.preventDefault(); 
+                        toggleDropdown(); 
+                    } 
+                }}
                 aria-haspopup="listbox"
                 aria-expanded={open}
+                aria-disabled={disabled}
             >
-                <div className="font-montserrat font-normal text-base leading-6 text-[#1E1E1E]">{value}</div>
-                { open ? <UpArrow /> : <DownArrow /> }
+                <div className="font-montserrat font-normal text-base leading-6 text-[#1E1E1E]">{value || 'Selecteer...'}</div>
+                { !disabled && (open ? <UpArrow /> : <DownArrow />) }
             </div>
 
             {open && (

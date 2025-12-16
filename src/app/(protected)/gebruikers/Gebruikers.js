@@ -35,11 +35,17 @@ export default function Gebruikers() {
   })
 
   function formatUser(u) {
+    const roles = Array.isArray(u.roles) ? u.roles : [u.role];
+    // Add Teamlid to roles if user has teamlid permissions
+    if (u.is_teamlid === true && !roles.includes("Teamlid")) {
+      roles.push("Teamlid");
+    }
     return {
       id: u.id,
       Naam: u.name || "—",
       Email: u.email || "—",
-      Rol: Array.isArray(u.roles) ? u.roles : [u.role],
+      Rol: roles,
+      is_teamlid: u.is_teamlid || false,
     }
   }
 
