@@ -453,7 +453,12 @@ export default function LeftSidebar() {
           // Determine current role state based on selected workspace
           if (!workspaces || !selectedOwnerId || !user) return null;
           
-          const isDefaultRole = workspaces.self?.ownerId === selectedOwnerId;
+          // Check if user is in guest mode (for company users with same ownerId)
+          const isGuestMode = typeof window !== 'undefined' 
+            ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+            : false;
+          
+          const isDefaultRole = workspaces.self?.ownerId === selectedOwnerId && !isGuestMode;
           
           if (isDefaultRole) {
             // User is acting on their own workspace (default role)
@@ -467,7 +472,19 @@ export default function LeftSidebar() {
             const guestWorkspace = (workspaces.guestOf || []).find(
               (ws) => ws.ownerId === selectedOwnerId
             );
-            if (guestWorkspace?.owner) {
+            // Also check if it's the self workspace but in guest mode (company user case)
+            const isSelfInGuestMode = workspaces.self?.ownerId === selectedOwnerId && isGuestMode;
+            
+            if (isSelfInGuestMode && workspaces.self?.owner) {
+              // Company user in guest mode with same ownerId
+              const adminName = workspaces.self.owner.name || workspaces.self.owner.email || 'beheerder';
+              return (
+                <div className="mt-1 text-[11px] text-amber-600">
+                  Teamlid voor {adminName}
+                </div>
+              );
+            } else if (guestWorkspace?.owner) {
+              // Different ownerId (guest workspace)
               const adminName = guestWorkspace.owner.name || guestWorkspace.owner.email || 'beheerder';
               return (
                 <div className="mt-1 text-[11px] text-amber-600">

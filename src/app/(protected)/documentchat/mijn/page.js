@@ -2,7 +2,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 
-import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
@@ -12,10 +11,10 @@ import { useSortableData } from "@/lib/useSortableData"
 import { useApi } from "@/lib/useApi"
 
 export default function MijnTab() {
-  const { getPrivateDocuments, deletePrivateDocuments } = useApi()
+  const { getPrivateDocuments, deletePrivateDocuments, getAllUserDocuments, downloadDocument } = useApi()
   const router = useRouter()
-  const allOptions3 = ["Bulkacties", "Verwijderen"]
-  const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
+  const documentTypeOptions = ["Alle", "Private", "RoleBased"]
+  const [selectedDocumentType, setSelectedDocumentType] = useState(documentTypeOptions[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
@@ -24,13 +23,12 @@ export default function MijnTab() {
 
   const refreshData = useCallback(async () => {
     try {
-      const docsRes = await getPrivateDocuments()
-      console.log(' --- DOCUMENTS ---', docsRes)
+      const docsRes = await getAllUserDocuments()
       if (docsRes?.data?.documents) setDocuments(docsRes.data.documents)
     } catch (err) {
       console.error("Failed to refresh data:", err)
     }
-  }, [getPrivateDocuments])
+  }, [getAllUserDocuments])
 
   useEffect(() => {
     const init = async () => {
@@ -63,13 +61,60 @@ export default function MijnTab() {
     return documents.map(doc => ({
       id: doc.file_name,
       file_name: doc.file_name,
-      file_name_lower: (doc.file_name || "").toLowerCase()
+      file_name_lower: (doc.file_name || "").toLowerCase(),
+      upload_type: doc.upload_type || "document",
+      is_private: doc.is_private !== undefined ? doc.is_private : (doc.upload_type === "document"),
+      path: doc.path || ""
     }))
   }, [documents])
 
   const baseDocuments = useMemo(() => {
-    return getAllDocuments()
-  }, [getAllDocuments])
+    const allDocs = getAllDocuments()
+    
+    let filteredDocs = []
+    
+    // Filter by document type
+    if (selectedDocumentType === "Alle") {
+      filteredDocs = allDocs
+    } else if (selectedDocumentType === "Private") {
+      filteredDocs = allDocs.filter(doc => doc.is_private)
+    } else if (selectedDocumentType === "RoleBased") {
+      filteredDocs = allDocs.filter(doc => !doc.is_private)
+    } else {
+      filteredDocs = allDocs
+    }
+    
+    // For RoleBased documents, deduplicate by file_name (keep only unique file names)
+    if (selectedDocumentType === "RoleBased" || selectedDocumentType === "Alle") {
+      const seen = new Set()
+      const uniqueDocs = []
+      const roleBasedDocs = []
+      const privateDocs = []
+      
+      for (const doc of filteredDocs) {
+        if (doc.is_private) {
+          privateDocs.push(doc)
+        } else {
+          roleBasedDocs.push(doc)
+        }
+      }
+      
+      // Add all private documents (no duplicates)
+      uniqueDocs.push(...privateDocs)
+      
+      // Add only unique RoleBased documents by file_name
+      for (const doc of roleBasedDocs) {
+        if (!seen.has(doc.file_name)) {
+          seen.add(doc.file_name)
+          uniqueDocs.push(doc)
+        }
+      }
+      
+      return uniqueDocs
+    }
+    
+    return filteredDocs
+  }, [getAllDocuments, selectedDocumentType])
 
   const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
 
@@ -92,34 +137,32 @@ export default function MijnTab() {
 
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      setSelectedDocuments(new Set(filteredDocuments.map(doc => doc.id)))
+      // Only select private documents (they can be deleted)
+      const privateDocs = filteredDocuments.filter(doc => doc.is_private)
+      setSelectedDocuments(new Set(privateDocs.map(doc => doc.id)))
     } else {
       setSelectedDocuments(new Set())
     }
   }
 
-  const allSelected = filteredDocuments.length > 0 && filteredDocuments.every(doc => selectedDocuments.has(doc.id))
-  const someSelected = filteredDocuments.some(doc => selectedDocuments.has(doc.id)) && !allSelected
-
-  const handleBulkAction = (action) => {
-    setSelectedBulkAction(action)
-    if (action === "Verwijderen") {
-      if (selectedDocuments.size > 0) {
-        setDeleteMode("bulk")
-        setIsDeleteModalOpen(true)
-      } else {
-        alert("Selecteer eerst documenten om te verwijderen.")
-        setSelectedBulkAction("Bulkacties")
-      }
-    }
-  }
 
   const handleDeleteConfirm = async () => {
     try {
       if (handleDeleteDocuments && selectedDocuments.size > 0) {
-        const docsToDelete = getSelectedDocumentsData().map(doc => ({
-          file_name: doc.file_name
-        }))
+        // Only allow deletion of private documents
+        const docsToDelete = getSelectedDocumentsData()
+          .filter(doc => doc.is_private)
+          .map(doc => ({
+            file_name: doc.file_name
+          }))
+        
+        if (docsToDelete.length === 0) {
+          alert("Je kunt alleen privé documenten verwijderen. Rol-gebaseerde documenten kunnen niet worden verwijderd.")
+          setIsDeleteModalOpen(false)
+          setSelectedDocuments(new Set())
+          return
+        }
+        
         await handleDeleteDocuments(docsToDelete)
         setSelectedDocuments(new Set())
       }
@@ -127,7 +170,6 @@ export default function MijnTab() {
       alert("Failed to delete documents. Please try again.")
     } finally {
       setIsDeleteModalOpen(false)
-      setSelectedBulkAction("Bulkacties")
     }
   }
 
@@ -160,11 +202,6 @@ export default function MijnTab() {
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
         {getHeaderText()}
-        {selectedDocuments.size > 0 && (
-          <span className="ml-2 text-gray-600">
-            ({selectedDocuments.size} geselecteerd)
-          </span>
-        )}
       </div>
 
       {/* Action Bar */}
@@ -172,9 +209,9 @@ export default function MijnTab() {
         <div className="flex flex-col md:flex-row w-full md:w-2/3 gap-4 md:items-center">
           <div className="w-full md:w-4/9">
             <DropdownMenu
-              value={selectedBulkAction}
-              onChange={handleBulkAction}
-              allOptions={allOptions3}
+              value={selectedDocumentType}
+              onChange={setSelectedDocumentType}
+              allOptions={documentTypeOptions}
             />
           </div>
           <div className="w-full md:w-4/9">
@@ -203,15 +240,7 @@ export default function MijnTab() {
                   currentSort={sortConfig}
                   className="px-4 py-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <CheckBox 
-                      toggle={allSelected} 
-                      indeterminate={someSelected}
-                      onChange={handleSelectAll}
-                      color="#23BD92" 
-                    />
-                    Document
-                  </div>
+                  Document
                 </SortableHeader>
 
                 <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
@@ -221,32 +250,50 @@ export default function MijnTab() {
             </thead>
 
             <tbody>
-              {filteredDocuments.map((doc) => (
+              {filteredDocuments.map((doc, index) => (
                 <tr
-                  key={doc.id + doc.file_name}
+                  key={`${doc.file_name}-${doc.is_private ? 'private' : 'rolebased'}-${index}`}
                   className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
                 >
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                    <div className="flex items-center gap-3">
-                      <CheckBox 
-                        toggle={selectedDocuments.has(doc.id)} 
-                        onChange={(isSelected) => handleDocumentSelect(doc.id, isSelected)}
-                        color="#23BD92" 
-                      />
-                      {doc.file_name}
-                    </div>
+                    {doc.path ? (
+                      <button
+                        onClick={async () => {
+                          if (doc.path) {
+                            try {
+                              await downloadDocument(doc.path);
+                            } catch (err) {
+                              console.error('Failed to open document:', err);
+                              alert('Kon document niet openen. Probeer het opnieuw.');
+                            }
+                          }
+                        }}
+                        className="text-[#23BD92] hover:text-[#1ea87a] hover:underline cursor-pointer text-left"
+                        title="Open document"
+                      >
+                        {doc.file_name}
+                      </button>
+                    ) : (
+                      doc.file_name
+                    )}
                   </td>
 
                   <td className="px-4 py-2">
                     <div className="flex justify-center items-center">
-                      <button 
-                        onClick={() => handleDeleteClick(doc)}
-                        className="hover:opacity-80 transition-opacity"
-                        aria-label={`Delete ${doc.file_name}`}
-                        title="Verwijder"
-                      >
-                        <RedCancelIcon />
-                      </button>
+                      {doc.is_private ? (
+                        <button 
+                          onClick={() => handleDeleteClick(doc)}
+                          className="hover:opacity-80 transition-opacity"
+                          aria-label={`Delete ${doc.file_name}`}
+                          title="Verwijder"
+                        >
+                          <RedCancelIcon />
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-sm" title="Rol-gebaseerde documenten kunnen niet worden verwijderd">
+                          -
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -262,7 +309,6 @@ export default function MijnTab() {
           className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
           onClick={() => {
             setIsDeleteModalOpen(false);
-            setSelectedBulkAction("Bulkacties");
           }}
         >
           <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
@@ -270,7 +316,6 @@ export default function MijnTab() {
               documents={getSelectedDocumentsData()}
               onClose={() => {
                 setIsDeleteModalOpen(false);
-                setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleDeleteConfirm}
               isMultiple={selectedDocuments.size > 1}

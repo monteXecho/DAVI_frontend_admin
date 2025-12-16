@@ -24,7 +24,7 @@ export default function MappenTab({
   const [allOptions2, setAllOptions2] = useState([])
   const [selectedRole, setSelectedRole] = useState("Alle Rollen")
   const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
-  const allOptions3 = ["Bulkacties", "Verwijderen"]
+  const allOptions3 = ["Bulkacties", "Verwijder map"]
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -281,7 +281,7 @@ export default function MappenTab({
 
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action)
-    if (action === "Verwijderen") {
+    if (action === "Verwijder map") {
       if (selectedDocuments.size > 0) {
         setIsDeleteModalOpen(true)
       } else {

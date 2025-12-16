@@ -111,30 +111,42 @@ export default function WorkspaceSwitcher() {
   }, [workspaces]);
 
   // Get display info for workspace - MUST be useCallback and defined before any conditional logic
-  const getWorkspaceInfo = useCallback((ws, workspaces) => {
+  const getWorkspaceInfo = useCallback((ws, workspaces, isCurrentlySelected = false) => {
     // Check if this is the "self" workspace (not a guest workspace)
     // For company users: self workspace has permissions: null, guest workspace has permissions object
     const isSelf = ws.isSelf || (workspaces?.self?.ownerId === ws.ownerId && !ws.permissions);
     const isGuest = ws.isGuest || (ws.permissions !== null && ws.permissions !== undefined);
-    const isDefault = isSelf || (ws.ownerId === currentUser?.user_id && !isGuest);
+    
+    // For the currently selected workspace, check localStorage to determine if in guest mode
+    let finalIsDefault;
+    if (isCurrentlySelected) {
+      const isCurrentlyGuest = typeof window !== 'undefined' 
+        ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+        : false;
+      // If currently selected and in guest mode, it's not default
+      finalIsDefault = !isCurrentlyGuest && (isSelf || (ws.ownerId === currentUser?.user_id && !isGuest));
+    } else {
+      // For other workspaces in dropdown, use their own properties
+      finalIsDefault = isSelf || (ws.ownerId === currentUser?.user_id && !isGuest);
+    }
     
     return {
-      title: isDefault ? 'Standaard rol' : 'Teamlid rol',
-      subtitle: isDefault 
+      title: finalIsDefault ? 'Standaard rol' : 'Teamlid rol',
+      subtitle: finalIsDefault 
         ? 'Eigen werkruimte' 
         : ws.owner 
           ? `voor ${ws.owner.name || ws.owner.email || 'beheerder'}`
           : ws.label || 'Onbekende rol',
-      name: isDefault 
+      name: finalIsDefault 
         ? (currentUser?.name || currentUser?.email || 'Jij')
         : (ws.owner?.name || ws.owner?.email || 'Beheerder'),
-      email: isDefault 
+      email: finalIsDefault 
         ? currentUser?.email 
         : ws.owner?.email,
-      isDefault,
+      isDefault: finalIsDefault,
       isSelf,
       isGuest,
-      icon: isDefault ? '👤' : '👥'
+      icon: finalIsDefault ? '👤' : '👥'
     };
   }, [currentUser]);
 
@@ -258,8 +270,22 @@ export default function WorkspaceSwitcher() {
   if (!workspaces) return null;
   if (!options.length || options.length < 2) return null;
 
-  const selectedWorkspace = options.find(ws => ws.ownerId === selectedOwnerId);
-  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace, workspaces) : null;
+  const selectedWorkspace = options.find(ws => {
+    if (ws.ownerId === selectedOwnerId) {
+      // For company users with same ownerId, check if both self and guest exist
+      const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
+                     options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
+      if (hasBoth) {
+        const storedIsGuest = typeof window !== 'undefined' 
+          ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+          : false;
+        return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
+      }
+      return true;
+    }
+    return false;
+  });
+  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace, workspaces, true) : null;
 
   return (
     <>
@@ -416,16 +442,12 @@ export default function WorkspaceSwitcher() {
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
           <div className="py-1">
             {options.map((ws) => {
-              const info = getWorkspaceInfo(ws, workspaces);
-              // For selection: check if this workspace matches selectedOwnerId
-              // For company users with same ownerId: distinguish by isSelf vs isGuest
+              // Check if this is the currently selected workspace
               let isSelected = false;
               if (ws.ownerId === selectedOwnerId) {
-                // Check if both self and guest exist with same ownerId
                 const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
                                options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
                 if (hasBoth) {
-                  // Need to check which one is currently selected using stored flag
                   const storedIsGuest = typeof window !== 'undefined' 
                     ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
                     : false;
@@ -434,6 +456,7 @@ export default function WorkspaceSwitcher() {
                   isSelected = true;
                 }
               }
+              const info = getWorkspaceInfo(ws, workspaces, isSelected);
               
               return (
                 <button

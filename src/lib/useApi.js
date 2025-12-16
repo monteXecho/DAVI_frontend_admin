@@ -259,6 +259,55 @@ export function useApi() {
     [withAuth]
   );
 
+  const getAllUserDocuments = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/documents/all', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const downloadDocument = useCallback(
+    (filePath) =>
+      withAuth(async (token) => {
+        const encodedPath = encodeURIComponent(filePath);
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/company-admin/documents/download?file_path=${encodedPath}`;
+        
+        // Open in new tab with authentication
+        // Since we can't pass headers via window.open, we'll fetch and create a blob URL
+        try {
+          const response = await fetch(url, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId') 
+                ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+                : {}),
+              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                ? { 'X-Acting-Owner-Is-Guest': 'true' }
+                : {})
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to download document: ${response.statusText}`);
+          }
+          
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+          
+          // Clean up the blob URL after a delay
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+        } catch (err) {
+          console.error('Failed to download document:', err);
+          throw err;
+        }
+      }),
+    [withAuth]
+  );
+
   const uploadUsersFile = useCallback(
     (formData) =>
       withAuth((token) =>
@@ -556,6 +605,8 @@ export function useApi() {
     deleteCompanyAdmin,
     getAdminDocuments,
     getPrivateDocuments,
+    getAllUserDocuments,
+    downloadDocument,
     sendResetPassword,
 
     getUsers,
