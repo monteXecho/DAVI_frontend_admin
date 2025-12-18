@@ -8,13 +8,48 @@ export default function DeleteDocumentModal({
 }) {
   const single = !isMultiple ? documents?.[0] : null;
 
+  // For folder deletion, deduplicate by folder name only (not by role)
+  // For document deletion, deduplicate by role and folder
+  // Check if this is folder deletion: if we have multiple entries with same folder but different roles,
+  // or if entries have folder but no file property
+  const hasFolderOnlyEntries = documents && documents.length > 0 && 
+    documents.some(d => d.folder && (d.file === null || d.file === undefined));
+  
+  // Check if same folder appears with different roles (indicates folder deletion, not document deletion)
+  const folderCounts = new Map();
+  documents?.forEach(d => {
+    if (d.folder) {
+      folderCounts.set(d.folder, (folderCounts.get(d.folder) || 0) + 1);
+    }
+  });
+  const hasDuplicateFolders = Array.from(folderCounts.values()).some(count => count > 1);
+  
+  const deduplicateByFolderOnly = hasFolderOnlyEntries || hasDuplicateFolders;
+  
   const uniqMap = new Map();
   (documents || []).forEach((d) => {
-    // Handle unassigned folders (role is null or undefined)
-    const role = d.role || "(geen rol)";
-    const key = `${role}|||${d.folder}`;
-    if (!uniqMap.has(key)) {
-      uniqMap.set(key, { folder: d.folder, role: d.role || null });
+    if (deduplicateByFolderOnly) {
+      // Deduplicate by folder name only (for folder deletion in MappenTab)
+      const key = d.folder;
+      if (!uniqMap.has(key)) {
+        // Collect all roles for this folder
+        const roles = documents
+          .filter(doc => doc.folder === d.folder && doc.role)
+          .map(doc => doc.role)
+          .filter((role, index, arr) => arr.indexOf(role) === index); // unique roles
+        uniqMap.set(key, { 
+          folder: d.folder, 
+          role: roles.length > 0 ? roles.join(", ") : null,
+          roles: roles
+        });
+      }
+    } else {
+      // Deduplicate by role and folder (for document deletion)
+      const role = d.role || "(geen rol)";
+      const key = `${role}|||${d.folder}`;
+      if (!uniqMap.has(key)) {
+        uniqMap.set(key, { folder: d.folder, role: d.role || null });
+      }
     }
   });
   const uniqueFolders = Array.from(uniqMap.values());
@@ -50,7 +85,16 @@ export default function DeleteDocumentModal({
           <div className="h-fit overflow-y-auto scrollbar-hide text-sm mt-2">
             {previewItems.map((it, index) => (
               <div key={index} className="truncate">
-                • map: {it.folder} — rol: {it.role}
+                • map: {it.folder}
+                {it.roles && it.roles.length > 0 && (
+                  <> — rol{it.roles.length > 1 ? 'len' : ''}: {it.roles.join(", ")}</>
+                )}
+                {!it.roles && it.role && (
+                  <> — rol: {it.role}</>
+                )}
+                {!it.roles && !it.role && (
+                  <> — (geen rol)</>
+                )}
               </div>
             ))}
 
@@ -66,7 +110,12 @@ export default function DeleteDocumentModal({
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je de map<br />
           <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
-          {single?.role ? (
+          {single?.roles && single.roles.length > 0 ? (
+            <>
+              wilt verwijderen?<br />
+              <span className="text-sm">(toegewezen aan rol{single.roles.length > 1 ? 'len' : ''}: {single.roles.join(", ")})</span>
+            </>
+          ) : single?.role ? (
             <>
               wilt verwijderen uit de rol<br />
               <span className="font-semibold">&quot;{single.role}&quot;</span>?
