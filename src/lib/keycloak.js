@@ -4,7 +4,22 @@ const keycloak = new Keycloak({
   url: process.env.NEXT_PUBLIC_KEYCLOAK_URL,
   realm: process.env.NEXT_PUBLIC_KEYCLOAK_REALM,
   clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID,
+  // Enable token refresh
+  enableLogging: process.env.NODE_ENV === 'development',
 });
+
+// Configure token refresh behavior
+keycloak.onTokenExpired = () => {
+  console.log('[Keycloak] Token expired, attempting refresh...');
+  keycloak.updateToken(30).catch((error) => {
+    console.error('[Keycloak] Failed to refresh token:', error);
+    // Only login if refresh token is truly unavailable
+    if (error?.error === 'invalid_grant' || !keycloak.refreshToken) {
+      console.log('[Keycloak] No valid refresh token, redirecting to login');
+      keycloak.login();
+    }
+  });
+};
 
 const keycloak_server = process.env.NEXT_PUBLIC_KEYCLOAK_URL
 

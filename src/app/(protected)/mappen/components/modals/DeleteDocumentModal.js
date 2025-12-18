@@ -10,9 +10,11 @@ export default function DeleteDocumentModal({
 
   const uniqMap = new Map();
   (documents || []).forEach((d) => {
-    const key = `${d.role}|||${d.folder}`;
+    // Handle unassigned folders (role is null or undefined)
+    const role = d.role || "(geen rol)";
+    const key = `${role}|||${d.folder}`;
     if (!uniqMap.has(key)) {
-      uniqMap.set(key, { folder: d.folder, role: d.role });
+      uniqMap.set(key, { folder: d.folder, role: d.role || null });
     }
   });
   const uniqueFolders = Array.from(uniqMap.values());
@@ -64,8 +66,14 @@ export default function DeleteDocumentModal({
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je de map<br />
           <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
-          wilt verwijderen uit de rol<br />
-          <span className="font-semibold">&quot;{single?.role}&quot;</span>?
+          {single?.role ? (
+            <>
+              wilt verwijderen uit de rol<br />
+              <span className="font-semibold">&quot;{single.role}&quot;</span>?
+            </>
+          ) : (
+            <>wilt verwijderen? (geen rol toegewezen)</>
+          )}
           <br />
         </p>
       )}

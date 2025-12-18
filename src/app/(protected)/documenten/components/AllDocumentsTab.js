@@ -37,6 +37,7 @@ export default function AllDocumentsTab({
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false) 
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single")
+  const [expandedRoles, setExpandedRoles] = useState(new Set())
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -174,6 +175,83 @@ export default function AllDocumentsTab({
     )
   }, [sortedDocuments, searchQuery])
 
+  // Group documents by folder + file name, collecting all roles
+  const groupedDocuments = useMemo(() => {
+    const grouped = new Map()
+    
+    filteredDocuments.forEach(doc => {
+      const key = `${doc.folder}::${doc.file}`
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          folder: doc.folder,
+          file: doc.file,
+          path: doc.path,
+          uploaded_at: doc.uploaded_at,
+          roles: [],
+          documents: [] // Store all document objects for this folder+file combo
+        })
+      }
+      const group = grouped.get(key)
+      if (!group.roles.includes(doc.role)) {
+        group.roles.push(doc.role)
+      }
+      group.documents.push(doc)
+    })
+    
+    return Array.from(grouped.values())
+  }, [filteredDocuments])
+
+  const toggleRolesExpand = (key) => {
+    setExpandedRoles(prev => {
+      const newSet = new Set(prev)
+      newSet.has(key) ? newSet.delete(key) : newSet.add(key)
+      return newSet
+    })
+  }
+
+  const renderRoles = (roles, folder, file) => {
+    const key = `${folder}::${file}`
+    const isExpanded = expandedRoles.has(key)
+    const hasMultipleRoles = roles.length > 1
+    
+    const rolesToShow = isExpanded ? roles : roles.slice(0, 1)
+    const hiddenRolesCount = roles.length - 1
+
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {rolesToShow.map((role) => (
+            <span 
+              key={`${key}-${role}`}
+              className="inline-block bg-[#23BD92]/10 text-[#23BD92] font-semibold text-sm px-2 py-1 rounded-md whitespace-nowrap"
+            >
+              {role}
+            </span>
+          ))}
+        </div>
+
+        {hasMultipleRoles && (
+          <div className="flex items-center">
+            <button
+              onClick={() => toggleRolesExpand(key)}
+              className="flex items-center gap-1 text-[#23BD92] text-sm font-medium hover:text-[#1da67c] transition-colors"
+            >
+              <span>
+                {isExpanded 
+                  ? `Minder tonen` 
+                  : `+${hiddenRolesCount} meer rol${hiddenRolesCount !== 1 ? 'len' : ''}`
+                }
+              </span>
+              <span className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const getSelectedRoleFolderCombinations = useCallback(() => {
     const combinations = new Set()
     getSelectedDocumentsData().forEach(doc => {
@@ -275,12 +353,13 @@ export default function AllDocumentsTab({
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
   const getHeaderText = () => {
+    const uniqueDocCount = groupedDocuments.length
     if (selectedRole === "Alle Rollen") {
-      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''}`
+      return `${uniqueDocCount} document${uniqueDocCount !== 1 ? 'en' : ''}`
     } else if (selectedFolder === "Alle Mappen") {
-      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
+      return `${uniqueDocCount} document${uniqueDocCount !== 1 ? 'en' : ''} met de rol "${selectedRole}"`
     } else {
-      return `${filteredDocuments.length} document${filteredDocuments.length !== 1 ? 'en' : ''} in map "${selectedFolder}" van rol "${selectedRole}"`
+      return `${uniqueDocCount} document${uniqueDocCount !== 1 ? 'en' : ''} in map "${selectedFolder}" van rol "${selectedRole}"`
     }
   }
 
@@ -329,7 +408,7 @@ export default function AllDocumentsTab({
           </div>
           <div className="w-4/9">
             <SearchBox 
-              placeholderText="Zoek document..." 
+              placeholderText="Zoek map, rol, document..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -340,7 +419,7 @@ export default function AllDocumentsTab({
       </div>
 
       {/* Documents Table */}
-      {filteredDocuments.length === 0 ? (
+      {groupedDocuments.length === 0 ? (
         <div className="text-center py-4 text-gray-500 font-montserrat">
           {selectedRole === "Alle Rollen"
             ? "Er zijn geen documenten beschikbaar."
@@ -375,14 +454,9 @@ export default function AllDocumentsTab({
                 </SortableHeader>
 
                 {selectedRole === "Alle Rollen" && (
-                  <SortableHeader 
-                    sortKey="role" 
-                    onSort={requestSort} 
-                    currentSort={sortConfig}
-                    className="px-4 py-2"
-                  >
-                    Rol
-                  </SortableHeader>
+                  <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                    Rollen
+                  </th>
                 )}
 
                 <SortableHeader 
@@ -401,82 +475,102 @@ export default function AllDocumentsTab({
             </thead>
 
             <tbody>
-              {filteredDocuments.map((doc) => (
-                <tr
-                  key={doc.id}
-                  className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
-                >
-                  <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                    <div className="flex items-center gap-3">
-                      {canWrite && (
-                        <CheckBox 
-                          toggle={selectedDocuments.has(doc.id)} 
-                          onChange={(isSelected) => handleDocumentSelect(doc.id, isSelected)}
-                          color="#23BD92" 
-                        />
-                      )}
-                      {!canWrite && <div className="w-5" />}
-                      {doc.folder}
-                    </div>
-                  </td>
-
-                  {selectedRole === "Alle Rollen" && (
+              {groupedDocuments.map((group) => {
+                const key = `${group.folder}::${group.file}`
+                // Check if any document in this group is selected
+                const groupDocIds = group.documents.map(doc => doc.id)
+                const isGroupSelected = groupDocIds.some(id => selectedDocuments.has(id))
+                const allGroupSelected = groupDocIds.every(id => selectedDocuments.has(id))
+                
+                return (
+                  <tr
+                    key={key}
+                    className="border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
+                  >
                     <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                      {doc.role}
+                      <div className="flex items-center gap-3">
+                        {canWrite && (
+                          <CheckBox 
+                            toggle={allGroupSelected}
+                            indeterminate={isGroupSelected && !allGroupSelected}
+                            onChange={(isSelected) => {
+                              groupDocIds.forEach(docId => handleDocumentSelect(docId, isSelected))
+                            }}
+                            color="#23BD92" 
+                          />
+                        )}
+                        {!canWrite && <div className="w-5" />}
+                        {group.folder}
+                      </div>
                     </td>
-                  )}
 
-                  <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                    {doc.file}
-                  </td>
+                    {selectedRole === "Alle Rollen" && (
+                      <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                        {renderRoles(group.roles, group.folder, group.file)}
+                      </td>
+                    )}
 
-                  <td className="px-4 py-2">
-                    <div className="flex justify-center items-center gap-4">
-                      <button
-                        className="relative w-[19px] h-5 cursor-pointer"
-                        title="Gebruikers"
-                        onClick={() => onShowUsers(doc.assigned_to, doc.file)}
-                      >
-                        <Image src={GebruikersItem} alt="Gebruikers" fill className="object-contain" />
-                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
-                      </button>
+                    <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
+                      {group.file}
+                    </td>
 
-                      <button
-                        className="relative w-[25px] h-[27px] cursor-pointer"
-                        title="Rollen"
-                        onClick={() => {
-                          const allRoles = getAllRolesForFile(doc.file);
-                          onShowRoles(doc.file, allRoles);
-                        }}
-                      >
-                        <Image src={RollenItem} alt="Rollen" fill className="object-contain" />
-                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
-                      </button>
-
-                      <button 
-                        className="cursor-pointer transition-opacity" 
-                        title="Mappen"
-                        onClick={() => {
-                          const allFolders = getAllFoldersForFile(doc.file);
-                          onShowFolders(doc.file, allFolders);
-                        }}
-                      >
-                        <GreenFolderIcon />
-                      </button>
-
-                      {canWrite && (
-                        <button 
-                          className="cursor-pointer transition-opacity"
-                          title="Verwijder"
-                          onClick={() => handleDeleteClick(doc)}
+                    <td className="px-4 py-2">
+                      <div className="flex justify-center items-center gap-4">
+                        <button
+                          className="relative w-[19px] h-5 cursor-pointer"
+                          title="Gebruikers"
+                          onClick={() => {
+                            // Use the first document's assigned_to (they should all be the same)
+                            const firstDoc = group.documents[0]
+                            if (firstDoc) {
+                              onShowUsers(firstDoc.assigned_to, group.file)
+                            }
+                          }}
                         >
-                          <RedCancelIcon />
+                          <Image src={GebruikersItem} alt="Gebruikers" fill className="object-contain" />
+                          <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+
+                        <button
+                          className="relative w-[25px] h-[27px] cursor-pointer"
+                          title="Rollen"
+                          onClick={() => {
+                            onShowRoles(group.file, group.roles);
+                          }}
+                        >
+                          <Image src={RollenItem} alt="Rollen" fill className="object-contain" />
+                          <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
+                        </button>
+
+                        <button 
+                          className="cursor-pointer transition-opacity" 
+                          title="Mappen"
+                          onClick={() => {
+                            onShowFolders(group.file, [group.folder]);
+                          }}
+                        >
+                          <GreenFolderIcon />
+                        </button>
+
+                        {canWrite && (
+                          <button 
+                            className="cursor-pointer transition-opacity"
+                            title="Verwijder"
+                            onClick={() => {
+                              // Select all documents in this group for deletion
+                              setSelectedDocuments(new Set(groupDocIds))
+                              setDeleteMode("single")
+                              setIsDeleteModalOpen(true)
+                            }}
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

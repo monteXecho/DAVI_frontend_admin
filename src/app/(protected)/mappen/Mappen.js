@@ -18,6 +18,7 @@ export default function Mappen() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [roles, setRoles] = useState([])
   const [documents, setDocuments] = useState(null)
+  const [folders, setFolders] = useState([])
   const [selectedUsers, setSelectedUsers] = useState([]) 
   const [selectedDocName, setSelectedDocName] = useState("") 
   const [selectedDocFolder, setSelectedDocFolder] = useState("")
@@ -26,7 +27,7 @@ export default function Mappen() {
   const [currentUser, setCurrentUser] = useState(null)
   const [canWrite, setCanWrite] = useState(true)
 
-  const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser } = useApi()
+  const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser, getFolders } = useApi()
 
   const router = useRouter()
 
@@ -47,16 +48,24 @@ export default function Mappen() {
 
   const refreshData = useCallback(async () => {
     try {
-      const [rolesRes, docsRes] = await Promise.all([
+      setLoading(true)
+      const [rolesRes, docsRes, foldersRes] = await Promise.all([
         getRoles(),
-        getAdminDocuments()
+        getAdminDocuments(),
+        getFolders()
       ])
       if (rolesRes?.roles) setRoles(rolesRes.roles)
       if (docsRes?.data) setDocuments(docsRes.data)
+      if (foldersRes?.folders) {
+        setFolders(foldersRes.folders)
+      }
     } catch (err) {
       console.error("Failed to refresh data:", err)
+      throw err
+    } finally {
+      setLoading(false)
     }
-  }, [getRoles, getAdminDocuments]) 
+  }, [getRoles, getAdminDocuments, getFolders]) 
 
   useEffect(() => {
     const init = async () => {
@@ -87,13 +96,21 @@ export default function Mappen() {
   const handleDeleteFolders = async (payload) => {
     try {
       const res = await deleteFolders(payload)
-      if (res?.success) {
+      // Check if deletion was successful - the backend returns {success: true, ...}
+      // Also check for status === "deleted" as an alternative success indicator
+      if (res?.success === true || res?.status === "deleted") {
         console.log("Folders deleted successfully", res)
+        // Refresh all data to reflect the deletion
+        await refreshData()
+        return res
+      } else {
+        // If we get a response but it's not marked as successful, log it but still refresh
+        console.warn("Delete response unclear, but proceeding with refresh:", res)
         await refreshData()
         return res
       }
     } catch (err) {
-      console.error("Failed to delete documents:", err)
+      console.error("Failed to delete folders:", err)
       throw err
     }
   }
@@ -126,7 +143,7 @@ export default function Mappen() {
   return (
     <div className="w-full h-fit flex flex-col py-[81px] overflow-scroll scrollbar-hide">
       <div className="pb-[17px] pl-[97px] font-montserrat font-extrabold text-2xl">
-        Documenten
+        Mappen
       </div>
 
       <div className="flex flex-col w-full">
@@ -173,6 +190,7 @@ export default function Mappen() {
             <ActiveComponent
               roles={roles}
               documents={documents}
+              folders={folders}
               onUploadTab={handleUploadTab}
               onShowUsers={handleShowUsers} 
               onDeleteFolders={handleDeleteFolders}

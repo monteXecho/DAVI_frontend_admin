@@ -1,6 +1,10 @@
 import { useKeycloak } from '@react-keycloak/web';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { apiClient, createAuthHeaders } from './apiClient';
+
+// Global flag to prevent multiple simultaneous token refresh attempts
+let isRefreshing = false;
+let refreshPromise = null;
 
 export function useApi() {
   const { keycloak } = useKeycloak();
@@ -11,11 +15,77 @@ export function useApi() {
     if (!keycloak?.authenticated) {
       throw new Error('User is not authenticated');
     }
-    const token = await keycloak.token;
-    if (!token) {
-      throw new Error('Unable to retrieve Keycloak token');
+    
+    try {
+      // Check if token is still valid before attempting refresh
+      const tokenParsed = keycloak.tokenParsed;
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      // If token is expired or about to expire (within 30 seconds), try to refresh
+      if (tokenParsed?.exp && tokenParsed.exp <= currentTime + 30) {
+        // Check if refresh token is available
+        if (!keycloak.refreshToken) {
+          console.warn('[useApi] No refresh token available, user needs to re-authenticate');
+          // Force re-login if no refresh token
+          keycloak.login();
+          throw new Error('Session expired. Please log in again.');
+        }
+        
+        // Prevent multiple simultaneous refresh attempts
+        if (isRefreshing && refreshPromise) {
+          // Wait for the ongoing refresh to complete
+          try {
+            await refreshPromise;
+          } catch (refreshErr) {
+            // If the ongoing refresh failed, we'll try again below
+            isRefreshing = false;
+            refreshPromise = null;
+          }
+        }
+        
+        // If not already refreshing, start a new refresh
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = keycloak.updateToken(30).catch((refreshError) => {
+            console.error('[useApi] Token refresh failed:', refreshError);
+            isRefreshing = false;
+            refreshPromise = null;
+            
+            // If refresh fails due to invalid grant or missing refresh token, force re-login
+            if (refreshError?.error === 'invalid_grant' || 
+                refreshError?.message?.includes('refresh token') ||
+                !keycloak.refreshToken) {
+              keycloak.login();
+              throw new Error('Session expired. Please log in again.');
+            }
+            throw refreshError;
+          }).then(() => {
+            isRefreshing = false;
+            refreshPromise = null;
+          });
+          
+          await refreshPromise;
+        }
+      }
+      
+      const token = await keycloak.token;
+      if (!token) {
+        throw new Error('Unable to retrieve Keycloak token');
+      }
+      return token;
+    } catch (err) {
+      // If it's already our custom error, re-throw it
+      if (err.message && (err.message.includes('Session expired') || err.message.includes('not authenticated'))) {
+        throw err;
+      }
+      // Handle Keycloak token errors
+      if (err.error === 'invalid_grant' || err.message?.includes('refresh token')) {
+        console.error('[useApi] Refresh token issue, forcing re-login');
+        keycloak.login();
+        throw new Error('Session expired. Please log in again.');
+      }
+      throw err;
     }
-    return token;
   }, [keycloak]);
 
   const withAuth = useCallback(
@@ -561,7 +631,7 @@ export function useApi() {
     (payload) =>
       withAuth((token) => {
         console.log('Sending role_name,and folder_names:', payload.role_names,payload.folder_names);
-        apiClient
+        return apiClient
           .post(`/company-admin/folders/delete`, 
             { role_names:payload.role_names, folder_names:payload.folder_names }, 
             createAuthHeaders(token)

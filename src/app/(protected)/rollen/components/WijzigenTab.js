@@ -338,7 +338,7 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
         </div>
 
         <button
-          disabled={saving || loading || !canWrite || editableModules.length === 0 || !!error || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
+          disabled={saving || loading || !canWrite || !!error || selectedFolders.filter(f => f).length === 0 || folders.length === 0}
           onClick={handleSave}
           className={`w-[95px] h-[50px] rounded-lg font-montserrat font-bold text-base text-white transition-colors ${
             saving || loading || !canWrite || error || selectedFolders.filter(f => f).length === 0 || folders.length === 0
