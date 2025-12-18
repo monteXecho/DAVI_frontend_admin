@@ -32,7 +32,7 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
           <div className="h-fit overflow-y-auto scrollbar-hide text-sm mt-2">
             {documents.slice(0, 5).map((doc, index) => (
               <div key={index} className="truncate">
-                • {doc.file} — map: {doc.folder}, rol: {doc.role}
+                • {doc.file} — map: {doc.folder}
               </div>
             ))}
 
@@ -50,8 +50,6 @@ export default function DeleteDocumentModal({ documents, onConfirm, onClose, isM
           <span className="font-semibold">&quot;{single?.file}&quot;</span><br />
           wilt verwijderen uit de map<br />
           <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
-          voor rol<br />
-          <span className="font-semibold">&quot;{single?.role}&quot;</span>?
         </p>
       )}
 

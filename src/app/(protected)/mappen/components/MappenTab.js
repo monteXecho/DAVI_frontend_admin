@@ -160,6 +160,22 @@ export default function MappenTab({
     }))
   }
 
+  const getUniqueDocumentsForFolder = (folderName) => {
+    // Get all documents for this folder and deduplicate by file name
+    const documentsMap = new Map()
+    
+    filteredDocuments
+      .filter(doc => doc.folder === folderName)
+      .forEach(doc => {
+        // Use file name as key to deduplicate
+        if (!documentsMap.has(doc.file)) {
+          documentsMap.set(doc.file, doc)
+        }
+      })
+    
+    return Array.from(documentsMap.values())
+  }
+
   const uniqueFolders = useMemo(() => {
     const folders = new Set()
     filteredDocuments.forEach(doc => folders.add(doc.folder))
@@ -183,7 +199,7 @@ export default function MappenTab({
     })
   }
 
-  const renderRolesWithDocuments = (folderName) => {
+  const renderRoles = (folderName) => {
     const rolesWithDocs = getDocumentsByRoleForFolder(folderName)
     const isRolesExpanded = expandedRoles.has(folderName)
     const hasMultipleRoles = rolesWithDocs.length > 1
@@ -193,49 +209,15 @@ export default function MappenTab({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3">
-          {rolesToShow.map(({ role, documents, count }) => {
-            const isDocumentsExpanded = expandedDocuments.has(`${folderName}::${role}`)
-            const hasMultipleDocuments = count > 1
-
-            return (
-              <div key={`${folderName}-${role}`} className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block bg-[#23BD92]/10 text-[#23BD92] font-semibold text-sm px-2 py-1 rounded-md whitespace-nowrap">
-                    {role}
-                  </span>
-                  
-                  <div className="flex flex-col gap-1 flex-1">
-                    {hasMultipleDocuments ? (
-                      <button
-                        onClick={() => toggleDocumentsExpand(folderName, role)}
-                        className="text-gray-600 text-sm hover:text-gray-800 hover:underline transition-colors flex items-center gap-1 text-left"
-                      >
-                        {count} document{count !== 1 ? 'en' : ''}
-                        <span className="ml-1 text-xs">{isDocumentsExpanded ? '▲' : '▼'}</span>
-                      </button>
-                    ) : (
-                      <span className="text-gray-800 text-sm">
-                        {documents[0].file}
-                      </span>
-                    )}
-
-                    {/* Expanded documents list */}
-                    {isDocumentsExpanded && hasMultipleDocuments && (
-                      <div className="flex flex-col gap-1 text-gray-700 text-sm">
-                        {documents.map((doc, index) => (
-                          <div key={doc.id} className="flex items-center gap-2">
-                            <span className="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
-                            <span className="break-words">{doc.file}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+        <div className="flex flex-col gap-2">
+          {rolesToShow.map(({ role }) => (
+            <span 
+              key={`${folderName}-${role}`}
+              className="inline-block bg-[#23BD92]/10 text-[#23BD92] font-semibold text-sm px-2 py-1 rounded-md whitespace-nowrap w-fit"
+            >
+              {role}
+            </span>
+          ))}
         </div>
 
         {hasMultipleRoles && (
@@ -255,6 +237,49 @@ export default function MappenTab({
               </span>
             </button>
           </div>
+        )}
+      </div>
+    )
+  }
+
+  const renderDocuments = (folderName) => {
+    const uniqueDocuments = getUniqueDocumentsForFolder(folderName)
+    const documentCount = uniqueDocuments.length
+    const isDocumentsExpanded = expandedDocuments.has(`${folderName}::documents`)
+    const hasMultipleDocuments = documentCount > 1
+
+    if (documentCount === 0) {
+      return <span className="text-gray-400 text-sm">Geen documenten</span>
+    }
+
+    return (
+      <div className="flex flex-col gap-1">
+        {hasMultipleDocuments ? (
+          <>
+            <button
+              onClick={() => toggleDocumentsExpand(folderName, 'documents')}
+              className="text-gray-600 text-sm hover:text-gray-800 hover:underline transition-colors flex items-center gap-1 text-left"
+            >
+              {documentCount} document{documentCount !== 1 ? 'en' : ''}
+              <span className="ml-1 text-xs">{isDocumentsExpanded ? '▲' : '▼'}</span>
+            </button>
+
+            {/* Expanded documents list */}
+            {isDocumentsExpanded && (
+              <div className="flex flex-col gap-1 text-gray-700 text-sm mt-1">
+                {uniqueDocuments.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-2">
+                    <span className="w-1 h-1 bg-gray-400 rounded-full shrink-0"></span>
+                    <span className="wrap-break-words">{doc.file}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <span className="text-gray-800 text-sm">
+            {uniqueDocuments[0].file}
+          </span>
         )}
       </div>
     )
@@ -427,7 +452,11 @@ export default function MappenTab({
                 </SortableHeader>
 
                 <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
-                  Rollen & Documenten
+                  Rollen
+                </th>
+
+                <th className="px-4 py-2 font-montserrat font-bold text-[16px] text-black">
+                  Documenten
                 </th>
 
                 <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
@@ -464,7 +493,11 @@ export default function MappenTab({
                   </td>
 
                   <td className="px-4 py-4">
-                    {renderRolesWithDocuments(folderName)}
+                    {renderRoles(folderName)}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    {renderDocuments(folderName)}
                   </td>
 
                   <td className="px-4 py-4">
