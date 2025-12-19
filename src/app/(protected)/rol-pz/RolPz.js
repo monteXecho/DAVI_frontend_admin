@@ -30,8 +30,8 @@ export default function RolPz ({ activeIndex = 0, setActiveIndex }) {
                                 key={tab.label}
                                 onClick={() => setActiveIndex(index)}
                                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
-                                ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
-                                w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
+                                ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
+                                w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-6 tracking-[0]
                                 `}
                             >
                                 {tab.label}

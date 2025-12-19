@@ -196,7 +196,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
 
         {/* Email + Reset Password */}
         <span className="mt-[23px] font-montserrat text-[16px]">E-mail adres</span>
-        <div className="mt-2 flex gap-[14px] items-center">
+        <div className="mt-2 flex gap-3.5 items-center">
           <input
             type="email"
             value={email}
@@ -207,7 +207,7 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
           <div className="relative">
             <button
               type="button"
-              className="w-fit h-[40px] flex items-center py-[15px] px-[13px] border-[2px] border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]"
+              className="w-fit h-10 flex items-center py-[15px] px-[13px] border-2 border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]"
               onClick={() => onResetPass(email)}
             >
               Wachtwoord resetten

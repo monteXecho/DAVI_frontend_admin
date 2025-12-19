@@ -17,7 +17,7 @@ export default function ToewijzenTab () {
                     <DropdownMenu value={selected} onChange={setSelected} allOptions={allOptions} />
                 </div>               
                 <span className="mt-[23px] mb-2 font-montserrat font-normal text-[16px] leading-normal tracking-normal">E-mail adres</span>
-                <div className="flex gap-[14px] items-center">
+                <div className="flex gap-3.5 items-center">
                     <input type="text" placeholder="info@creeert.net" className="w-1/3 h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none" />
                     <AddIcon />
                 </div>

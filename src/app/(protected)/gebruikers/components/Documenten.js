@@ -226,7 +226,7 @@ export default function DocumentenTab({
     <div className="flex flex-col w-full">
       {/* User Info */}
       {selectedUser && (
-        <div className="mb-[20px] font-montserrat font-medium text-[16px] text-gray-700">
+        <div className="mb-5 font-montserrat font-medium text-[16px] text-gray-700">
           <span className="font-bold">{selectedUser.name}</span>
           {selectedUser.email && <span> — {selectedUser.email}</span>}
           {selectedUser.roles && selectedUser.roles.length > 0 && (

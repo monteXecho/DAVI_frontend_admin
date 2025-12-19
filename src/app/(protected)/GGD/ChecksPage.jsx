@@ -94,7 +94,7 @@ const UploadSection = memo(function UploadSection({ title, kind, format }) {
               onClick={handleDelete}
               variant="remove"
               size="xs"
-              className="!rounded-full !p-0.5"
+              className="rounded-full! p-0.5!"
             />
           )}
         </div>

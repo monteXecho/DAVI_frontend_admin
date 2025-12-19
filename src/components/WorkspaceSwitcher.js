@@ -32,7 +32,7 @@ const UserAvatar = ({ name, email, isActive, size = 32 }) => {
         ${sizeClass} rounded-full flex items-center justify-center font-semibold
         ${isActive 
           ? 'bg-[#23BD92] text-white ring-2 ring-[#23BD92] ring-offset-2 ring-offset-white' 
-          : 'bg-gradient-to-br from-[#23BD92] to-[#1ea87a] text-white'
+          : 'bg-linear-to-br from-[#23BD92] to-[#1ea87a] text-white'
         }
         transition-all duration-200 shadow-sm
       `}
@@ -49,7 +49,7 @@ export default function WorkspaceSwitcher() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isSwitching, setIsSwitching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [transitionInfo, setTransitionInfo] = useState(null); // { from: string, to: string }
+  const [transitionInfo, setTransitionInfo] = useState(null); 
 
   // Calculate options with useMemo - MUST be defined before useCallback that uses it
   const options = useMemo(() => {
@@ -291,7 +291,7 @@ export default function WorkspaceSwitcher() {
     <>
       {/* Full-screen Role Transition Overlay */}
       {transitionInfo && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-[#F5FBF8] via-white to-[#E8F5EE]">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-linear-to-br from-[#F5FBF8] via-white to-[#E8F5EE]">
           <div className="text-center px-6 max-w-2xl">
             {/* Logo/Brand */}
             <div className="mb-8">
@@ -365,7 +365,7 @@ export default function WorkspaceSwitcher() {
                 <span className="text-base font-medium">Rol wordt gewisseld...</span>
               </div>
               <div className="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-gradient-to-r from-[#23BD92] to-[#1ea87a] rounded-full animate-progress"></div>
+                <div className="h-full bg-linear-to-r from-[#23BD92] to-[#1ea87a] rounded-full animate-progress"></div>
               </div>
             </div>
           </div>

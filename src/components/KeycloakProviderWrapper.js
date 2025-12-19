@@ -25,14 +25,13 @@ export default function KeycloakProviderWrapper({ children }) {
       authClient={keycloak}
       initOptions={{ 
         onLoad: 'check-sso',
-        checkLoginIframe: false, // Disable iframe check to avoid refresh token issues
-        pkceMethod: 'S256' // Use PKCE for better security
+        checkLoginIframe: false, 
+        pkceMethod: 'S256' 
       }}
       onTokens={(tokens) => { 
         if (tokens.token) {
           localStorage.setItem('token', tokens.token);
         }
-        // Store refresh token if available
         if (tokens.refreshToken) {
           localStorage.setItem('refreshToken', tokens.refreshToken);
         }
@@ -40,7 +39,6 @@ export default function KeycloakProviderWrapper({ children }) {
       onEvent={(event, error) => {
         if (event === 'onAuthError' || event === 'onTokenExpired') {
           console.warn('[KeycloakProvider] Auth error:', event, error);
-          // Don't auto-logout on token refresh errors, let the app handle it
           if (error?.error !== 'invalid_grant') {
             keycloak.login();
           }

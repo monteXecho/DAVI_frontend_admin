@@ -35,7 +35,7 @@ export default function GebruikersTab() {
         </div>
 
         <div className="flex h-[60px] bg-[#F9FBFA] items-center justify-between px-2">
-             <button className="w-[127px] h-[40px] border-[2px] border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]">
+             <button className="w-[127px] h-10 border-2 border-[#23BD92] rounded-lg font-bold text-[16px] leading-[100%] text-[#23BD92]">
                 Bulk import
             </button>
             <AddButton onClick={() => {}} text="Toevoegen" />
@@ -59,7 +59,7 @@ export default function GebruikersTab() {
 
         <table className="w-full border-separate border-spacing-0">
             <thead className="bg-[#F9FBFA]">                
-                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] px-2">
+                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-10 px-2">
                     <th className="flex items-center gap-5 w-3/8">
                         <CheckBox toggle={false} color='#23BD92'/> 
                         <span>Naam</span>
@@ -74,7 +74,7 @@ export default function GebruikersTab() {
             </thead>
             <tbody>
                 {RolPZData.map(({Naam, Email}, i) => (
-                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
+                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-10">
                         <td className="flex gap-5 w-3/8 px-2 items-center">
                             <CheckBox toggle={false} color='#23BD92' />  
                             {Naam}

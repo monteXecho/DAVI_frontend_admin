@@ -8,7 +8,7 @@ export default function CheckBox({ toggle, color, onChange, indeterminate = fals
                     onChange={(e) => onChange?.(e.target.checked)}
                     disabled={disabled}
                     style={{ '--check-color': color }}
-                    className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-[var(--check-color)] checked:border-[var(--check-color)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="peer h-4 w-4 transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-(--check-color) checked:border-(--check-color) disabled:cursor-not-allowed disabled:opacity-50"
                     ref={(el) => {
                         if (el) {
                             el.indeterminate = indeterminate;

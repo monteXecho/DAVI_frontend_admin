@@ -2,7 +2,6 @@ import { useKeycloak } from '@react-keycloak/web';
 import { useCallback, useState, useRef } from 'react';
 import { apiClient, createAuthHeaders } from './apiClient';
 
-// Global flag to prevent multiple simultaneous token refresh attempts
 let isRefreshing = false;
 let refreshPromise = null;
 
@@ -17,33 +16,25 @@ export function useApi() {
     }
     
     try {
-      // Check if token is still valid before attempting refresh
       const tokenParsed = keycloak.tokenParsed;
       const currentTime = Math.floor(Date.now() / 1000);
       
-      // If token is expired or about to expire (within 30 seconds), try to refresh
       if (tokenParsed?.exp && tokenParsed.exp <= currentTime + 30) {
-        // Check if refresh token is available
         if (!keycloak.refreshToken) {
           console.warn('[useApi] No refresh token available, user needs to re-authenticate');
-          // Force re-login if no refresh token
           keycloak.login();
           throw new Error('Session expired. Please log in again.');
         }
         
-        // Prevent multiple simultaneous refresh attempts
         if (isRefreshing && refreshPromise) {
-          // Wait for the ongoing refresh to complete
           try {
             await refreshPromise;
           } catch (refreshErr) {
-            // If the ongoing refresh failed, we'll try again below
             isRefreshing = false;
             refreshPromise = null;
           }
         }
         
-        // If not already refreshing, start a new refresh
         if (!isRefreshing) {
           isRefreshing = true;
           refreshPromise = keycloak.updateToken(30).catch((refreshError) => {
@@ -51,7 +42,6 @@ export function useApi() {
             isRefreshing = false;
             refreshPromise = null;
             
-            // If refresh fails due to invalid grant or missing refresh token, force re-login
             if (refreshError?.error === 'invalid_grant' || 
                 refreshError?.message?.includes('refresh token') ||
                 !keycloak.refreshToken) {
@@ -74,11 +64,9 @@ export function useApi() {
       }
       return token;
     } catch (err) {
-      // If it's already our custom error, re-throw it
       if (err.message && (err.message.includes('Session expired') || err.message.includes('not authenticated'))) {
         throw err;
       }
-      // Handle Keycloak token errors
       if (err.error === 'invalid_grant' || err.message?.includes('refresh token')) {
         console.error('[useApi] Refresh token issue, forcing re-login');
         keycloak.login();
@@ -119,7 +107,6 @@ export function useApi() {
   const uploadDocumentForRole = useCallback(
     (folderPath, formData) =>
       withAuth((token) => {
-        // URL encode the folder path to handle special characters
         const encodedFolderPath = encodeURIComponent(folderPath);
         return apiClient
           .post(
@@ -345,8 +332,6 @@ export function useApi() {
         const encodedPath = encodeURIComponent(filePath);
         const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/company-admin/documents/download?file_path=${encodedPath}`;
         
-        // Open in new tab with authentication
-        // Since we can't pass headers via window.open, we'll fetch and create a blob URL
         try {
           const response = await fetch(url, {
             headers: {
@@ -368,7 +353,6 @@ export function useApi() {
           const blobUrl = window.URL.createObjectURL(blob);
           window.open(blobUrl, '_blank');
           
-          // Clean up the blob URL after a delay
           setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
         } catch (err) {
           console.error('Failed to download document:', err);
@@ -441,7 +425,6 @@ export function useApi() {
     () =>
       withAuth((token) =>
         apiClient
-          // Do NOT forward acting owner here; we need full list, not scoped
           .get('/company-admin/guest-workspaces', {
             headers: {
               Authorization: `Bearer ${token}`,

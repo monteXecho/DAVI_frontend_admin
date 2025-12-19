@@ -27,7 +27,7 @@ export default function GekoppeldDocumentTab() {
 
   return (
     <div className="flex flex-col w-full">
-        <div className="flex w-full bg-[#F9FBFA] gap-4 py-[10px] px-2">
+        <div className="flex w-full bg-[#F9FBFA] gap-4 py-2.5 px-2">
             <div className="relative w-3/10">
                 <DropdownMenu value={selected1} onChange={setSelected1} allOptions={allOptions1} />
             </div>
@@ -37,7 +37,7 @@ export default function GekoppeldDocumentTab() {
             </div>
         </div>
 
-        <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-[6px]">
+        <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5">
             <div className="flex w-2/3 gap-4 items-center">
                 <CheckBox toggle={false} color='#23BD92' />   
                 <div className="relative w-4/9">
@@ -54,7 +54,7 @@ export default function GekoppeldDocumentTab() {
 
         <table className="w-full border-separate border-spacing-0 border border-transparent">
             <thead className="bg-[#F9FBFA]">                
-                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
+                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-10 w-full px-2">
                     <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
                         <CheckBox toggle={false} color='#23BD92' />  
                         <span>Map</span>
@@ -65,7 +65,7 @@ export default function GekoppeldDocumentTab() {
             </thead>
             <tbody>
                 {GekoppeldMapTab.map(({Map}, i) => (
-                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-[40px]">
+                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] hover:bg-[#F9FBFA] flex items-center gap-10">
                         <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                             <CheckBox toggle={false} color='#23BD92' />   
                             {Map}

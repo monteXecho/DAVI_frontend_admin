@@ -8,7 +8,6 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
   const [isDeleteAdminOpen, setIsDeleteAdminOpen] = useState(false);
 
-  console.log('____ Selected admin ____', selectedId)
 
   return (
     <div className="w-full h-2/3 min-h-fit flex flex-col justify-between p-5 gap-5 border border-zinc-100 rounded-2xl shadow-lg shadow-zinc-300/50">
@@ -18,7 +17,6 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
         </span>
 
         {admins.map((item) => {
-          // Safely convert to strings - handle objects, null, undefined
           const name = item.name != null && typeof item.name === 'object' 
             ? (item.name.email || item.name.name || item.name.toString?.() || '') 
             : (item.name || '');

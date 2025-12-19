@@ -23,7 +23,7 @@ export default function UploadIssueState ( {uploadedFileName} ) {
                 <br/>lunchbegeleiding van de peutergroep.
             </div>
 
-            <div className="w-full h-[1px] bg-[#C5BEBE]"></div>
+            <div className="w-full h-px bg-[#C5BEBE]"></div>
         </div>
     )
 }

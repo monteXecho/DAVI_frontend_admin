@@ -47,7 +47,7 @@ export default function GekoppeldMapTab() {
 
         <table className="w-full border-separate border-spacing-0 border border-transparent">
             <thead className="bg-[#F9FBFA]">                
-                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px] w-full px-2">
+                <tr className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-10 w-full px-2">
                     <th className="flex items-center gap-5 w-full font-montserrat font-bold text-[16px] leading-6 text-black">
                         <CheckBox toggle={false} color='#23BD92' /> 
                         <span>Map</span>
@@ -59,7 +59,7 @@ export default function GekoppeldMapTab() {
             </thead>
             <tbody>
                 {GekoppeldMapData.map(({Map, Bestand}, i) => (
-                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-[40px]">
+                    <tr key={i} className="h-[51px] border-b border-[#C5BEBE] flex items-center gap-10">
                         <td className="flex gap-5 w-full items-center font-montserrat font-normal text-[16px] leading-6 text-black px-2 py-2">
                         <CheckBox toggle={false} color='#23BD92' /> 
                             {Map}

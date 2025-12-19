@@ -17,7 +17,6 @@ export default function AppearInRoleTab({ documents = {}, selectedDocName, onDel
   const [selectedEntriesSet, setSelectedEntriesSet] = useState(new Set());
   const [deleteMode, setDeleteMode] = useState("single");
 
-  /** Extract all role-folder combinations that contain this document */
   const allEntries = useMemo(() => {
     const entries = [];
     

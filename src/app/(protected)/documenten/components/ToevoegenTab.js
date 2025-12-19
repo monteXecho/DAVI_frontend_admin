@@ -4,7 +4,6 @@ import { useRef, useEffect, useState } from "react"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import UploadBttn from '@/components/buttons/UploadBttn'
 import UploadingBttn from '@/components/buttons/UploadingBttn'
-import SuccessBttn from '@/components/buttons/SuccessBttn'
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import { ToastContainer, toast } from 'react-toastify';
@@ -26,13 +25,12 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   const [uploadTargets, setUploadTargets] = useState([])
   const [currentUploadIndex, setCurrentUploadIndex] = useState(0)
   const [currentFileIndex, setCurrentFileIndex] = useState(0) 
-  const [uploadMode, setUploadMode] = useState('files') // 'files' or 'folder'
+  const [uploadMode, setUploadMode] = useState('files') 
   const [selectedFolderName, setSelectedFolderName] = useState("")
 
   const fileInputRef = useRef(null)
   const folderInputRef = useRef(null)
 
-  // Auto-select first folder when folders array changes
   useEffect(() => {
     if (folders.length > 0 && selectedFolder === "") {
       setSelectedFolder(folders[0])
@@ -54,7 +52,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
 
     setUploadTargets(prev => [...prev, { folder: selectedFolder }])
     
-    // Auto-select next available folder after adding
     const remainingFolders = folders.filter(folder => 
       !uploadTargets.some(target => target.folder === folder) && folder !== selectedFolder
     )
@@ -62,7 +59,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     if (remainingFolders.length > 0) {
       setSelectedFolder(remainingFolders[0])
     } else {
-      setSelectedFolder("") // No more folders available
+      setSelectedFolder("") 
     }
   }
 
@@ -70,8 +67,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     const removedFolder = uploadTargets[index].folder
     setUploadTargets(prev => prev.filter((_, i) => i !== index))
     
-    // If the removed folder is not in current selection and exists in folders array,
-    // consider making it available in dropdown
     if (!selectedFolder && folders.includes(removedFolder)) {
       setSelectedFolder(removedFolder)
     }
@@ -101,7 +96,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
       return
     }
 
-    // Reset states
     setUploadedFiles(files)
     setUploadStatus(UploadStates.UPLOADING)
     setSuccessfulUploads([])
@@ -111,7 +105,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
 
     await uploadAllFiles(files)
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -121,32 +114,23 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     const files = Array.from(event.target.files || [])
     if (files.length === 0) return
 
-    // Extract folder name from the first file's path
-    // When using webkitdirectory, files have a webkitRelativePath property
     const firstFile = files[0]
     let folderName = ""
     
     if (firstFile.webkitRelativePath) {
-      // Extract folder name from path like "FolderName/file.pdf"
-      // webkitRelativePath format: "FolderName/subfolder/file.pdf" or just "FolderName/file.pdf"
       const pathParts = firstFile.webkitRelativePath.split('/').filter(p => p.trim())
       
       if (pathParts.length > 0) {
-        // Take ONLY the first part (the root folder name)
         folderName = pathParts[0].trim()
         
-        // CRITICAL: Remove any path separators and ensure it's just the folder name
         folderName = folderName.replace(/[/\\]/g, '').trim()
         
-        // Safety check: if the folder name somehow contains itself (like "folder/folder"), 
-        // extract just the unique part
         const uniqueParts = [...new Set(folderName.split(/[/\\]/).filter(p => p.trim()))]
         if (uniqueParts.length > 0) {
-          folderName = uniqueParts[0] // Take the first unique part
+          folderName = uniqueParts[0] 
         }
       }
     } else {
-      // Fallback: use a default name or prompt user
       folderName = `Nieuwe map ${new Date().toLocaleDateString()}`
     }
 
@@ -155,7 +139,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
       return
     }
     
-    // Final cleanup: ensure folder name is clean
     folderName = folderName.replace(/[/\\]/g, '').trim()
 
     setSelectedFolderName(folderName)
@@ -166,7 +149,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     setCurrentFileIndex(0)
 
     try {
-      // Step 1: Create the folder
       if (onAddFolders) {
         const folderResult = await onAddFolders([folderName])
         
@@ -175,14 +157,12 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
           toast.error(errorMsg)
           setUploadStatus(UploadStates.ERROR)
           
-          // Reset folder input
           if (folderInputRef.current) {
             folderInputRef.current.value = ''
           }
           return
         }
 
-        // Check if folder was created (might be duplicate)
         if (folderResult.duplicated_folders && folderResult.duplicated_folders.includes(folderName)) {
           toast.warn(`Map "${folderName}" bestaat al. Documenten worden toegevoegd aan bestaande map.`)
         } else {
@@ -190,10 +170,8 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
         }
       }
 
-      // Step 2: Upload all files to the newly created folder
       await uploadAllFiles(files, folderName)
       
-      // Reset folder input
       if (folderInputRef.current) {
         folderInputRef.current.value = ''
       }
@@ -202,7 +180,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
       toast.error(`Fout bij uploaden van map: ${err.message || 'Onbekende fout'}`)
       setUploadStatus(UploadStates.ERROR)
       
-      // Reset folder input
       if (folderInputRef.current) {
         folderInputRef.current.value = ''
       }
@@ -213,7 +190,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     const successful = []
     const failed = []
     
-    // Determine upload targets: use provided folder name for folder upload, or use selected targets for file upload
     const targets = targetFolderName 
       ? [{ folder: targetFolderName }]
       : uploadTargets
@@ -232,14 +208,11 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
         setCurrentUploadIndex(targetIndex)
         const target = targets[targetIndex]
         
-        // CRITICAL: Ensure folder name is clean (no path separators, no duplication)
         let cleanFolderName = target.folder.trim()
-        // Remove any path separators
         cleanFolderName = cleanFolderName.replace(/[/\\]/g, '')
-        // If somehow the folder name contains itself (like "folder/folder"), extract just the name
         const parts = cleanFolderName.split(/[/\\]/).filter(p => p.trim())
         if (parts.length > 0) {
-          cleanFolderName = parts[parts.length - 1] // Take only the last part
+          cleanFolderName = parts[parts.length - 1] 
         }
         
         const formData = new FormData()
@@ -274,11 +247,9 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
       }
     }
 
-    // Update states
     setSuccessfulUploads(successful)
     setFailedUploads(failed)
     
-    // Determine final status
     if (failed.length === 0 && successful.length > 0) {
       setUploadStatus(UploadStates.SUCCESS)
       if (targetFolderName) {
@@ -332,7 +303,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
         
         return <UploadingBttn text={progressText} />
       case UploadStates.SUCCESS:
-        // Only show success message when there are successful uploads
         if (successfulUploads.length === 0) return null
         
         const uniqueFiles = [...new Set(successfulUploads.map(u => u.file))]
@@ -371,7 +341,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
           </div>
         )
       case UploadStates.ERROR:
-        // Show success button for successful uploads, but also indicate some failed
         if (successfulUploads.length > 0) {
           const uniqueFiles = [...new Set(successfulUploads.map(u => u.file))]
           return (
@@ -412,7 +381,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     }
   }
 
-  // Get available folders for dropdown (exclude already selected ones)
   const getAvailableFolders = () => {
     return folders.filter(folder => 
       !uploadTargets.some(target => target.folder === folder)

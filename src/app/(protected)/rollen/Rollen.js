@@ -148,9 +148,9 @@ export default function Rollen() {
                   disabled={!isSelectable}
                   title={!isSelectable ? "Geen schrijfrechten" : ""}
                   className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all
-                    ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-[32px]'}
+                    ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
                     ${isSelectable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-60'}
-                    w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-[24px] tracking-[0]
+                    w-fit px-4 py-1 font-montserrat font-semibold text-[12px] leading-6 tracking-[0]
                   `}
                 >
                 {loading && isActive ? (

@@ -8,7 +8,7 @@ export default function FooterItem ({ text, isActive, onClick, image, width, hei
         <Image src={image} alt="photo" className="w-full h-full object-cover" />
         <div className={`absolute inset-0 ${isActive && 'bg-[#23BD92] mix-blend-overlay'}`}></div>
       </div>
-      <div className={`font-montserrat font-semibold text-base text-center leading-5 ${isActive ? 'text-[#23BD92]' : 'text-[#000]'}`}>
+      <div className={`font-montserrat font-semibold text-base text-center leading-5 ${isActive ? 'text-[#23BD92]' : 'text-black'}`}>
         {text}
       </div>
     </div>
