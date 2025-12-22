@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import AddButton from "@/components/buttons/AddButton";
 import CheckBox from "@/components/buttons/CheckBox";
@@ -15,6 +17,7 @@ import DeleteUserModal from "./modals/DeleteUserModal";
 import DeleteSuccessModal from "./modals/DeleteSuccessModal";
 import BulkImportModal from "./modals/BulkImportModal";
 import AddRoleModal from "./modals/AddRoleModal";
+import DeleteRoleModal from "./modals/DeleteRoleModal";
 
 import { useSortableData } from "@/lib/useSortableData";
 
@@ -35,6 +38,7 @@ export default function GebruikersTab({
   const [isDeleteSuccessModalOpen, setIsDeleteSuccessModalOpen] = useState(false);
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+  const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
 
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [bulkAction, setBulkAction] = useState("Bulkacties");
@@ -263,8 +267,8 @@ export default function GebruikersTab({
         return alert("De 'Beheerder' rol kan niet via bulk acties verwijderd worden. Gebruik individuele bewerking.");
       }
       
-      // Allow removing "Teamlid" role - it will clean up all teamlid permissions in backend
-      handleDeleteRoleFromUsersConfirm();
+      // Show confirmation modal for role removal
+      setIsDeleteRoleModalOpen(true);
     }
     if (action === "Rol toevoegen") {
       if (selectedUsers.size === 0) return alert("Selecteer eerst gebruikers.");
@@ -284,8 +288,12 @@ export default function GebruikersTab({
   const handleDeleteRoleFromUsersConfirm = async () => {
     try {
       await onDeleteRoleFromUsers(Array.from(selectedUsers), selectedRole);
-      alert(`Rol "${selectedRole}" succesvol verwijderd.`);
+      toast.success(`Rol "${selectedRole}" is verwijderd.`);
+    } catch (err) {
+      console.error("Failed to remove role:", err);
+      toast.error(`Fout bij het verwijderen van rol "${selectedRole}".`);
     } finally {
+      setIsDeleteRoleModalOpen(false);
       setBulkAction("Bulkacties");
       setSelectedUsers(new Set());
     }
@@ -676,6 +684,32 @@ export default function GebruikersTab({
           onConfirm={handleAddRoleConfirm}
         />
       )}
+
+      {isDeleteRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsDeleteRoleModalOpen(false)}>
+          <div className="p-6" onClick={(e) => e.stopPropagation()}>
+            <DeleteRoleModal
+              roleName={selectedRole}
+              users={getSelectedUsersData()}
+              onClose={() => setIsDeleteRoleModalOpen(false)}
+              onConfirm={handleDeleteRoleFromUsersConfirm}
+              isMultiple={selectedUsers.size > 1}
+            />
+          </div>
+        </div>
+      )}
+
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
