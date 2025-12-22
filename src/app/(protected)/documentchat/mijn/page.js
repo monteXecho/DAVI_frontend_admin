@@ -13,7 +13,7 @@ import { useApi } from "@/lib/useApi"
 export default function MijnTab() {
   const { getPrivateDocuments, deletePrivateDocuments, getAllUserDocuments, downloadDocument } = useApi()
   const router = useRouter()
-  const documentTypeOptions = ["Alle", "Private", "RoleBased"]
+  const documentTypeOptions = ["Alle", "Eigen documenten", "Toegekende documenten"]
   const [selectedDocumentType, setSelectedDocumentType] = useState(documentTypeOptions[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -76,16 +76,16 @@ export default function MijnTab() {
     // Filter by document type
     if (selectedDocumentType === "Alle") {
       filteredDocs = allDocs
-    } else if (selectedDocumentType === "Private") {
+    } else if (selectedDocumentType === "Eigen documenten") {
       filteredDocs = allDocs.filter(doc => doc.is_private)
-    } else if (selectedDocumentType === "RoleBased") {
+    } else if (selectedDocumentType === "Toegekende documenten") {
       filteredDocs = allDocs.filter(doc => !doc.is_private)
     } else {
       filteredDocs = allDocs
     }
     
     // For RoleBased documents, deduplicate by file_name (keep only unique file names)
-    if (selectedDocumentType === "RoleBased" || selectedDocumentType === "Alle") {
+    if (selectedDocumentType === "Toegekende documenten" || selectedDocumentType === "Alle") {
       const seen = new Set()
       const uniqueDocs = []
       const roleBasedDocs = []
@@ -153,8 +153,8 @@ export default function MijnTab() {
         const docsToDelete = getSelectedDocumentsData()
           .filter(doc => doc.is_private)
           .map(doc => ({
-            file_name: doc.file_name
-          }))
+          file_name: doc.file_name
+        }))
         
         if (docsToDelete.length === 0) {
           alert("Je kunt alleen privé documenten verwijderen. Rol-gebaseerde documenten kunnen niet worden verwijderd.")
@@ -240,7 +240,7 @@ export default function MijnTab() {
                   currentSort={sortConfig}
                   className="px-4 py-2"
                 >
-                  Document
+                    Document
                 </SortableHeader>
 
                 <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
@@ -271,7 +271,7 @@ export default function MijnTab() {
                         className="text-[#23BD92] hover:text-[#1ea87a] hover:underline cursor-pointer text-left"
                         title="Open document"
                       >
-                        {doc.file_name}
+                      {doc.file_name}
                       </button>
                     ) : (
                       doc.file_name
@@ -281,14 +281,14 @@ export default function MijnTab() {
                   <td className="px-4 py-2">
                     <div className="flex justify-center items-center">
                       {doc.is_private ? (
-                        <button 
-                          onClick={() => handleDeleteClick(doc)}
-                          className="hover:opacity-80 transition-opacity"
-                          aria-label={`Delete ${doc.file_name}`}
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
+                      <button 
+                        onClick={() => handleDeleteClick(doc)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`Delete ${doc.file_name}`}
+                        title="Verwijder"
+                      >
+                        <RedCancelIcon />
+                      </button>
                       ) : (
                         <span className="text-gray-400 text-sm" title="Rol-gebaseerde documenten kunnen niet worden verwijderd">
                           -

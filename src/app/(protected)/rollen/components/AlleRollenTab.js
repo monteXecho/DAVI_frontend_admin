@@ -102,7 +102,7 @@ export default function AlleRollenTab({ roles = [], users = [], user: currentUse
       } else if (role.isSpecial && role.type === "teamlid") {
         router.push(`/gebruikers?role=Teamlid`)
       } else {
-        router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
+      router.push(`/gebruikers?role=${encodeURIComponent(role.name)}`)
       }
     }
   }

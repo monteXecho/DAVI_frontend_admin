@@ -40,14 +40,14 @@ export default function DeleteDocumentModal({
         uniqMap.set(key, { 
           folder: d.folder, 
           role: roles.length > 0 ? roles.join(", ") : null,
-          roles: roles
+          roles: roles.length > 0 ? roles : [] // Always set roles as array, even if empty
         });
       }
     } else {
       // Deduplicate by role and folder (for document deletion)
       const role = d.role || "(geen rol)";
       const key = `${role}|||${d.folder}`;
-      if (!uniqMap.has(key)) {
+    if (!uniqMap.has(key)) {
         uniqMap.set(key, { folder: d.folder, role: d.role || null });
       }
     }
@@ -110,19 +110,25 @@ export default function DeleteDocumentModal({
         <p className="text-center text-[18px] leading-6 text-black px-6">
           Weet je zeker dat je de map<br />
           <span className="font-semibold">&quot;{single?.folder}&quot;</span><br />
-          {single?.roles && single.roles.length > 0 ? (
-            <>
-              wilt verwijderen?<br />
-              <span className="text-sm">(toegewezen aan rol{single.roles.length > 1 ? 'len' : ''}: {single.roles.join(", ")})</span>
-            </>
-          ) : single?.role ? (
-            <>
-              wilt verwijderen uit de rol<br />
-              <span className="font-semibold">&quot;{single.role}&quot;</span>?
-            </>
-          ) : (
-            <>wilt verwijderen? (geen rol toegewezen)</>
-          )}
+          {(() => {
+            // Collect roles - prefer roles array, fallback to role string
+            const folderRoles = single?.roles && single.roles.length > 0 
+              ? single.roles 
+              : single?.role 
+                ? [single.role] 
+                : [];
+            
+            if (folderRoles.length > 0) {
+              return (
+                <>
+                  wilt verwijderen?<br />
+                  <span className="text-sm">(toegewezen aan rol{folderRoles.length > 1 ? 'len' : ''}: {folderRoles.join(", ")})</span>
+                </>
+              );
+            } else {
+              return <>wilt verwijderen? (geen rol toegewezen)</>;
+            }
+          })()}
           <br />
         </p>
       )}

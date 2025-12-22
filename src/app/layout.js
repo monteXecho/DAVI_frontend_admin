@@ -15,10 +15,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head suppressHydrationWarning>
         {isProduction && (
-          <link
-            rel="manifest"
-            href="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/progressier.json"
-          />
+        <link
+          rel="manifest"
+          href="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/progressier.json"
+        />
         )}
       </head>
 

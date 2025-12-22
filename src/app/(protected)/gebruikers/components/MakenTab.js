@@ -70,7 +70,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
       setDocumentPermission(false)
     } catch (err) {
       console.error("Failed to add user:", err)
-      toast.error("Er is een fout opgetreden bij het toevoegen van de gebruiker.")
+      toast.error("De rol van teamlid kan alleen aan een bestaande gebruiker worden toegevoegd.")
     } finally {
       setLoading(false)
     }

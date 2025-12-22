@@ -263,6 +263,7 @@ export default function GebruikersTab({
         return alert("De 'Beheerder' rol kan niet via bulk acties verwijderd worden. Gebruik individuele bewerking.");
       }
       
+      // Allow removing "Teamlid" role - it will clean up all teamlid permissions in backend
       handleDeleteRoleFromUsersConfirm();
     }
     if (action === "Rol toevoegen") {

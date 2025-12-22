@@ -129,7 +129,7 @@ export default function MappenTab({
           // Only show documents from folders assigned to the selected role
           const roleFolderSet = new Set(selectedRole.folders)
           docs = docs.filter(doc => roleFolderSet.has(doc.folder) && doc.role === selectedFolder)
-        } else {
+    } else {
           docs = []
         }
       }
@@ -140,14 +140,14 @@ export default function MappenTab({
     
     return docs
   }, [
-    getAllDocuments,
+    getAllDocuments, 
     selectedFolderType,
     selectedFolder,
     foldersInRoles,
     roles
   ])
 
-  const { items: sortedDocuments, requestSort, sortConfig } = useSortableData(baseDocuments)
+  const { items: sortedDocuments, requestSort: requestDocumentSort, sortConfig: documentSortConfig } = useSortableData(baseDocuments)
 
   const filteredDocuments = useMemo(() => {
     if (!searchQuery.trim()) return sortedDocuments
@@ -273,6 +273,19 @@ export default function MappenTab({
     return folderList
   }, [selectedFolderType, selectedFolder, foldersWithoutRoles, folders, foldersInRoles, roles, searchQuery, filteredDocuments])
 
+  // Convert uniqueFolders to objects for sorting
+  const foldersForSorting = useMemo(() => {
+    return uniqueFolders.map(folderName => ({ folder: folderName }))
+  }, [uniqueFolders])
+
+  // Apply sorting to folders
+  const { items: sortedFolders, requestSort, sortConfig } = useSortableData(foldersForSorting)
+
+  // Extract folder names from sorted objects
+  const sortedFolderNames = useMemo(() => {
+    return sortedFolders.map(item => item.folder)
+  }, [sortedFolders])
+
   const toggleRolesExpand = (folderName) => {
     setExpandedRoles(prev => {
       const newSet = new Set(prev)
@@ -365,8 +378,8 @@ export default function MappenTab({
               key={`${folderName}-${role}`}
               className="inline-block bg-[#23BD92]/10 text-[#23BD92] font-semibold text-sm px-2 py-1 rounded-md whitespace-nowrap w-fit"
             >
-              {role}
-            </span>
+                    {role}
+                  </span>
           ))}
         </div>
 
@@ -445,19 +458,111 @@ export default function MappenTab({
 
   const handleSelectAll = (isSelected) => {
     if (isSelected) {
-      setSelectedDocuments(new Set(filteredDocuments.map(doc => doc.id)))
+      const allSelections = new Set()
+      
+      // Select all documents from folders with documents
+      filteredDocuments.forEach(doc => allSelections.add(doc.id))
+      
+      // Select all folders without documents
+      uniqueFolders.forEach(folderName => {
+        const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
+        if (folderDocs.length === 0) {
+          // Folder has no documents - use appropriate marker
+          const isUnassignedFolder = !foldersInRoles.has(folderName)
+          if (isUnassignedFolder) {
+            allSelections.add(`folder-only:${folderName}`)
+          } else {
+            // Find role for this folder
+            const rolesWithFolder = roles.filter(role => 
+              role.folders && role.folders.includes(folderName)
+            )
+            if (rolesWithFolder.length > 0) {
+              const roleName = rolesWithFolder[0].name || rolesWithFolder[0]
+              allSelections.add(`role-folder:${roleName}::${folderName}`)
+            }
+          }
+        }
+      })
+      
+      setSelectedDocuments(allSelections)
     } else {
       setSelectedDocuments(new Set())
     }
   }
 
-  const allSelected = filteredDocuments.length > 0 && filteredDocuments.every(doc => selectedDocuments.has(doc.id))
-  const someSelected = filteredDocuments.some(doc => selectedDocuments.has(doc.id)) && !allSelected
+  // Calculate selected folders count (not documents)
+  const getSelectedFoldersCount = () => {
+    const selectedFolderNames = new Set()
+    
+    // Get folders from selected documents
+    Array.from(selectedDocuments).forEach(docId => {
+      if (docId.startsWith('folder-only:')) {
+        selectedFolderNames.add(docId.replace('folder-only:', ''))
+      } else if (docId.startsWith('role-folder:')) {
+        const parts = docId.replace('role-folder:', '').split('::')
+        if (parts.length === 2) {
+          selectedFolderNames.add(parts[1]) // folder name
+        }
+      } else {
+        const doc = filteredDocuments.find(d => d.id === docId)
+        if (doc && doc.folder) {
+          selectedFolderNames.add(doc.folder)
+        }
+      }
+    })
+    
+    return selectedFolderNames.size
+  }
+
+  // Check if all folders are selected
+  const allSelected = uniqueFolders.length > 0 && uniqueFolders.every(folderName => {
+    const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
+    if (folderDocs.length > 0) {
+      // Folder has documents - check if all documents are selected
+      return folderDocs.every(doc => selectedDocuments.has(doc.id))
+    } else {
+      // Folder has no documents - check if folder marker is selected
+      const isUnassignedFolder = !foldersInRoles.has(folderName)
+      if (isUnassignedFolder) {
+        return selectedDocuments.has(`folder-only:${folderName}`)
+      } else {
+        // Check if any role-folder marker exists for this folder
+        const rolesWithFolder = roles.filter(role => 
+          role.folders && role.folders.includes(folderName)
+        )
+        return rolesWithFolder.some(role => {
+          const roleName = role.name || role
+          return selectedDocuments.has(`role-folder:${roleName}::${folderName}`)
+        })
+      }
+    }
+  })
+  
+  const someSelected = uniqueFolders.some(folderName => {
+    const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
+    if (folderDocs.length > 0) {
+      return folderDocs.some(doc => selectedDocuments.has(doc.id))
+    } else {
+      const isUnassignedFolder = !foldersInRoles.has(folderName)
+      if (isUnassignedFolder) {
+        return selectedDocuments.has(`folder-only:${folderName}`)
+      } else {
+        const rolesWithFolder = roles.filter(role => 
+          role.folders && role.folders.includes(folderName)
+        )
+        return rolesWithFolder.some(role => {
+          const roleName = role.name || role
+          return selectedDocuments.has(`role-folder:${roleName}::${folderName}`)
+        })
+      }
+    }
+  }) && !allSelected
 
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action)
     if (action === "Verwijder map") {
-      if (selectedDocuments.size > 0) {
+      const selectedCount = getSelectedFoldersCount()
+      if (selectedCount > 0) {
         setIsDeleteModalOpen(true)
       } else {
         alert("Selecteer eerst mappen om te verwijderen.")
@@ -473,28 +578,28 @@ export default function MappenTab({
         
         if (selectedDocs.length > 0) {
           // Handle documents with roles and unassigned folders
-          const pairSet = new Set();
+        const pairSet = new Set();
           const unassignedFolders = new Set();
-          
+
           selectedDocs.forEach(doc => {
             if (doc.role) {
-              const key = `${doc.role}::${doc.folder}`;
-              pairSet.add(key);
+          const key = `${doc.role}::${doc.folder}`;
+          pairSet.add(key);
             } else if (doc.folder) {
               // Unassigned folder - collect folder names
               unassignedFolders.add(doc.folder);
             }
-          });
+        });
 
-          const role_names = [];
-          const folder_names = [];
+        const role_names = [];
+        const folder_names = [];
 
           // Process role/folder pairs (deduplicated by Set)
-          pairSet.forEach(key => {
-            const [role, folder] = key.split("::");
-            role_names.push(role);
-            folder_names.push(folder);
-          });
+        pairSet.forEach(key => {
+          const [role, folder] = key.split("::");
+          role_names.push(role);
+          folder_names.push(folder);
+        });
           
           // For unassigned folders, we need to provide empty role names
           // The backend should handle this case
@@ -510,13 +615,13 @@ export default function MappenTab({
             return;
           }
 
-          const payload = { role_names, folder_names };
+        const payload = { role_names, folder_names };
 
           // Wait for deletion and refresh to complete
-          await onDeleteFolders(payload);
-          
+        await onDeleteFolders(payload);
+
           // Clear selection after successful deletion
-          setSelectedDocuments(new Set());
+        setSelectedDocuments(new Set());
         } else {
           // This shouldn't happen as we require documents to be selected
           alert("Selecteer documenten om te verwijderen.")
@@ -604,9 +709,9 @@ export default function MappenTab({
     <div className="flex flex-col w-full">
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
         {getHeaderText()}
-        {selectedDocuments.size > 0 && (
+        {getSelectedFoldersCount() > 0 && (
           <span className="ml-2 text-gray-600">
-            ({selectedDocuments.size} geselecteerd)
+            ({getSelectedFoldersCount()} map{getSelectedFoldersCount() !== 1 ? 'pen' : ''} geselecteerd)
           </span>
         )}
       </div>
@@ -621,14 +726,14 @@ export default function MappenTab({
           />
         </div>
         {selectedFolderType === "Mappen met rollen" && (
-          <div className="w-3/10">
-            <DropdownMenu
-              value={selectedFolder}
-              onChange={setSelectedFolder}
-              allOptions={allOptions2}
+        <div className="w-3/10">
+          <DropdownMenu
+            value={selectedFolder}
+            onChange={setSelectedFolder}
+            allOptions={allOptions2}
               placeholder="Selecteer rol..."
-            />
-          </div>
+          />
+        </div>
         )}
       </div>
 
@@ -651,7 +756,7 @@ export default function MappenTab({
             />
           </div>
         </div>
-        {canWrite && <AddButton onClick={() => onUploadTab()} text="Toevoegen" />}
+        {canWrite && <AddButton onClick={() => onUploadTab()} text="Document toevoegen" />}
         {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
       </div>
 
@@ -678,12 +783,12 @@ export default function MappenTab({
                 >
                   <div className="flex items-center gap-3">
                     {canWrite && (
-                      <CheckBox 
-                        toggle={allSelected} 
-                        indeterminate={someSelected}
-                        onChange={handleSelectAll}
-                        color="#23BD92" 
-                      />
+                    <CheckBox 
+                      toggle={allSelected} 
+                      indeterminate={someSelected}
+                      onChange={handleSelectAll}
+                      color="#23BD92" 
+                    />
                     )}
                     {!canWrite && <div className="w-5" />}
                     Map
@@ -705,7 +810,7 @@ export default function MappenTab({
             </thead>
 
             <tbody>
-              {uniqueFolders.map((folderName, index) => (
+              {sortedFolderNames.map((folderName, index) => (
                 <tr
                   key={folderName || `folder-${index}`}
                   className="w-full border-b border-[#C5BEBE] hover:bg-[#F9FBFA] transition-colors"
@@ -715,17 +820,69 @@ export default function MappenTab({
                       {canWrite && (() => {
                         const folderDocs = filteredDocuments.filter(doc => doc.folder === folderName)
                         const hasDocuments = folderDocs.length > 0
-                        const allSelected = hasDocuments && folderDocs.every(doc => selectedDocuments.has(doc.id))
+                        const isUnassignedFolder = !foldersInRoles.has(folderName)
+                        const isRoleAssignedFolder = foldersInRoles.has(folderName)
+                        
+                        // Determine if this folder is selected
+                        let isFolderSelected = false
+                        if (hasDocuments) {
+                          // Folder has documents - check if all documents are selected
+                          isFolderSelected = folderDocs.length > 0 && folderDocs.every(doc => selectedDocuments.has(doc.id))
+                        } else {
+                          // Folder has no documents - check folder markers
+                          if (isUnassignedFolder) {
+                            isFolderSelected = selectedDocuments.has(`folder-only:${folderName}`)
+                          } else if (isRoleAssignedFolder) {
+                            // Check if any role-folder marker exists for this folder
+                            const rolesWithFolder = roles.filter(role => 
+                              role.folders && role.folders.includes(folderName)
+                            )
+                            isFolderSelected = rolesWithFolder.some(role => {
+                              const roleName = role.name || role
+                              return selectedDocuments.has(`role-folder:${roleName}::${folderName}`)
+                            })
+                          }
+                        }
                         
                         return (
                           <CheckBox 
-                            toggle={allSelected}
+                            toggle={isFolderSelected}
                             onChange={(isSelected) => {
-                              if (!hasDocuments) {
-                                // No documents to select
-                                return
+                              if (hasDocuments) {
+                                // Select/deselect all documents in this folder
+                                folderDocs.forEach(doc => handleDocumentSelect(doc.id, isSelected))
+                              } else {
+                                // Folder has no documents - use folder markers
+                                if (isUnassignedFolder) {
+                                  if (isSelected) {
+                                    setSelectedDocuments(prev => new Set(prev).add(`folder-only:${folderName}`))
+                                  } else {
+                                    setSelectedDocuments(prev => {
+                                      const newSet = new Set(prev)
+                                      newSet.delete(`folder-only:${folderName}`)
+                                      return newSet
+                                    })
+                                  }
+                                } else if (isRoleAssignedFolder) {
+                                  // Find role for this folder
+                                  const rolesWithFolder = roles.filter(role => 
+                                    role.folders && role.folders.includes(folderName)
+                                  )
+                                  if (rolesWithFolder.length > 0) {
+                                    const roleName = rolesWithFolder[0].name || rolesWithFolder[0]
+                                    const marker = `role-folder:${roleName}::${folderName}`
+                                    if (isSelected) {
+                                      setSelectedDocuments(prev => new Set(prev).add(marker))
+                                    } else {
+                                      setSelectedDocuments(prev => {
+                                        const newSet = new Set(prev)
+                                        newSet.delete(marker)
+                                        return newSet
+                                      })
+                                    }
+                                  }
+                                }
                               }
-                              folderDocs.forEach(doc => handleDocumentSelect(doc.id, isSelected))
                             }}
                             color="#23BD92" 
                           />
@@ -755,19 +912,19 @@ export default function MappenTab({
                         // Only show Users button if folder has documents AND is assigned to a role
                         if (hasDocuments && isRoleAssignedFolder) {
                           return (
-                            <button
-                              className="relative w-[19px] h-5 cursor-pointer"
-                              title="Gebruikers"
-                              onClick={() => {
+                      <button
+                        className="relative w-[19px] h-5 cursor-pointer"
+                        title="Gebruikers"
+                        onClick={() => {
                                 const firstDoc = folderDocs[0]
-                                if (firstDoc) {
-                                  onShowUsers(firstDoc.assigned_to, firstDoc.file, folderName, firstDoc.role)
-                                }
-                              }}
-                            >
-                              <Image src={GebruikersItem} alt="Gebruikers" fill className="object-contain" />
-                              <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
-                            </button>
+                          if (firstDoc) {
+                            onShowUsers(firstDoc.assigned_to, firstDoc.file, folderName, firstDoc.role)
+                          }
+                        }}
+                      >
+                        <Image src={GebruikersItem} alt="Gebruikers" fill className="object-contain" />
+                        <div className="absolute inset-0 bg-[#23BD92] mix-blend-overlay"></div>
+                      </button>
                           )
                         }
                         return <div className="w-[19px]" />
@@ -786,11 +943,11 @@ export default function MappenTab({
                         // 3. Role-assigned folders (even without documents)
                         if (hasDocuments || isUnassignedFolder || isRoleAssignedFolder) {
                           return (
-                            <button 
-                              onClick={() => {
+                        <button 
+                          onClick={() => {
                                 if (hasDocuments) {
                                   // Select all documents in this folder for deletion
-                                  setSelectedDocuments(new Set(folderDocs.map(doc => doc.id)))
+                              setSelectedDocuments(new Set(folderDocs.map(doc => doc.id)))
                                 } else {
                                   // For folders without documents (assigned or unassigned), use special marker
                                   // We need to get the role name for assigned folders
@@ -813,13 +970,13 @@ export default function MappenTab({
                                       setSelectedDocuments(new Set([`folder-only:${folderName}`]))
                                   }
                                 }
-                                setIsDeleteModalOpen(true)
-                              }}
-                              className="hover:opacity-80 transition-opacity"
-                              title="Verwijder"
-                            >
-                              <RedCancelIcon />
-                            </button>
+                              setIsDeleteModalOpen(true)
+                          }}
+                          className="hover:opacity-80 transition-opacity"
+                          title="Verwijder"
+                        >
+                          <RedCancelIcon />
+                        </button>
                           )
                         }
                         return <div className="w-5" />
@@ -849,7 +1006,7 @@ export default function MappenTab({
                 setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleDeleteConfirm}
-              isMultiple={selectedDocuments.size > 1}
+              isMultiple={getSelectedFoldersCount() > 1}
             />
           </div>
         </div>

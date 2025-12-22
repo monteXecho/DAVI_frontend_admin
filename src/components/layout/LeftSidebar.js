@@ -244,34 +244,52 @@ export default function LeftSidebar() {
   }, [userRoles, workspaces, selectedOwnerId]);
 
   const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
-    // For public modules (Document Chat, GGD Checks):
-    // Always use the user's own modules, not guest workspace modules
-    // This ensures company admins acting as teamlid still see their own modules
-    const publicModules = userRoles.isSuperAdmin
-      ? MENU_CONFIG.publicModules
-      : MENU_CONFIG.publicModules.filter(module => {
-          // Always check against the user's own modules, regardless of guest mode
-          const moduleInfo = stableUser?.modules?.[module.moduleKey];
-          return moduleInfo?.enabled === true;
-        });
-
-    const adminModules = !isAuthenticated
-      ? []
-      : userRoles.isSuperAdmin
-      ? MENU_CONFIG.adminModules
-      : MENU_CONFIG.adminModules.filter(module => {
+    // For company admins: Only show BEHEER (adminModules), hide MODULES (publicModules)
+    // For company users: Only show MODULES (publicModules), hide BEHEER (adminModules)
+    // For super admins: Show both
+    
+    let publicModules = [];
+    let adminModules = [];
+    
+    if (userRoles.isSuperAdmin) {
+      // Super admins see everything
+      publicModules = MENU_CONFIG.publicModules;
+      adminModules = MENU_CONFIG.adminModules;
+    } else if (userRoles.isCompanyAdmin) {
+      // Company admins: Only show BEHEER items, hide MODULES
+      publicModules = [];
+      adminModules = MENU_CONFIG.adminModules.filter(module => {
+        if (module.requiredRole === "super_admin")
+          return false; // Company admins can't access super_admin only modules
+        if (module.requiredRoles)
+          return module.requiredRoles.some(role =>
+            role === "company_admin" || (role === "super_admin" && false)
+          );
+        return true;
+      });
+    } else if (userRoles.isCompanyUser) {
+      // Company users: Show MODULES items
+      publicModules = MENU_CONFIG.publicModules.filter(module => {
+        // Check against the user's own modules
+        const moduleInfo = stableUser?.modules?.[module.moduleKey];
+        return moduleInfo?.enabled === true;
+      });
+      
+      // Company users with teamlid access can see BEHEER items
+      if (hasTeamlidAccess) {
+        adminModules = MENU_CONFIG.adminModules.filter(module => {
           if (module.requiredRole === "super_admin")
-            return userRoles.isSuperAdmin;
+            return false; // Company users can't access super_admin only modules
           if (module.requiredRoles)
             return module.requiredRoles.some(role =>
-              role === "super_admin"
-                ? userRoles.isSuperAdmin
-                : role === "company_admin"
-                ? (userRoles.isCompanyAdmin || hasTeamlidAccess)  // Allow company users with teamlid access
-                : false
+              role === "company_admin" // Allow access to company_admin modules when acting as teamlid
             );
           return true;
         });
+      } else {
+        adminModules = []; // Company users without teamlid access don't see BEHEER items
+      }
+    }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
   }, [stableUser, userRoles, isAuthenticated, hasTeamlidAccess]);
