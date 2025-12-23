@@ -237,7 +237,7 @@ export default function WorkspaceSwitcher() {
       setIsSwitching(false);
       setTransitionInfo(null);
     }
-  }, [selectedOwnerId, setSelectedOwnerId, options, currentUser, router]);
+  }, [selectedOwnerId, setSelectedOwnerId, options, currentUser]);
 
   // Fetch current user to determine if it's their own workspace
   useEffect(() => {

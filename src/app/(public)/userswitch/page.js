@@ -95,7 +95,7 @@ export default function UserSwitchPage() {
     };
 
     load();
-  }, [initialized, keycloak?.authenticated, getUser, getGuestWorkspaces, router, redirectTo]);
+  }, [initialized, keycloak?.authenticated, keycloak?.tokenParsed?.realm_access?.roles, getUser, getGuestWorkspaces, router, redirectTo]);
 
   const handleRoleSelect = (option) => {
     try {

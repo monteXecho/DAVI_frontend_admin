@@ -44,6 +44,20 @@ const MENU_CONFIG = {
       requiredRole: 'super_admin'
     },
     {
+      id: 'mappen',
+      label: 'Mappen',
+      icon: GrayFolderIcon,
+      path: '/mappen',
+      requiredRoles: ['super_admin', 'company_admin']
+    },
+    {
+      id: 'documents',
+      label: 'Documenten',
+      icon: DocumentenItem,
+      path: '/documenten',
+      requiredRoles: ['super_admin', 'company_admin']
+    },
+    {
       id: 'roles',
       label: 'Rollen',
       icon: RollenItem,
@@ -57,20 +71,6 @@ const MENU_CONFIG = {
       path: '/gebruikers',
       requiredRoles: ['super_admin', 'company_admin']
     },
-    {
-      id: 'documents',
-      label: 'Documenten',
-      icon: DocumentenItem,
-      path: '/documenten',
-      requiredRoles: ['super_admin', 'company_admin']
-    },
-    {
-      id: 'mappen',
-      label: 'Mappen',
-      icon: GrayFolderIcon,
-      path: '/mappen',
-      requiredRoles: ['super_admin', 'company_admin']
-    }
   ]
 };
 
@@ -292,7 +292,7 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, userRoles, isAuthenticated, hasTeamlidAccess]);
+  }, [stableUser, userRoles, hasTeamlidAccess]);
 
   const routeToTab = useMemo(() => {
     const map = {

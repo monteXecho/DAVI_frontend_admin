@@ -79,14 +79,14 @@ export default function MakenTab({ onAddFolders, canWrite = true }) {
       
       if (res.success) {
         if (res.duplicated_folders && res.duplicated_folders.length > 0) {
-          const newIssueMessages = res.duplicated_folders.map(folderName => 
-            <IssueBttn text={`Map "${folderName}" bestaat al`} />
+          const newIssueMessages = res.duplicated_folders.map((folderName, idx) => 
+            <IssueBttn key={idx} text={`Map "${folderName}" bestaat al`} />
           )
           setIssueMessages(newIssueMessages)
           
           if (res.added_folders && res.added_folders.length > 0) {
-            const newSuccessMessages = res.added_folders.map(folderName => 
-              <SuccessBttn text={`Map "${folderName}" toegevoegd`} />
+            const newSuccessMessages = res.added_folders.map((folderName, idx) => 
+              <SuccessBttn key={idx} text={`Map "${folderName}" toegevoegd`} />
             )
             setSuccessMessages(newSuccessMessages)
             
@@ -100,8 +100,8 @@ export default function MakenTab({ onAddFolders, canWrite = true }) {
             setLastAddedFolders([])
           }
         } else {
-          const newSuccessMessages = (res.added_folders || []).map(folderName => 
-            <SuccessBttn text={`Map "${folderName}" toegevoegd`} />
+          const newSuccessMessages = (res.added_folders || []).map((folderName, idx) => 
+            <SuccessBttn key={idx} text={`Map "${folderName}" toegevoegd`} />
           )
           setSuccessMessages(newSuccessMessages)
           
@@ -118,8 +118,8 @@ export default function MakenTab({ onAddFolders, canWrite = true }) {
       if (err.response?.data) {
         const errorData = err.response.data
         if (errorData.duplicated_folders && errorData.duplicated_folders.length > 0) {
-          const newIssueMessages = errorData.duplicated_folders.map(folderName => 
-            <IssueBttn text={`Map "${folderName}" bestaat al`} />
+          const newIssueMessages = errorData.duplicated_folders.map((folderName, idx) => 
+            <IssueBttn key={idx} text={`Map "${folderName}" bestaat al`} />
           )
           setIssueMessages(newIssueMessages)
         } else {

@@ -252,6 +252,10 @@ export default function AllDocumentsTab({
     )
   }
 
+  const getSelectedDocumentsData = useCallback(() =>
+    Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
+  , [selectedDocuments, filteredDocuments])
+
   const getSelectedRoleFolderCombinations = useCallback(() => {
     const combinations = new Set()
     getSelectedDocumentsData().forEach(doc => {
@@ -261,7 +265,7 @@ export default function AllDocumentsTab({
       const [role, folder] = combo.split('::')
       return { role, folder }
     })
-  }, [selectedDocuments, filteredDocuments])
+  }, [getSelectedDocumentsData])
 
   const handleDocumentSelect = (docId, isSelected) => {
     setSelectedDocuments(prev => {
@@ -349,8 +353,6 @@ export default function AllDocumentsTab({
     setIsDeleteModalOpen(true)
   }
 
-  const getSelectedDocumentsData = () =>
-    Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
   const getHeaderText = () => {
     const uniqueDocCount = groupedDocuments.length

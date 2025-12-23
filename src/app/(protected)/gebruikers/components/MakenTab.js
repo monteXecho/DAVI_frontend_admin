@@ -156,7 +156,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
           </div>
           
           <p className="text-sm text-gray-500 mt-2">
-            Deze permissies zijn alleen van toepassing op gebruikers met de 'Teamlid' rol.
+            Deze permissies zijn alleen van toepassing op gebruikers met de &apos;Teamlid&apos; rol.
           </p>
         </div>
       )}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -140,7 +140,7 @@ export default function GebruikersTab({
     setExpandedRolesPerUser(newExpandedRolesPerUser);
   }, [searchQuery, sortedUsers, roleMap]);
 
-  const userMatchesSearch = (user, searchTerm) => {
+  const userMatchesSearch = useCallback((user, searchTerm) => {
     if (
       user.Naam?.toLowerCase().includes(searchTerm) ||
       user.Email?.toLowerCase().includes(searchTerm)
@@ -161,7 +161,7 @@ export default function GebruikersTab({
     }
 
     return false;
-  };
+  }, [roleMap]);
 
   const roleHasSearchMatch = (roleName) => {
     if (!searchQuery.trim()) return false;
@@ -216,7 +216,7 @@ export default function GebruikersTab({
     }
 
     return data;
-  }, [sortedUsers, selectedRole, searchQuery, roleMap]);
+  }, [sortedUsers, selectedRole, searchQuery, userMatchesSearch]);
 
   const titleText = useMemo(() => {
     if (selectedRole === "Beheerder") {

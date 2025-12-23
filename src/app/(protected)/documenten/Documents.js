@@ -60,7 +60,7 @@ export default function Documents() {
     } catch (err) {
       console.error("Failed to refresh data:", err)
     }
-  }, [getRoles, getAdminDocuments]) 
+  }, [getRoles, getAdminDocuments, getFolders]) 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

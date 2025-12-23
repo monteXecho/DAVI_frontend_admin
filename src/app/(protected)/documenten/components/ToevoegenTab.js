@@ -326,7 +326,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
               </div>
               {isFolderUpload ? (
                 <div className="text-green-600 text-xs mt-2">
-                  Alle documenten zijn toegevoegd aan map "{selectedFolderName}"
+                  Alle documenten zijn toegevoegd aan map &quot;{selectedFolderName}&quot;
                 </div>
               ) : uploadTargets.length > 1 && (
                 <div className="text-green-600 text-xs mt-2">
@@ -419,7 +419,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
           
           {folders.length === 0 ? (
             <p className="text-sm text-gray-500 mt-2">
-              Geen mappen beschikbaar. Voeg eerst mappen toe in het "Mappen" tabblad.
+              Geen mappen beschikbaar. Voeg eerst mappen toe in het &quot;Mappen&quot; tabblad.
             </p>
           ) : availableFolders.length === 0 ? (
             <p className="text-sm text-gray-500 mt-2">

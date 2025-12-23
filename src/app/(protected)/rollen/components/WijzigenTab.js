@@ -229,7 +229,7 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
           
           {folders.length === 0 ? (
             <div className="text-gray-500 text-sm mb-4">
-              Geen mappen beschikbaar. Voeg eerst mappen toe in het "Mappen" tabblad.
+              Geen mappen beschikbaar. Voeg eerst mappen toe in het &quot;Mappen&quot; tabblad.
             </div>
           ) : (
             <>
