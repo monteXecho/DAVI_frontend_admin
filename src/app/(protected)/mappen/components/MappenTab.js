@@ -49,8 +49,6 @@ export default function MappenTab({
     })
     return foldersSet
   }, [roles])
-
-  // Get folders without roles
   const foldersWithoutRoles = useMemo(() => {
     return folders
       .filter(folderName => {
@@ -889,7 +887,47 @@ export default function MappenTab({
                         )
                       })()}
                       {!canWrite && <div className="w-5" />}
-                      {folderName}
+                      <div className="flex items-center gap-2">
+                        <span>{folderName}</span>
+                        {(() => {
+                          // Find folder metadata if available
+                          // folders can be array of strings or array of objects
+                          let folderMeta = null
+                          if (Array.isArray(folders)) {
+                            folderMeta = folders.find(f => {
+                              if (typeof f === 'object' && f !== null) {
+                                return f.name === folderName
+                              }
+                              return f === folderName
+                            })
+                          }
+                          
+                          // Only show metadata if it's an object with metadata
+                          if (!folderMeta || typeof folderMeta !== 'object' || folderMeta === null) {
+                            return null
+                          }
+                          
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              {folderMeta.origin === 'imported' && (
+                                <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200" title="Geïmporteerd van Nextcloud">
+                                  Geïmporteerd
+                                </span>
+                              )}
+                              {folderMeta.origin === 'davi' && folderMeta.sync_enabled && (
+                                <span className="text-xs px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-200" title="Gemaakt in DAVI, gesynchroniseerd met Nextcloud">
+                                  DAVI
+                                </span>
+                              )}
+                              {folderMeta.indexed && (
+                                <span className="text-xs px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-200" title="Geïndexeerd voor RAG">
+                                  Geïndexeerd
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </div>
                   </td>
 

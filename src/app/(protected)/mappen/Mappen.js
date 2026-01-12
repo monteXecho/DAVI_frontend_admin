@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation"
 import UsersTab from "./components/UsersTab"
 import MappenTab from "./components/MappenTab"
 import MakenTab from "./components/MakenTab"
+import ImportTab from "./components/ImportTab"
 import { useApi } from "@/lib/useApi"
 import { canWriteFolders } from "@/lib/permissions"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
   { label: 'Maken', component: MakenTab, selectable: true },
+  { label: 'Importeren', component: ImportTab, selectable: true },
   { label: 'Gebruikers', component: UsersTab, selectable: false }
 ]
 
@@ -57,7 +59,13 @@ export default function Mappen() {
       if (rolesRes?.roles) setRoles(rolesRes.roles)
       if (docsRes?.data) setDocuments(docsRes.data)
       if (foldersRes?.folders) {
-        setFolders(foldersRes.folders)
+        // Use folders_metadata if available (includes origin, indexed, etc.), otherwise fall back to folder names
+        if (foldersRes.folders_metadata && Array.isArray(foldersRes.folders_metadata)) {
+          setFolders(foldersRes.folders_metadata)
+        } else {
+          // Backward compatibility: convert folder names to objects
+          setFolders(foldersRes.folders.map(name => ({ name, origin: 'davi', indexed: false, sync_enabled: false })))
+        }
       }
     } catch (err) {
       console.error("Failed to refresh data:", err)
@@ -195,6 +203,7 @@ export default function Mappen() {
               onShowUsers={handleShowUsers} 
               onDeleteFolders={handleDeleteFolders}
               onAddFolders={handleAddFolders}
+              onRefresh={refreshData}
               selectedUsers={selectedUsers} 
               selectedDocFolder={selectedDocFolder} 
               selectedDocRole={selectedDocRole}

@@ -610,6 +610,50 @@ export function useApi() {
     [withAuth]
   );
 
+  const listImportableFolders = useCallback(
+    (importRoot = null) =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/folders/import/list', {
+            ...createAuthHeaders(token),
+            params: importRoot ? { import_root: importRoot } : {}
+          })
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const importFolders = useCallback(
+    (folderPaths) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            '/company-admin/folders/import',
+            { folder_paths: folderPaths },
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const syncFoldersFromNextcloud = useCallback(
+    (folderId = null) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            '/company-admin/folders/sync',
+            {},
+            {
+              ...createAuthHeaders(token),
+              params: folderId ? { folder_id: folderId } : {}
+            }
+          )
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   const deleteFolders = useCallback(
     (payload) =>
       withAuth((token) => {
@@ -681,6 +725,9 @@ export function useApi() {
     addFolders,
     getFolders,
     deleteFolders,
+    listImportableFolders,
+    importFolders,
+    syncFoldersFromNextcloud,
     assignRole,
 
     assignModules,
