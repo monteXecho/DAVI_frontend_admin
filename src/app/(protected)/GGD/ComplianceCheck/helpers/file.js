@@ -5,10 +5,12 @@ const getKeyFromFileName = (fileName) => {
 function getExtFromString(s) {
   try {
     const url = new URL(s);
-    s = url.pathname; 
+    s = url.pathname; // strip query/hash if URL
   } catch {
+    /* not a URL, keep as-is */
   }
 
+  // Handle multi-part like .tar.gz
   const match = s
     .toLowerCase()
     .match(/(\.tar\.(?:gz|bz2|xz))$|(\.[a-z0-9]+)$/i);

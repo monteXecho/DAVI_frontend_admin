@@ -12,7 +12,7 @@ function minToStr(mins) {
   return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
 }
 function mergeFailRanges(slices, key /* "BKR" | "VGC" */) {
-  const failing = (slices || []).filter((s) => s && s[key] === "No");
+  const failing = (slices || []).filter((s) => s && s[key] === "Nee");
   if (!failing.length) return { ranges: [], totalFailMins: 0, slots: 0 };
 
   failing.sort((a, b) => toMin(a["From Time"]) - toMin(b["From Time"]));
@@ -29,7 +29,7 @@ function mergeFailRanges(slices, key /* "BKR" | "VGC" */) {
       continue;
     }
     const last = merged[merged.length - 1];
-    if (a === last[1]) last[1] = b; 
+    if (a === last[1]) last[1] = b; // contiguous -> extend
     else merged.push([a, b]);
   }
 
@@ -44,6 +44,7 @@ function countPassedBKR(slices) {
 }
 function minutesToHoursStr(mins) {
   const hours = mins / 60;
+  // show with 1 decimal if needed
   return (Math.round(hours * 10) / 10).toFixed(hours % 1 === 0 ? 0 : 1);
 }
 function countUnknownVgc(slices) {
@@ -53,6 +54,7 @@ function recommendStaffFromDetails(slices) {
   const counts = new Map();
   for (const s of slices || []) {
     for (const line of s.Details || []) {
+      // "VGC failed: A, B for Child X"
       const m = line.match(/^VGC failed:\s*(.+?)\s+for\s+/i);
       if (!m) continue;
       const namesPart = m[1];

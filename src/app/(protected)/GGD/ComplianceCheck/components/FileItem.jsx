@@ -1,10 +1,12 @@
 import ModalImage from "react-modal-image";
 import { useChecks } from "../contexts/ChecksContext";
-import { getFileDownloadUrl, getFileStatus } from "../services/api";
+import { getFileDownloadUrl, getFileStatus, removeFile } from "../services/api";
+import { useI18n } from "../../contexts/i18n/I18nContext";
 import Button from "./Button";
 
 export default function FileItem({ kind, file }) {
   const { onRemoved } = useChecks();
+  const { t } = useI18n();
 
   const fileName = file.fileUrl.split(/[/\\]/).pop().substr(9);
 
@@ -19,7 +21,7 @@ export default function FileItem({ kind, file }) {
       alert(typeof res === "string" ? res : JSON.stringify(res, null, 2));
     } catch (e) {
       console.error(e);
-      alert(e.message || "Failed to get file status");
+      alert(e.message || t("fileItem.statusFailed"));
     }
   }
   async function handleDelete() {
@@ -52,28 +54,28 @@ export default function FileItem({ kind, file }) {
           size="xs"
           icon="download"
           onClick={handleDownload}
-          title="Download"
+          title={t("fileItem.download")}
         ></Button>
         <Button
           variant="secondary"
           size="xs"
           icon="info"
           onClick={handleCheckStatus}
-          title="Status"
+          title={t("fileItem.status")}
         ></Button>
         {/* <Button
           variant="secondary"
           size="xs"
           icon="trash-2"
           onClick={handleDelete}
-          title="Remove"
+          title={t("fileItem.remove")}
         ></Button> */}
         <Button
           variant="secondary"
           size="xs"
           icon="x"
           onClick={handleRemove}
-          title="Remvoe from check list"
+          title={t("common.removeFromCheckList")}
           className="bg-yellow-300 text-blue-900 px-4"
         />
       </div>

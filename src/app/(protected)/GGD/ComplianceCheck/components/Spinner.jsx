@@ -4,7 +4,7 @@ export default function Spinner({
   size = 24,
   strokeWidth = 2,
   className,
-  label = "Loading…",
+  label = "Bezig met laden…",
 }) {
   return (
     <div

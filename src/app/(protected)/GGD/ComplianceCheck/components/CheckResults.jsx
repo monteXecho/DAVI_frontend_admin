@@ -52,7 +52,7 @@ const CheckResults = ({ data }) => {
               />
             ))
           ) : (
-            <p>No data available</p>
+            <p>Geen gegevens beschikbaar</p>
           )}
         </div>
 

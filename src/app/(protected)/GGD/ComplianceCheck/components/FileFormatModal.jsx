@@ -43,6 +43,7 @@ export default function FileFormatModal({ kind, onClose }) {
   const draggingRef = useRef(false);
   const dragStartRef = useRef(null);
 
+  // Load first image from DOCX
   useEffect(() => {
     async function getImage() {
       try {
@@ -55,6 +56,7 @@ export default function FileFormatModal({ kind, onClose }) {
     if (file && file.objectKey) getImage();
   }, [file]);
 
+  // Create an <img> element so we know natural width/height
   useEffect(() => {
     if (!imgSrc) return;
     const img = new Image();
@@ -62,6 +64,7 @@ export default function FileFormatModal({ kind, onClose }) {
     img.src = imgSrc;
   }, [imgSrc]);
 
+  // Layout canvas to fit container + draw
   useEffect(() => {
     function layout() {
       const stage = stageRef.current;
@@ -89,8 +92,10 @@ export default function FileFormatModal({ kind, onClose }) {
     layout();
     window.addEventListener("resize", layout);
     return () => window.removeEventListener("resize", layout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imgEl, imgSrc]);
 
+  // geometry helpers
   function getGeom() {
     const overlay = overlayRef.current;
     if (!overlay || !imgEl) return null;
@@ -112,6 +117,7 @@ export default function FileFormatModal({ kind, onClose }) {
     return { ix, iy };
   }
 
+  // drawing
   function drawOverlay(previewRect) {
     const overlay = overlayRef.current;
     if (!overlay || !imgEl) return;
@@ -178,6 +184,7 @@ export default function FileFormatModal({ kind, onClose }) {
     ctx.stroke();
   }
 
+  // mouse handlers
   const onMouseMove = (e) => {
     setMousePos({ x: e.clientX, y: e.clientY });
     const pos = clientToImage(e);
@@ -234,12 +241,16 @@ export default function FileFormatModal({ kind, onClose }) {
       overlay.removeEventListener("mouseup", onUp);
       overlay.removeEventListener("mouseleave", onLeave);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey, imgEl]);
 
+  // redraw on ROI changes
   useEffect(() => {
     drawOverlay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rois, imgEl]);
 
+  // inputs
   const setField = (key, field, v) => {
     const num = Number(v);
     if (Number.isNaN(num)) return;

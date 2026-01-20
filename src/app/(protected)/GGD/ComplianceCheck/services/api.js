@@ -1,4 +1,4 @@
-const API_BASE_URL = "/ggd";
+const API_BASE_URL ="/ggd";
 
 export const FileKind = {
   STAFF_PLANNING: "staff-planning",
@@ -14,9 +14,8 @@ async function request(path, options = {}) {
     });
 
     if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      const errorMessage = text || `Request failed: ${response.status}`;
-      throw new Error(errorMessage);
+      const errData = await response.json();
+      throw new Error(errData.detail || `Request failed: ${response.status}`);
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -25,12 +24,7 @@ async function request(path, options = {}) {
     }
     return response.text();
   } catch (error) {
-    console.error("API Request failed:", error);
-    alert(
-      error.message.includes("Failed to fetch")
-        ? "Network error: Unable to connect to server. Please check your internet connection."
-        : `Error: ${error.message}`
-    );
+    console.error("API request failed:", error);
     throw error;
   }
 }
@@ -114,6 +108,26 @@ export async function getCheckList() {
 
 export async function getModuleDocuments(module) {
   return request(`/requirements?modules=${encodeURIComponent(module)}`, {
+    method: "GET",
+  });
+}
+
+export async function startCreatingVGCList(body) {
+  return request("/create-vgc", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getCheckVGCCreatingProgress(checkId) {
+  return request(`/checks-create-vgc/${encodeURIComponent(checkId)}`, {
+    method: "GET",
+  });
+}
+
+export async function getCheckVGCCreatingList() {
+  return request(`/checks-create-vgc/list`, {
     method: "GET",
   });
 }

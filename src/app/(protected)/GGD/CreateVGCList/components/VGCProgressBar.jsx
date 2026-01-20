@@ -1,14 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getCheckProgress } from "../services/api";
+import { getCheckVGCCreatingProgress } from "../../ComplianceCheck/services/api";
+import { useI18n } from "../../contexts/i18n/I18nContext";
 import clsx from "clsx";
 
-export default function ProgressBarPolling({
+export default function VGCProgressBar({
   checkId,
   intervalMs = 3000,
   className = "",
   onComplete,
 }) {
-  const [data, setData] = useState({ status: "Starting…", progress: 0 });
+  const { t } = useI18n();
+  const [data, setData] = useState({
+    status: t("progress.beginning"),
+    progress: 0,
+  });
   const timeoutRef = useRef(null);
   const abortRef = useRef(null);
 
@@ -22,9 +27,12 @@ export default function ProgressBarPolling({
       let isDone = false;
 
       try {
-        const res = await getCheckProgress(checkId);
-        setData({ status: res.status.message, progress: res.status.progress });
-        if (res.status.message === "completed") {
+        const res = await getCheckVGCCreatingProgress(checkId);
+        setData({
+          status: res.status?.message || t("progress.processing"),
+          progress: res.status?.progress || 0,
+        });
+        if (res.status?.message === "completed") {
           isDone = true;
           onComplete(res);
         }
@@ -48,10 +56,12 @@ export default function ProgressBarPolling({
 
   const pct = typeof data.progress === "number" ? Math.round(data.progress) : 0;
 
-  return (
+  return data.status === "completed" ? (
+    <></>
+  ) : (
     <div className={clsx("space-y-2 w-full", className)} aria-live="polite">
       <div className="text-sm font-medium text-gray-800 capitalize">
-        {data.status ?? "Processing…"}
+        {data.status ?? t("progress.processing")}
       </div>
 
       <div
@@ -59,7 +69,7 @@ export default function ProgressBarPolling({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={pct}
-        aria-label="Progress"
+        aria-label="Voortgang"
         className="relative h-2 w-full rounded-full bg-gray-200 overflow-hidden"
       >
         <div
@@ -73,3 +83,4 @@ export default function ProgressBarPolling({
     </div>
   );
 }
+

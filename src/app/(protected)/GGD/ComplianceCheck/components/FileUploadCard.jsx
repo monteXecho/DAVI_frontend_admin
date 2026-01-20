@@ -6,8 +6,10 @@ import {
   getFileDownloadUrl,
   getFileStatus,
   getModuleDocuments,
+  removeFile,
 } from "../services/api";
 import { useChecks } from "../contexts/ChecksContext";
+import { useI18n } from "../../contexts/i18n/I18nContext";
 import { getKeyFromFileName } from "../helpers/file";
 import Button from "./Button";
 import Icon from "./Icon";
@@ -79,6 +81,7 @@ export default function FileUploadCard({
 }
 
 function EditFileDialog({ kind, onClose }) {
+  const { t } = useI18n();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
@@ -115,7 +118,7 @@ function EditFileDialog({ kind, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Edit File</h3>
+          <h3 className="text-lg font-semibold">{t("common.edit")}</h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -125,7 +128,7 @@ function EditFileDialog({ kind, onClose }) {
         </div>
         <div className="max-h-[60vh] overflow-y-scroll flex flex-wrap gap-2">
           {loading ? (
-            "Loading..."
+            t("common.loading")
           ) : documents && documents.length > 0 ? (
             documents.map((item) => (
               <DocumentItem
@@ -137,7 +140,7 @@ function EditFileDialog({ kind, onClose }) {
               />
             ))
           ) : (
-            <p>No documentations</p>
+            <p>{t("common.noData")}</p>
           )}
         </div>
       </div>
@@ -147,6 +150,7 @@ function EditFileDialog({ kind, onClose }) {
 
 function DocumentItem({ kind, doc, onClick, active }) {
   const { fileMap, onAdded, onRemoved } = useChecks();
+  const { t } = useI18n();
 
   const file = fileMap[kind];
   const fileKey = file?.objectKey;
@@ -166,7 +170,7 @@ function DocumentItem({ kind, doc, onClick, active }) {
       alert(typeof res === "string" ? res : JSON.stringify(res, null, 2));
     } catch (e) {
       console.error(e);
-      alert(e.message || "Failed to get file status");
+      alert(e.message || t("fileItem.statusFailed"));
     }
   };
   const handleDelete = async () => {
@@ -211,21 +215,21 @@ function DocumentItem({ kind, doc, onClick, active }) {
           size="xs"
           icon="download"
           onClick={handleDownload}
-          title="Download"
+          title={t("fileItem.download")}
         />
         <Button
           variant="secondary"
           size="xs"
           icon="info"
           onClick={handleCheckStatus}
-          title="Status"
+          title={t("fileItem.status")}
         />
         {/* <Button
           variant="secondary"
           size="xs"
           icon="trash-2"
           onClick={handleDelete}
-          title="Remove"
+          title={t("fileItem.remove")}
         /> */}
         {fileKey === docKey ? (
           <Button
@@ -233,7 +237,7 @@ function DocumentItem({ kind, doc, onClick, active }) {
             size="xs"
             icon="x"
             onClick={handleRemove}
-            title="Remvoe from check list"
+            title={t("common.removeFromCheckList")}
             className="bg-yellow-300 text-blue-900 px-4"
           />
         ) : (
@@ -242,7 +246,7 @@ function DocumentItem({ kind, doc, onClick, active }) {
             size="xs"
             icon="check"
             onClick={handleAdd}
-            title="Add to check list"
+            title={t("common.addToCheckList")}
             className="bg-blue-300 text-yellow-200 hover:text-yellow-600 px-4"
           />
         )}
