@@ -81,7 +81,7 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
 
   // Handle select all/none
   const handleSelectAll = (checked) => {
-    const importableFolders = folders.filter(f => !f.imported)
+    const importableFolders = folders.filter(f => !f.imported && f.selectable !== false)
     if (checked) {
       setSelectedPaths(new Set(importableFolders.map(f => f.path)))
     } else {
@@ -189,6 +189,7 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
             path: pathSoFar,
             depth: i,
             imported: fullFolder?.imported || false,
+            selectable: fullFolder?.selectable !== false, // Default to true if not specified
             children: []
           }
           current.push(node)
@@ -206,6 +207,7 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
     const isSelected = selectedPaths.has(node.path)
     const hasChildren = node.children && node.children.length > 0
     const indent = level * 20
+    const isSelectable = node.selectable !== false && !node.imported && canWrite
 
     return (
       <div key={node.path} className="mb-0.5">
@@ -217,7 +219,7 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
             <CheckBox
               toggle={isSelected}
               onChange={(checked) => handleToggleFolder(node.path, checked)}
-              disabled={node.imported || !canWrite}
+              disabled={!isSelectable}
               color="#23BD92"
             />
             <span className="ml-3 flex-1 text-sm font-medium text-gray-900 truncate">
@@ -245,10 +247,10 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
     )
   }
 
-  const importableCount = folders.filter(f => !f.imported).length
+  const importableCount = folders.filter(f => !f.imported && f.selectable !== false).length
   const selectedCount = Array.from(selectedPaths).filter(path => {
     const folder = folders.find(f => f.path === path)
-    return folder && !folder.imported
+    return folder && !folder.imported && folder.selectable !== false
   }).length
 
   return (
