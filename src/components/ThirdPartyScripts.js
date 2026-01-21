@@ -78,7 +78,7 @@ export default function ThirdPartyScripts() {
       const script = document.createElement('script');
       script.id = 'Cookiebot';
       script.src = 'https://consent.cookiebot.com/uc.js';
-      script.setAttribute('data-cbid', '515f801d-02f6-4a38-94ad-fb3529a17575');
+      script.setAttribute('data-cbid', '07a76009-c76a-4918-a40a-7f4d0fb4fbef');
       script.setAttribute('data-blockingmode', 'auto');
       script.type = 'text/javascript';
       script.async = false;

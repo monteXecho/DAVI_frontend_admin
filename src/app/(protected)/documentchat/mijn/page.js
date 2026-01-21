@@ -9,9 +9,12 @@ import DeleteDocumentModal from "./DeleteDocumentModal"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 import { useApi } from "@/lib/useApi"
+import DocumentViewer from "@/components/DocumentViewer"
+import { useKeycloak } from "@react-keycloak/web"
 
 export default function MijnTab() {
   const { getPrivateDocuments, deletePrivateDocuments, getAllUserDocuments, downloadDocument } = useApi()
+  const { keycloak } = useKeycloak()
   const router = useRouter()
   const documentTypeOptions = ["Alle", "Eigen documenten", "Toegekende documenten"]
   const [selectedDocumentType, setSelectedDocumentType] = useState(documentTypeOptions[0])
@@ -20,6 +23,7 @@ export default function MijnTab() {
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [documents, setDocuments] = useState(null)
   const [deleteMode, setDeleteMode] = useState("single")
+  const [viewerDoc, setViewerDoc] = useState(null)
 
   const refreshData = useCallback(async () => {
     try {
@@ -261,7 +265,17 @@ export default function MijnTab() {
                         onClick={async () => {
                           if (doc.path) {
                             try {
-                              await downloadDocument(doc.path);
+                              const fileExtension = doc.file_name.toLowerCase().split('.').pop();
+                              // For Word documents, open in viewer
+                              if (['doc', 'docx'].includes(fileExtension)) {
+                                setViewerDoc({
+                                  filePath: doc.path,
+                                  fileName: doc.file_name
+                                });
+                              } else {
+                                // For PDFs and other files, use existing download logic
+                                await downloadDocument(doc.path, doc.file_name);
+                              }
                             } catch (err) {
                               console.error('Failed to open document:', err);
                               alert('Kon document niet openen. Probeer het opnieuw.');
@@ -322,6 +336,17 @@ export default function MijnTab() {
             />
           </div>
         </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewerDoc && keycloak.authenticated && (
+        <DocumentViewer
+          filePath={viewerDoc.filePath}
+          fileName={viewerDoc.fileName}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}
+          authToken={keycloak.token}
+          onClose={() => setViewerDoc(null)}
+        />
       )}
     </div>
   )

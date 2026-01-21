@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import DocumentViewer from './DocumentViewer';
+import { useKeycloak } from '@react-keycloak/web';
 
 const groupByFileAndPage = (docs = []) => {
   if (!Array.isArray(docs)) return {};
@@ -27,8 +29,41 @@ const groupByFileAndPage = (docs = []) => {
 };
 
 const PdfSnippetList = ({ documents }) => {
+  const { keycloak } = useKeycloak();
   const [openFile, setOpenFile] = useState(null);
+  const [viewerDoc, setViewerDoc] = useState(null);
   const grouped = groupByFileAndPage(documents);
+
+  const getFileExtension = (filename) => {
+    return filename.toLowerCase().split('.').pop();
+  };
+
+  const handleViewDocument = (filePath) => {
+    // For PDFs, use the highlighted endpoint (if available)
+    const fileExtension = getFileExtension(filePath);
+    if (fileExtension === 'pdf') {
+      // PDF viewing is handled by the Link component
+      return;
+    }
+    
+    // For Word documents, open in viewer
+    if (['doc', 'docx'].includes(fileExtension)) {
+      // Find the document metadata to get the original file path if available
+      const docMeta = documents.find(d => {
+        const metaPath = d.meta?.file_path || d.meta?.file_name || '';
+        return metaPath === filePath || metaPath.endsWith(filePath) || filePath.endsWith(metaPath);
+      });
+      
+      // Use original_file_path if available, otherwise use file_path, otherwise use the provided path
+      const actualPath = docMeta?.meta?.original_file_path || docMeta?.meta?.file_path || filePath;
+      const fileName = docMeta?.meta?.file_name || filePath.split('/').pop() || filePath;
+      
+      setViewerDoc({
+        filePath: actualPath,
+        fileName: fileName
+      });
+    }
+  };
 
   return (
     <div className='w-full flex flex-col gap-[11px]'>
@@ -54,15 +89,31 @@ const PdfSnippetList = ({ documents }) => {
                     </div>
                   </div>
 
-                  <Link
-                    href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/highlighted/${encodeURIComponent(file)}#page=${Object.keys(pages)[0]}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M0 0.5V19.5H19V0.5H0ZM8.97196 16.3333H3.16667V10.528L4.95029 12.3109L7.32688 9.94458L9.56571 12.1834L7.18913 14.5497L8.97196 16.3333ZM15.8333 9.47196L14.0497 7.68913L11.7388 10L9.5 7.76117L11.8109 5.45029L10.028 3.66667H15.8333V9.47196Z" fill="#23BD92"/>
-                    </svg>
-                  </Link>
+                  {getFileExtension(file) === 'pdf' ? (
+                    <Link
+                      href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/highlighted/${encodeURIComponent(file)}#page=${Object.keys(pages)[0]}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0.5V19.5H19V0.5H0ZM8.97196 16.3333H3.16667V10.528L4.95029 12.3109L7.32688 9.94458L9.56571 12.1834L7.18913 14.5497L8.97196 16.3333ZM15.8333 9.47196L14.0497 7.68913L11.7388 10L9.5 7.76117L11.8109 5.45029L10.028 3.66667H15.8333V9.47196Z" fill="#23BD92"/>
+                      </svg>
+                    </Link>
+                  ) : ['doc', 'docx'].includes(getFileExtension(file)) ? (
+                    <button
+                      onClick={() => handleViewDocument(file)}
+                      className="cursor-pointer"
+                      title="Bekijk Word document"
+                    >
+                      <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0.5V19.5H19V0.5H0ZM8.97196 16.3333H3.16667V10.528L4.95029 12.3109L7.32688 9.94458L9.56571 12.1834L7.18913 14.5497L8.97196 16.3333ZM15.8333 9.47196L14.0497 7.68913L11.7388 10L9.5 7.76117L11.8109 5.45029L10.028 3.66667H15.8333V9.47196Z" fill="#23BD92"/>
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="text-gray-400 text-xs" title="Weergave niet beschikbaar voor dit bestandstype">
+                      -
+                    </span>
+                  )}
                 </div>
 
                 {openFile === file && (
@@ -76,13 +127,17 @@ const PdfSnippetList = ({ documents }) => {
                               : item.snippet}
                           </div>
 
-                          <Link
-                            href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/highlighted/${encodeURIComponent(file)}#page=${pageNumber}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >  
-                            <div className='text-[10px] lg:text-[12px] text-[#8F8989]'>pagina {pageNumber}</div>
-                          </Link> 
+                          {getFileExtension(file) === 'pdf' ? (
+                            <Link
+                              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/highlighted/${encodeURIComponent(file)}#page=${pageNumber}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >  
+                              <div className='text-[10px] lg:text-[12px] text-[#8F8989]'>pagina {pageNumber}</div>
+                            </Link>
+                          ) : (
+                            <div className='text-[10px] lg:text-[12px] text-[#8F8989]'>-</div>
+                          )} 
                         </li>
                       ))
                     ))}
@@ -93,6 +148,17 @@ const PdfSnippetList = ({ documents }) => {
             <div className="h-0.5 w-full bg-[#C5BEBE]"></div>
           </div>
         </>
+      )}
+
+      {/* Document Viewer Modal for Word files */}
+      {viewerDoc && keycloak?.authenticated && (
+        <DocumentViewer
+          filePath={viewerDoc.filePath}
+          fileName={viewerDoc.fileName}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}
+          authToken={keycloak.token}
+          onClose={() => setViewerDoc(null)}
+        />
       )}
     </div>
   );

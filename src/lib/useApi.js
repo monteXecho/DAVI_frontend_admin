@@ -327,37 +327,96 @@ export function useApi() {
   );
 
   const downloadDocument = useCallback(
-    (filePath) =>
+    (filePath, fileName) =>
       withAuth(async (token) => {
         const encodedPath = encodeURIComponent(filePath);
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/company-admin/documents/download?file_path=${encodedPath}`;
+        const fileExtension = (fileName || filePath).toLowerCase().split('.').pop();
         
-        try {
-          const response = await fetch(url, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId') 
-                ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
-                : {}),
-              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
-                ? { 'X-Acting-Owner-Is-Guest': 'true' }
-                : {})
+        // For PDFs, open directly in browser
+        if (fileExtension === 'pdf') {
+          const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/company-admin/documents/download?file_path=${encodedPath}`;
+          
+          try {
+            const response = await fetch(url, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId') 
+                  ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+                  : {}),
+                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                  ? { 'X-Acting-Owner-Is-Guest': 'true' }
+                  : {})
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to download document: ${response.statusText}`);
             }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to download document: ${response.statusText}`);
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          } catch (err) {
+            console.error('Failed to download document:', err);
+            throw err;
           }
-          
-          const blob = await response.blob();
-          const blobUrl = window.URL.createObjectURL(blob);
-          window.open(blobUrl, '_blank');
-          
-          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-        } catch (err) {
-          console.error('Failed to download document:', err);
-          throw err;
+        } 
+        // For Word documents, return the viewer URL
+        else if (['doc', 'docx'].includes(fileExtension)) {
+          // Return file path and name for the viewer component
+          return {
+            filePath,
+            fileName: fileName || filePath.split('/').pop(),
+            viewerType: 'word'
+          };
         }
+        // For other file types, download normally
+        else {
+          const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/company-admin/documents/download?file_path=${encodedPath}`;
+          
+          try {
+            const response = await fetch(url, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId') 
+                  ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+                  : {}),
+                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                  ? { 'X-Acting-Owner-Is-Guest': 'true' }
+                  : {})
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Failed to download document: ${response.statusText}`);
+            }
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName || filePath.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+          } catch (err) {
+            console.error('Failed to download document:', err);
+            throw err;
+          }
+        }
+      }),
+    [withAuth]
+  );
+
+  const getDocumentViewUrl = useCallback(
+    (filePath, fileName) =>
+      withAuth(async (token) => {
+        const encodedPath = encodeURIComponent(filePath);
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+        return `${baseUrl}/company-admin/documents/view?file_path=${encodedPath}`;
       }),
     [withAuth]
   );
