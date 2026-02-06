@@ -7,12 +7,10 @@ import { I18nProvider } from "./contexts/i18n/I18nContext"
 import { ThemeProvider } from "./contexts/theme/ThemeContext"
 import { ToastProvider } from "./ComplianceCheck/contexts/ToastContext"
 import ToastContainer from "./ComplianceCheck/components/toast"
-import LLM from "./LLM/LLM"
 
 const tabsConfig = [
   { label: 'Compliance Check', component: ComplianceCheckTab, selectable: true },
   { label: 'Create VGC List', component: CreateVGCTab, selectable: true },
-  { label: 'LLM Module', component: LLM, selectable: true },
 ]
 
 export default function GGD() {

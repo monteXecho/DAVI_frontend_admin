@@ -17,6 +17,8 @@ import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
 import DashboardIcon from "@/components/icons/DashboardIcon";
 import GrayFolderIcon from "@/components/icons/GrayFolderIcon"
+import CreatieChatIcon from "@/components/icons/CreatieChatIcon";
+import WebChatIcon from "@/components/icons/WebChatIcon";
 
 const MENU_CONFIG = {
   publicModules: [
@@ -33,6 +35,20 @@ const MENU_CONFIG = {
       icon: VGCItem,
       path: '/GGD',
       moduleKey: 'GGD Checks'
+    },
+    {
+      id: 'creatiechat',
+      label: 'CreatieChat',
+      icon: () => <CreatieChatIcon className="w-8 h-8" />,
+      path: '/creatiechat',
+      moduleKey: 'CreatieChat'
+    },
+    {
+      id: 'webchat',
+      label: 'WebChat',
+      icon: () => <WebChatIcon className="w-8 h-8" />,
+      path: '/webchat',
+      moduleKey: 'WebChat'
     }
   ],
   adminModules: [
@@ -62,6 +78,13 @@ const MENU_CONFIG = {
       label: 'Rollen',
       icon: RollenItem,
       path: '/rollen',
+      requiredRoles: ['super_admin', 'company_admin']
+    },
+    {
+      id: 'bronnen',
+      label: 'Bronnen',
+      icon: RollenItem,
+      path: '/bronnen',
       requiredRoles: ['super_admin', 'company_admin']
     },
     {
@@ -299,6 +322,9 @@ export default function LeftSidebar() {
       "/documentchat": "Documentenchat",
       "/documentchat/mijn": "Documentenchat",
       "/GGD": "GGD Checks",
+      "/creatiechat": "CreatieChat",
+      "/webchat": "WebChat",
+      "/bronnen": "Bronnen",
       "/compagnies": "Dashboard",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
@@ -330,8 +356,7 @@ export default function LeftSidebar() {
     setActiveTab(routeToTab[pathname] || null);
   }, [pathname, routeToTab]);
 
-  const handleNavigation = useCallback((path, label) => {
-    setActiveTab(label);
+  const handleNavigation = useCallback((path) => {
     router.push(path);
   }, [router]);
 
@@ -369,7 +394,7 @@ export default function LeftSidebar() {
       <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
         {filteredPublicModules.map(module => {
           const handler = getStable(`nav-${module.id}`, () =>
-            handleNavigation(module.path, module.label)
+            handleNavigation(module.path)
           );
           return (
             <MenuButton
@@ -392,7 +417,7 @@ export default function LeftSidebar() {
       <div className="flex flex-col gap-6 w-[19.44vw] xl:w-[280px]">
         {filteredAdminModules.map(module => {
           const handler = getStable(`nav-${module.id}`, () =>
-            handleNavigation(module.path, module.label)
+            handleNavigation(module.path)
           );
           return (
             <MenuButton

@@ -9,11 +9,13 @@ export function useDocuments() {
   const { withAuth, apiClient, createAuthHeaders } = useApiCore();
 
   const uploadDocument = useCallback(
-    (formData) =>
-      withAuth((token) =>
-        apiClient
-          .post('/company-admin/documents/upload', formData, createAuthHeaders(token, { 'Content-Type': 'multipart/form-data' }))
-          .then((res) => ({ success: true, message: 'File uploaded successfully' }))
+    (formData, uploadType = 'document') =>
+      withAuth((token) => {
+        // Add upload_type as a query parameter or form field
+        const url = `/company-admin/documents/upload?upload_type=${uploadType}`;
+        return apiClient
+          .post(url, formData, createAuthHeaders(token, { 'Content-Type': 'multipart/form-data' }))
+          .then((res) => ({ success: true, data: res.data, message: 'File uploaded successfully' }))
           .catch((err) => {
             const status = err.response?.status;
             const detail = err.response?.data?.detail;
@@ -31,8 +33,8 @@ export function useDocuments() {
             }
 
             return { success: false, message: detail || 'Upload failed. Please try again.' };
-          })
-      ),
+          });
+      }),
     [withAuth]
   );
 
@@ -120,7 +122,7 @@ export function useDocuments() {
     () =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/documents', createAuthHeaders(token))
+          .get('/company-admin/documents/all', createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]

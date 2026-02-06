@@ -16,6 +16,8 @@ const MODULES = [
   { key: 'Nextcloud', label: 'Nextcloud', shortLabel: 'Nex' },
   { key: 'Documenten chat', label: 'Chat', shortLabel: 'Chat' },
   { key: 'GGD Checks', label: 'GGD Checks', shortLabel: 'GGD' },
+  { key: 'CreatieChat', label: 'CreatieChat', shortLabel: 'Creatie' },
+  { key: 'WebChat', label: 'WebChat', shortLabel: 'WebChat' },
 ];
 
 export default function ModulesDetail() {

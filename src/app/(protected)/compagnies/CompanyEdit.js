@@ -45,6 +45,8 @@ export default function CompanyEdit() {
   const [modulePermissions, setModulePermissions] = useState({
     'Documenten chat': false,
     'GGD Checks': false,
+    'CreatieChat': false,
+    'WebChat': false,
     'Admin Dashboard': false,
     'Webcrawler': false,
     'Nexcloud': false,
@@ -100,6 +102,8 @@ export default function CompanyEdit() {
         const modulePerms = {
           'Documenten chat': false,
           'GGD Checks': false,
+          'CreatieChat': false,
+          'WebChat': false,
           'Admin Dashboard': false,
           'Webcrawler': false,
           'Nexcloud': false,
@@ -116,6 +120,10 @@ export default function CompanyEdit() {
                   modulePerms['Documenten chat'] = moduleItem.enabled === true;
                 } else if (moduleName === 'GGD Checks') {
                   modulePerms['GGD Checks'] = moduleItem.enabled === true;
+                } else if (moduleName === 'CreatieChat') {
+                  modulePerms['CreatieChat'] = moduleItem.enabled === true;
+                } else if (moduleName === 'WebChat') {
+                  modulePerms['WebChat'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Admin Dashboard' || moduleName === 'Dashboard') {
                   modulePerms['Admin Dashboard'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Webcrawler' || moduleName === 'Web Crawler') {
@@ -135,6 +143,10 @@ export default function CompanyEdit() {
                   modulePerms['Documenten chat'] = enabled;
                 } else if (moduleKey === 'GGD Checks') {
                   modulePerms['GGD Checks'] = enabled;
+                } else if (moduleKey === 'CreatieChat') {
+                  modulePerms['CreatieChat'] = enabled;
+                } else if (moduleKey === 'WebChat') {
+                  modulePerms['WebChat'] = enabled;
                 } else if (moduleKey === 'Admin Dashboard' || moduleKey === 'Dashboard') {
                   modulePerms['Admin Dashboard'] = enabled;
                 } else if (moduleKey === 'Webcrawler' || moduleKey === 'Web Crawler') {

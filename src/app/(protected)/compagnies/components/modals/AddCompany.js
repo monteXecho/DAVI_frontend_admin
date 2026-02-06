@@ -23,6 +23,8 @@ export default function AddCompany({ onClose, onCreate }) {
   const [modulePermissions, setModulePermissions] = useState({
     'Documenten chat': false,
     'GGD Checks': false,
+    'CreatieChat': false,
+    'WebChat': false,
     'Admin Dashboard': false,
     'Webcrawler': false,
     'Nexcloud': false,

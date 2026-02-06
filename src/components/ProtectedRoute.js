@@ -7,7 +7,7 @@ import { useApi } from '@/lib/useApi';
 
 // Define which paths are admin-only (BEHEER) vs module paths (MODULES)
 const ADMIN_PATHS = ['/rollen', '/rol-pz', '/gebruikers', '/documenten', '/mappen', '/compagnies'];
-const MODULE_PATHS = ['/documentchat', '/GGD', '/bkr', '/vgc', '/3-uurs'];
+const MODULE_PATHS = ['/documentchat', '/GGD', '/creatiechat', '/webchat', '/bkr', '/vgc', '/3-uurs'];
 
 export default function ProtectedRoute({ children }) {
   const { keycloak, initialized } = useKeycloak();
@@ -118,6 +118,10 @@ export default function ProtectedRoute({ children }) {
             hasAccess = user.modules?.['Documenten chat']?.enabled === true;
           } else if (pathname.startsWith('/GGD')) {
             hasAccess = user.modules?.['GGD Checks']?.enabled === true;
+          } else if (pathname.startsWith('/creatiechat')) {
+            hasAccess = user.modules?.['CreatieChat']?.enabled === true;
+          } else if (pathname.startsWith('/webchat')) {
+            hasAccess = user.modules?.['WebChat']?.enabled === true;
           } else {
             // For other module paths, allow if user has any module enabled
             hasAccess = Object.values(user.modules || {}).some(module => module.enabled === true);
@@ -129,6 +133,10 @@ export default function ProtectedRoute({ children }) {
               router.replace('/documentchat');
             } else if (user.modules?.['GGD Checks']?.enabled) {
               router.replace('/GGD');
+            } else if (user.modules?.['CreatieChat']?.enabled) {
+              router.replace('/creatiechat');
+            } else if (user.modules?.['WebChat']?.enabled) {
+              router.replace('/webchat');
             } else {
               router.replace('/documentchat'); // Default fallback
             }
