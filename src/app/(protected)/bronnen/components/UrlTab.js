@@ -189,18 +189,6 @@ export default function UrlTab({
         </div>
       </div>
 
-      {/* Sync Info */}
-      {(lastSync || nextSync) && (
-        <div className="mb-4 text-sm text-gray-600">
-          {lastSync && (
-            <span>Laatste synchronisatie: {formatDateTime(lastSync)}.</span>
-          )}
-          {nextSync && (
-            <span className="ml-4">Volgende synchronisatie: {formatNextSync(nextSync)}.</span>
-          )}
-        </div>
-      )}
-
       {/* Table */}
       {filteredSources.length === 0 ? (
         <div className="text-center py-4 text-gray-500 font-montserrat">

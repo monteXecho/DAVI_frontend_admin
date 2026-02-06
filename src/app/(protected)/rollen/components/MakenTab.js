@@ -21,21 +21,28 @@ export default function MakenTab({ user, folders, onAddOrUpdateRole, canWrite = 
     // Company modules determine what's available for roles
     const modulesSource = user?.company_modules || user?.modules || [];
     
+    // Modules that should not be assignable to company roles (admin-only)
+    const adminOnlyModules = ['Admin Dashboard', 'Webcrawler', 'Nextcloud', 'Nexcloud'];
+    
     if (Array.isArray(modulesSource)) {
       // If it's an array (from company_modules serialized format)
-      const userModules = modulesSource.map(module => ({
-        name: module.name,
-        enabled: Boolean(module.enabled),
-        locked: !module.enabled,  // Lock modules that company doesn't have enabled
-      }))
+      const userModules = modulesSource
+        .filter(module => !adminOnlyModules.includes(module.name))
+        .map(module => ({
+          name: module.name,
+          enabled: Boolean(module.enabled),
+          locked: !module.enabled,  // Lock modules that company doesn't have enabled
+        }))
       setModules(userModules)
     } else if (typeof modulesSource === 'object') {
       // If it's an object (from user.modules)
-      const userModules = Object.entries(modulesSource).map(([name, val]) => ({
-        name,
-        enabled: Boolean(val.enabled),
-        locked: !val.enabled,
-      }))
+      const userModules = Object.entries(modulesSource)
+        .filter(([name]) => !adminOnlyModules.includes(name))
+        .map(([name, val]) => ({
+          name,
+          enabled: Boolean(val.enabled),
+          locked: !val.enabled,
+        }))
       setModules(userModules)
     }
   }, [user])

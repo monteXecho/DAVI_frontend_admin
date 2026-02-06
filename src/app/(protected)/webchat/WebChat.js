@@ -2,32 +2,14 @@
 
 import { useState, useCallback } from 'react'
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
-import { useApiCore } from '@/lib/api/useApiCore'
+import { useWebChat } from '@/lib/api/webchat'
 
 export default function WebChat() {
-  const { withAuth } = useApiCore()
+  const { askQuestion } = useWebChat()
   const [response, setResponse] = useState('')
   const [sources, setSources] = useState([])
   const [loading, setLoading] = useState(false)
   const [submittedQuestion, setSubmittedQuestion] = useState('')
-
-  const askWebChatQuestion = useCallback(async (questionText) => {
-    return await withAuth(async (token) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/webchat/ask`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ question: questionText }),
-      })
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'Failed to get answer' }))
-        throw new Error(error.detail || 'Failed to get answer')
-      }
-      return await response.json()
-    })
-  }, [withAuth])
 
   const handleQuestionSubmit = useCallback(async (questionText) => {
     if (!questionText.trim()) return
@@ -38,7 +20,7 @@ export default function WebChat() {
     setLoading(true)
 
     try {
-      const data = await askWebChatQuestion(questionText)
+      const data = await askQuestion(questionText)
       setResponse(data.answer || '')
       
       // Format sources from documents
@@ -61,7 +43,7 @@ export default function WebChat() {
     } finally {
       setLoading(false)
     }
-  }, [askWebChatQuestion])
+  }, [askQuestion])
 
   return (
     <div className="flex flex-col h-full w-full p-8">

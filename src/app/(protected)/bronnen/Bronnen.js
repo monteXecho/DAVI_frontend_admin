@@ -26,6 +26,13 @@ export default function Bronnen() {
       if (res?.sources) {
         setSources(res.sources)
       }
+      // Update sync times from API response
+      if (res?.last_sync) {
+        setLastSync(new Date(res.last_sync))
+      }
+      if (res?.next_sync) {
+        setNextSync(new Date(res.next_sync))
+      }
     } catch (err) {
       console.error("Failed to fetch sources:", err)
     } finally {
@@ -35,15 +42,6 @@ export default function Bronnen() {
 
   useEffect(() => {
     fetchSources()
-    // Set sync times (mock for now, can be enhanced with actual sync schedule)
-    const now = new Date()
-    setLastSync(now)
-    const next = new Date(now)
-    next.setHours(2, 10, 0, 0)
-    if (next < now) {
-      next.setDate(next.getDate() + 1)
-    }
-    setNextSync(next)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run once on mount
 
@@ -100,9 +98,15 @@ export default function Bronnen() {
 
   const handleSync = async () => {
     try {
-      await syncSources()
+      const res = await syncSources()
+      // Update sync times from sync response
+      if (res?.last_sync) {
+        setLastSync(new Date(res.last_sync))
+      }
+      if (res?.next_sync) {
+        setNextSync(new Date(res.next_sync))
+      }
       await fetchSources()
-      setLastSync(new Date())
     } catch (err) {
       console.error("Failed to sync sources:", err)
       throw err
@@ -144,6 +148,22 @@ export default function Bronnen() {
         <p className="text-gray-600 font-montserrat">
           Beheer welke websites worden gebruikt voor branche-antwoorden.
         </p>
+        
+        {/* Sync Information */}
+        {(lastSync || nextSync) && (
+          <div className="mt-4 text-sm text-gray-600 font-montserrat flex flex-col gap-1">
+            {lastSync && (
+              <div>
+                <span className="font-bold">Laatste synchronisatie:</span> {formatDateTime(lastSync)}.
+              </div>
+            )}
+            {nextSync && (
+              <div>
+                <span className="font-bold">Volgende synchronisatie:</span> {formatNextSync(nextSync)}.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
