@@ -30,11 +30,18 @@ export default function DashboardClient() {
         } else {
           try {
             statsData = await getSuperAdminStats();
+            console.log("✅ Stats API response:", statsData);
             // Mark endpoint as available if request succeeds
             if (typeof window !== 'undefined') {
               window.sessionStorage.setItem('superAdminStatsEndpointAvailable', 'true');
             }
+            // Validate that we got actual data
+            if (!statsData || (statsData.companies?.total === undefined && !statsData.companies)) {
+              console.warn("⚠️ Stats API returned empty or invalid data, using fallback");
+              statsData = null;
+            }
           } catch (err) {
+            console.error('❌ Error fetching super admin stats:', err);
             // If endpoint doesn't exist yet (404) or access denied (403), calculate from companies data
             // Mark endpoint as unavailable to prevent future requests
             if ((err.is404 || err.response?.status === 404) && typeof window !== 'undefined') {
@@ -49,6 +56,7 @@ export default function DashboardClient() {
         }
         
         if (!statsData) {
+          // Fallback: calculate from companies data if API endpoint not available
           const companies = await getCompanies();
           const companiesList = Array.isArray(companies) ? companies : companies.companies || [];
           
@@ -86,22 +94,75 @@ export default function DashboardClient() {
             });
           });
           
+          // Match the API response structure
           statsData = {
-            companies: companiesList.length,
-            company_admins: totalAdmins,
-            team_members: totalTeamMembers,
-            users: totalUsers,
-            online_users: onlineUsers,
-            max_users: 4096,
-            max_admins: 4096,
-            max_roles: 512,
-            modules_activated: totalModules,
-            total_documents: totalDocuments,
-            max_documents: 1048576,
-            unlimited_users: unlimitedUsers,
-            unlimited_admins: unlimitedAdmins,
-            unlimited_documents: unlimitedDocuments
+            companies: {
+              total: companiesList.length
+            },
+            admins: {
+              total: totalAdmins,
+              max_possible: 4096,
+              unlimited_companies: unlimitedAdmins
+            },
+            team_members: {
+              total: totalTeamMembers
+            },
+            users: {
+              total: totalUsers,
+              online: onlineUsers,
+              max_possible: 4096,
+              unlimited_companies: unlimitedUsers
+            },
+            roles: {
+              total: 0, // Would need to count from companies
+              max_possible: 512
+            },
+            documents: {
+              total: totalDocuments,
+              max_possible: 1048576,
+              unlimited_companies: unlimitedDocuments
+            },
+            modules: {
+              active: totalModules
+            }
           };
+        }
+        
+        console.log("📊 Dashboard stats data:", statsData);
+        
+        // Ensure statsData has the correct structure
+        if (statsData) {
+          // If statsData has flat structure (old format), convert to nested structure
+          if (typeof statsData.companies === 'number') {
+            console.warn("⚠️ Converting old flat stats structure to nested structure");
+            statsData = {
+              companies: { total: statsData.companies || 0 },
+              admins: {
+                total: statsData.company_admins || 0,
+                max_possible: statsData.max_admins || 0,
+                unlimited_companies: statsData.unlimited_admins || 0
+              },
+              team_members: { total: statsData.team_members || 0 },
+              users: {
+                total: statsData.users || 0,
+                online: statsData.online_users || 0,
+                max_possible: statsData.max_users || 0,
+                unlimited_companies: statsData.unlimited_users || 0
+              },
+              roles: {
+                total: 0,
+                max_possible: statsData.max_roles || 0
+              },
+              documents: {
+                total: statsData.total_documents || 0,
+                max_possible: statsData.max_documents || 0,
+                unlimited_companies: statsData.unlimited_documents || 0
+              },
+              modules: {
+                active: statsData.modules_activated || 0
+              }
+            };
+          }
         }
         
         setStats(statsData);
@@ -201,53 +262,53 @@ export default function DashboardClient() {
             className="cursor-pointer"
           >
             <DashboardCard
-              number={stats.companies || 0}
+              number={stats.companies?.total || 0}
               label="Bedrijven"
               icon={<BuildingIcon />}
             />
           </div>
           <DashboardCard
-            number={stats.company_admins || 0}
+            number={stats.admins?.total || 0}
             label="Bedrijfs-admins"
             icon={<CompanyAdminIcon />}
           />
           <DashboardCard
-            number={stats.team_members || 0}
+            number={stats.team_members?.total || 0}
             label="Teamleden"
             icon={<PeopleIcon />}
           />
 
           {/* Row 2 - 3 tiles */}
           <DashboardCard
-            number={stats.users || 0}
+            number={stats.users?.total || 0}
             label="Gebruikers"
             icon={<PersonIcon />}
             subtitle={{
-              text: `${stats.online_users || 0} online`,
+              text: `${stats.users?.online || 0} online`,
               icon: <LightningIcon />
             }}
           />
           <DashboardCard
-            number={stats.max_users || 0}
+            number={stats.users?.max_possible || 0}
             label="Maximum gebruikers mogelijk"
-            unlimitedCount={stats.unlimited_users || 0}
+            unlimitedCount={stats.users?.unlimited_companies || 0}
             icon={<SettingsIcon />}
           />
           <DashboardCard
-            number={stats.max_admins || 0}
+            number={stats.admins?.max_possible || 0}
             label="Maximum admins mogelijk"
-            unlimitedCount={stats.unlimited_admins || 0}
+            unlimitedCount={stats.admins?.unlimited_companies || 0}
             icon={<SettingsIcon />}
           />
 
           {/* Row 3 - 3 tiles */}
           <DashboardCard
-            number={stats.max_roles || 0}
-            label="Maximum rollen mogelijk"
+            number={stats.roles?.total || 0}
+            label="Totaal rollen"
             icon={<RoleIcon />}
           />
           <DashboardCard
-            number={stats.max_roles || 0}
+            number={stats.roles?.max_possible || 0}
             label="Maximum rollen mogelijk"
             icon={<RoleIcon />}
           />
@@ -256,7 +317,7 @@ export default function DashboardClient() {
             className="cursor-pointer"
           >
             <DashboardCard
-              number={stats.modules_activated || 0}
+              number={stats.modules?.active || 0}
               label="Modules geactiveerd"
               icon={<ModuleIcon />}
             />
@@ -264,15 +325,15 @@ export default function DashboardClient() {
 
           {/* Row 4 - 2 tiles (centered on large screens) */}
           <DashboardCard
-            number={stats.total_documents || 0}
+            number={stats.documents?.total || 0}
             label="Totaal documenten opgeslagen"
             icon={<DocumentIcon />}
           />
           <DashboardCard
-            number={stats.max_documents || 0}
+            number={stats.documents?.max_possible || 0}
             label="Maximum documenten mogelijk"
             icon={<DocumentIcon />}
-            unlimitedCount={stats.unlimited_documents || 0}
+            unlimitedCount={stats.documents?.unlimited_companies || 0}
           />
         </div>
       </div>

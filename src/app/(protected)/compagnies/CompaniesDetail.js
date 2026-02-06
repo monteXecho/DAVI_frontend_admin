@@ -7,17 +7,19 @@ import AddButton from "@/components/buttons/AddButton";
 import SortableHeader from "@/components/SortableHeader";
 import { useSortableData } from "@/lib/useSortableData";
 import EditIcon from "@/components/icons/EditIcon";
+import AddCompany from "./components/modals/AddCompany";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function CompaniesDetail() {
   const router = useRouter();
-  const { getCompanies, getSuperAdminRolesCount } = useApi();
+  const { getCompanies, getSuperAdminRolesCount, createCompany, updateCompanyLimits, updateCompanyModules } = useApi();
   const [companies, setCompanies] = useState([]);
   const [rolesByCompany, setRolesByCompany] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -146,6 +148,7 @@ export default function CompaniesDetail() {
   }
 
   return (
+    <>
     <div className="flex flex-col w-full h-full px-[25px] md:px-[97px] py-[22px] md:py-[143px] overflow-scroll scrollbar-hide bg-gradient-to-br from-gray-50 to-white">
       {/* Header with back button */}
       <div className="flex flex-col mb-8 gap-3">
@@ -197,7 +200,7 @@ export default function CompaniesDetail() {
                   <p className="text-sm text-gray-600">Beheer alle bedrijven en hun instellingen</p>
                 </div>
               </div>
-              <AddButton onClick={() => {}} text="Toevoegen" />
+              <AddButton onClick={() => setIsAddCompanyModalOpen(true)} text="Toevoegen" />
             </div>
           </div>
           
@@ -382,6 +385,49 @@ export default function CompaniesDetail() {
           </div>
         </div>
       </div>
+
+      {/* Add Company Modal */}
+      {isAddCompanyModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
+          onClick={() => setIsAddCompanyModalOpen(false)}
+        >
+          <div className="animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <AddCompany
+              onClose={() => setIsAddCompanyModalOpen(false)}
+              onCreate={async (name, limits, modules) => {
+                try {
+                  // Create company
+                  const newCompany = await createCompany(name);
+                  const companyId = newCompany.id || newCompany._id;
+                  
+                  // Update limits if provided
+                  if (limits) {
+                    await updateCompanyLimits(companyId, limits);
+                  }
+                  
+                  // Update modules if provided
+                  if (modules) {
+                    await updateCompanyModules(companyId, { modules });
+                  }
+                  
+                  // Refresh companies list
+                  const data = await getCompanies();
+                  const companiesList = Array.isArray(data) ? data : data.companies || [];
+                  setCompanies(companiesList);
+                  
+                  setIsAddCompanyModalOpen(false);
+                  alert('Bedrijf succesvol aangemaakt!');
+                } catch (error) {
+                  console.error("Failed to create company:", error);
+                  throw error;
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

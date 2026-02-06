@@ -108,28 +108,28 @@ export default function CompanyEdit() {
         // Get company modules (company-level permissions)
         if (foundCompany.modules) {
           if (Array.isArray(foundCompany.modules)) {
-            foundCompany.modules.forEach(module => {
-              if (module && module.name) {
-                const moduleName = module.name;
+            foundCompany.modules.forEach(moduleItem => {
+              if (moduleItem && moduleItem.name) {
+                const moduleName = moduleItem.name;
                 // Map module names
                 if (moduleName === 'Documenten chat' || moduleName === 'Documenten chat') {
-                  modulePerms['Documenten chat'] = module.enabled === true;
+                  modulePerms['Documenten chat'] = moduleItem.enabled === true;
                 } else if (moduleName === 'GGD Checks') {
-                  modulePerms['GGD Checks'] = module.enabled === true;
+                  modulePerms['GGD Checks'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Admin Dashboard' || moduleName === 'Dashboard') {
-                  modulePerms['Admin Dashboard'] = module.enabled === true;
+                  modulePerms['Admin Dashboard'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Webcrawler' || moduleName === 'Web Crawler') {
-                  modulePerms['Webcrawler'] = module.enabled === true;
+                  modulePerms['Webcrawler'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Nexcloud' || moduleName === 'Nextcloud') {
-                  modulePerms['Nexcloud'] = module.enabled === true;
+                  modulePerms['Nexcloud'] = moduleItem.enabled === true;
                 }
               }
             });
           } else if (typeof foundCompany.modules === 'object') {
             Object.keys(foundCompany.modules).forEach(moduleKey => {
-              const module = foundCompany.modules[moduleKey];
-              if (module) {
-                const enabled = module.enabled === true || module.enabled === "true";
+              const moduleConfig = foundCompany.modules[moduleKey];
+              if (moduleConfig) {
+                const enabled = moduleConfig.enabled === true || moduleConfig.enabled === "true";
                 // Map module names
                 if (moduleKey === 'Documenten chat') {
                   modulePerms['Documenten chat'] = enabled;

@@ -19,12 +19,19 @@ export function useCompanies() {
   );
 
   const createCompany = useCallback(
-    (name) =>
-      withAuth((token) =>
-        apiClient
-          .post('/super-admin/companies', { name }, createAuthHeaders(token))
-          .then((res) => res.data)
-      ),
+    (name, limits = null, modules = null) =>
+      withAuth((token) => {
+        const payload = { name };
+        if (limits) {
+          payload.limits = limits;
+        }
+        if (modules) {
+          payload.modules = modules;
+        }
+        return apiClient
+          .post('/super-admin/companies', payload, createAuthHeaders(token))
+          .then((res) => res.data);
+      }),
     [withAuth]
   );
 

@@ -16,11 +16,11 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
     // If it's an array, convert to object format
     if (Array.isArray(modules)) {
       const modulesObj = {};
-      modules.forEach(module => {
-        if (module && module.name) {
-          modulesObj[module.name] = {
-            enabled: module.enabled === true,
-            desc: module.desc || ""
+      modules.forEach(moduleItem => {
+        if (moduleItem && moduleItem.name) {
+          modulesObj[moduleItem.name] = {
+            enabled: moduleItem.enabled === true,
+            desc: moduleItem.desc || ""
           };
         }
       });
@@ -33,8 +33,8 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
   const companyModuleNames = useMemo(() => {
     return Object.keys(companyModules).filter(
       key => {
-        const module = companyModules[key];
-        const isEnabled = module?.enabled === true;
+        const moduleConfig = companyModules[key];
+        const isEnabled = moduleConfig?.enabled === true;
         // Only include if it's not a numeric key (indices)
         const isNotIndex = isNaN(parseInt(key));
         return isEnabled && isNotIndex;

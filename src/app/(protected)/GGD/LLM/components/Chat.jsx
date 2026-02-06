@@ -32,7 +32,8 @@ const Chat = () => {
 
     try {
       // Get API base URL from environment variable, fallback to relative path
-      const apiUrl = '/llm';
+      const apiBaseUrl = "https://demo.daviapp.nl/llm";
+      const apiUrl = `${apiBaseUrl}/api/chat`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
