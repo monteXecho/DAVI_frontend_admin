@@ -41,11 +41,11 @@ export default function Company({ companies, selectedId, onSelect, onCreateCompa
 
       {isAddCompanyOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
           onClick={() => setIsAddCompanyOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-fit"
+            className="w-full max-w-[560px] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <AddCompany 
@@ -61,14 +61,13 @@ export default function Company({ companies, selectedId, onSelect, onCreateCompa
 
       {isDeleteCompanyOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
           onClick={() => setIsDeleteCompanyOpen(false)} 
         >
           <div
-            className="bg-white rounded-2xl p-6 w-fit"
+            className="w-full max-w-[600px] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {console.log("Company name: ", selectedCompany?.name)}
             <DeleteCompany 
               selectedCompany={selectedCompany} 
               onClose={() => setIsDeleteCompanyOpen(false)} 

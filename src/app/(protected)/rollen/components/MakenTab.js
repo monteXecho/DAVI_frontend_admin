@@ -17,8 +17,21 @@ export default function MakenTab({ user, folders, onAddOrUpdateRole, canWrite = 
   const [errorMessage, setErrorMessage] = useState("") 
 
   useEffect(() => {
-    if (user?.modules) {
-      const userModules = Object.entries(user.modules).map(([name, val]) => ({
+    // Use company_modules if available, otherwise fall back to user.modules
+    // Company modules determine what's available for roles
+    const modulesSource = user?.company_modules || user?.modules || [];
+    
+    if (Array.isArray(modulesSource)) {
+      // If it's an array (from company_modules serialized format)
+      const userModules = modulesSource.map(module => ({
+        name: module.name,
+        enabled: Boolean(module.enabled),
+        locked: !module.enabled,  // Lock modules that company doesn't have enabled
+      }))
+      setModules(userModules)
+    } else if (typeof modulesSource === 'object') {
+      // If it's an object (from user.modules)
+      const userModules = Object.entries(modulesSource).map(([name, val]) => ({
         name,
         enabled: Boolean(val.enabled),
         locked: !val.enabled,

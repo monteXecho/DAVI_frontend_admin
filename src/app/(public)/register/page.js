@@ -184,12 +184,12 @@ export default function RegisterPage() {
       const result = await register(form);
       console.log("Register API result:", result);
 
-      if (result.ok) {
+      if (result?.status === "success") {
         console.log("Registration successful");
         setLoggedin(true);
         setForm({ fullName: "", email: "", password: "", passwordConfirm: "" });
       } else {
-        const errorData = result.data;
+        const errorData = result?.detail || result?.data || result;
         console.log("Registration failed with data:", errorData);
         
         const errorDetail = parseBackendError(errorData);
@@ -235,7 +235,45 @@ export default function RegisterPage() {
         }
       }
     } catch (error) {
-      toast.error("Er is een onverwachte fout opgetreden. Probeer het later nog eens.");
+      console.error("Registration error:", error);
+      
+      // Handle axios error responses
+      const errorData = error?.response?.data || error?.data || error;
+      const errorDetail = parseBackendError(errorData);
+      
+      switch (errorDetail) {
+        case "EMAIL_NOT_FOUND":
+          setErrors(prev => ({
+            ...prev,
+            emailNotFound: "E-mailadres niet bekend.\nVraag bij je organisatie om je uit te nodigen."
+          }));
+          break;
+          
+        case "EMAIL_EXISTS":
+          setErrors(prev => ({
+            ...prev,
+            emailExists: "Dit e-mailadres is al geregistreerd. Log in of gebruik een ander e-mailadres."
+          }));
+          break;
+          
+        case "USERNAME_EXISTS":
+          setErrors(prev => ({
+            ...prev,
+            usernameExists: "Deze gebruikersnaam bestaat al. Probeer een andere voor- en achternaam combinatie."
+          }));
+          break;
+          
+        case "ROLE_MISSING":
+          setErrors(prev => ({
+            ...prev,
+            roleMissing: "Er is een configuratieprobleem bij jouw organisatie."
+          }));
+          toast.error("Rol niet gevonden. Neem contact op met je organisatie.");
+          break;
+          
+        default:
+          toast.error("Registratie mislukt. Probeer het opnieuw.");
+      }
     } finally {
       setLoading(false);
     }

@@ -394,7 +394,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
     <div className="flex flex-col gap-11 w-full justify-between">
       <div className="flex w-full gap-5">
         <div className="flex flex-col w-full">
-          <span className="mb-2 font-montserrat text-[16px]">Selecteer een map</span>
+          <span className="mb-2 font-montserrat text-[16px]">Selecteer een map en klik op ‘+’</span>
           <div className="flex gap-2">
             <div className="flex-1">
               <DropdownMenu

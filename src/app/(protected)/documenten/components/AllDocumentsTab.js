@@ -256,15 +256,41 @@ export default function AllDocumentsTab({
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
   , [selectedDocuments, filteredDocuments])
 
-  const getSelectedRoleFolderCombinations = useCallback(() => {
-    const combinations = new Set()
+  // Get unique documents by folder + file name (not by role)
+  const getSelectedUniqueDocuments = useCallback(() => {
+    const uniqueDocs = new Map()
     getSelectedDocumentsData().forEach(doc => {
-      combinations.add(`${doc.role}::${doc.folder}`)
+      const key = `${doc.folder}::${doc.file}`
+      if (!uniqueDocs.has(key)) {
+        uniqueDocs.set(key, {
+          folder: doc.folder,
+          file: doc.file,
+          path: doc.path,
+          // Collect all roles this document appears in
+          roles: []
+        })
+      }
+      const uniqueDoc = uniqueDocs.get(key)
+      if (!uniqueDoc.roles.includes(doc.role)) {
+        uniqueDoc.roles.push(doc.role)
+      }
     })
-    return Array.from(combinations).map(combo => {
-      const [role, folder] = combo.split('::')
-      return { role, folder }
+    return Array.from(uniqueDocs.values())
+  }, [getSelectedDocumentsData])
+
+  // Get unique folders for the selected documents (one document = one folder, regardless of roles)
+  const getSelectedRoleFolderCombinations = useCallback(() => {
+    // Get unique folders only - a document is physically in one folder, even if assigned to multiple roles
+    const uniqueFolders = new Set()
+    
+    getSelectedDocumentsData().forEach(doc => {
+      uniqueFolders.add(doc.folder)
     })
+    
+    // Return unique folders only (no duplicates)
+    return Array.from(uniqueFolders).map(folder => ({
+      folder
+    }))
   }, [getSelectedDocumentsData])
 
   const handleDocumentSelect = (docId, isSelected) => {
@@ -310,10 +336,13 @@ export default function AllDocumentsTab({
   const handleDeleteConfirm = async () => {
     try {
       if (onDeleteDocuments && selectedDocuments.size > 0) {
+        // Use all selected document instances (not just unique ones)
+        // This ensures all role-folder combinations are deleted
         const docsToDelete = getSelectedDocumentsData().map(doc => ({
           fileName: doc.file,
           folderName: doc.folder,
-          path: doc.path
+          path: doc.path,
+          role: doc.role
         }))
         await onDeleteDocuments(docsToDelete)
         setSelectedDocuments(new Set())
@@ -329,12 +358,16 @@ export default function AllDocumentsTab({
   const handleReplaceConfirm = async (files) => {
     try {
       if (onReplaceDocuments && selectedDocuments.size > 0 && files.length > 0) {
+        // Use all selected document instances (not just unique ones)
+        // This ensures all role-folder combinations are replaced
         const docsToDelete = getSelectedDocumentsData().map(doc => ({
           fileName: doc.file,
           folderName: doc.folder,
           path: doc.path,
+          role: doc.role
         }))
         
+        // Get all role-folder combinations where the selected documents appear
         const uploadTargets = getSelectedRoleFolderCombinations()
         
         await onReplaceDocuments(docsToDelete, files, uploadTargets)
@@ -372,7 +405,7 @@ export default function AllDocumentsTab({
         {getHeaderText()}
         {selectedDocuments.size > 0 && (
           <span className="ml-2 text-gray-600">
-            ({selectedDocuments.size} geselecteerd)
+            ({getSelectedUniqueDocuments().length} document{getSelectedUniqueDocuments().length !== 1 ? 'en' : ''} geselecteerd)
           </span>
         )}
       </div>
@@ -589,13 +622,13 @@ export default function AllDocumentsTab({
         >
           <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
             <DeleteDocumentModal
-              documents={getSelectedDocumentsData()}
+              documents={getSelectedUniqueDocuments()}
               onClose={() => {
                 setIsDeleteModalOpen(false);
                 setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleDeleteConfirm}
-              isMultiple={selectedDocuments.size > 1}
+              isMultiple={getSelectedUniqueDocuments().length > 1}
             />
           </div>
         </div>
@@ -612,14 +645,14 @@ export default function AllDocumentsTab({
         >
           <div className="p-6 w-fit" onClick={(e) => e.stopPropagation()}>
             <ReplaceDocumentsModal
-              documents={getSelectedDocumentsData()}
+              documents={getSelectedUniqueDocuments()}
               uploadTargets={getSelectedRoleFolderCombinations()}
               onClose={() => {
                 setIsReplaceModalOpen(false);
                 setSelectedBulkAction("Bulkacties");
               }}
               onConfirm={handleReplaceConfirm}
-              isMultiple={selectedDocuments.size > 1}
+              isMultiple={getSelectedUniqueDocuments().length > 1}
             />
           </div>
         </div>

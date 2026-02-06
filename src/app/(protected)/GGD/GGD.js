@@ -7,10 +7,12 @@ import { I18nProvider } from "./contexts/i18n/I18nContext"
 import { ThemeProvider } from "./contexts/theme/ThemeContext"
 import { ToastProvider } from "./ComplianceCheck/contexts/ToastContext"
 import ToastContainer from "./ComplianceCheck/components/toast"
+import LLM from "./LLM/LLM"
 
 const tabsConfig = [
   { label: 'Compliance Check', component: ComplianceCheckTab, selectable: true },
   { label: 'Create VGC List', component: CreateVGCTab, selectable: true },
+  { label: 'LLM Module', component: LLM, selectable: true },
 ]
 
 export default function GGD() {
@@ -63,8 +65,10 @@ export default function GGD() {
 
               {/* Active Tab Content */}
               <div className="w-full h-[3px] bg-[#D6F5EB]"></div>
-              <div className="w-full px-[102px] py-[46px]">
-                <ActiveComponent />
+              <div className="w-full px-4 md:px-8 lg:px-[102px] py-4 md:py-6 lg:py-[46px]">
+                <div className="w-full h-[calc(100vh-280px)] min-h-[500px] max-h-[900px]">
+                  <ActiveComponent />
+                </div>
               </div>
             </div>
           </div>

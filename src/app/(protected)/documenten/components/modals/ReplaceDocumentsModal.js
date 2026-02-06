@@ -81,7 +81,7 @@ export default function ReplaceDocumentsModal({
       {/* Documents to be replaced */}
       <div className="mb-6">
         <h3 className="font-semibold text-gray-700 mb-2">
-          Te vervangen {isMultiple ? "documenten" : "document"}:
+          Te vervangen {isMultiple ? "documenten" : "document"} ({documents.length} {documents.length !== 1 ? 'documenten' : 'document'}):
         </h3>
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           {documents.map((doc, index) => (

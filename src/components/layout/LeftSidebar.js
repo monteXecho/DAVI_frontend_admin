@@ -15,7 +15,7 @@ import VGCItem from "@/assets/VGC_item.png";
 import RollenItem from "@/assets/rollen_item.png";
 import GebruikersItem from "@/assets/gebruikers_item.png";
 import DocumentenItem from "@/assets/documenten_item.png";
-import CompanyItem from "@/assets/company_item.png";
+import DashboardIcon from "@/components/icons/DashboardIcon";
 import GrayFolderIcon from "@/components/icons/GrayFolderIcon"
 
 const MENU_CONFIG = {
@@ -37,9 +37,9 @@ const MENU_CONFIG = {
   ],
   adminModules: [
     {
-      id: 'companies',
-      label: 'Compagnies',
-      icon: CompanyItem,
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: DashboardIcon,
       path: '/compagnies',
       requiredRole: 'super_admin'
     },
@@ -299,7 +299,7 @@ export default function LeftSidebar() {
       "/documentchat": "Documentenchat",
       "/documentchat/mijn": "Documentenchat",
       "/GGD": "GGD Checks",
-      "/compagnies": "Compagnies",
+      "/compagnies": "Dashboard",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",

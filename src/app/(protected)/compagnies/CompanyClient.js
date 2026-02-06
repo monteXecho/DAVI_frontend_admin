@@ -5,7 +5,7 @@ import Company from "./components/Company";
 import CompanyAdmins from "./components/CompanyAdmins";
 import AssignModules from "./components/AssignModules";
 
-export default function CompanyClient() {
+export default function ccc() {
   const { getCompanies, createCompany, deleteCompany, addCompanyAdmin, reassignCompanyAdmin, deleteCompanyAdmin, assignModules, error } = useApi();
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);

@@ -1,8 +1,11 @@
-export default function UploadBttn ({onClick, text}) {
+export default function UploadBttn ({onClick, text, disabled = false}) {
     return (
         <button
             onClick={onClick}
-            className="w-fit bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white"
+            disabled={disabled}
+            className={`w-fit bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors ${
+                disabled ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             >
             <svg width="24" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path

@@ -33,3 +33,20 @@ export const createAuthHeaders = (token, extraHeaders = {}) => {
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
 });
+
+// Add response interceptor to suppress console errors for expected 403/404 errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // For 404 errors, mark them as silent to prevent console logging
+    if (error.response?.status === 404) {
+      error.silent = true;
+    }
+    // For 403 errors, also mark as silent
+    if (error.response?.status === 403) {
+      error.silent = true;
+    }
+    // The error will still be thrown and can be caught by the calling code
+    return Promise.reject(error);
+  }
+);

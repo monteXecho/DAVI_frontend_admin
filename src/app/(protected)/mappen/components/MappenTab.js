@@ -9,6 +9,8 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import GebruikersItem from "@/assets/gebruikers_item.png"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
+import AddRoleModal from "./modals/AddRoleModal"
+import RemoveRoleModal from "./modals/RemoveRoleModal"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 
@@ -19,16 +21,20 @@ export default function MappenTab({
   onUploadTab, 
   onShowUsers,
   onDeleteFolders,
+  onAddRolesToFolders,
+  onRemoveRolesFromFolders,
   canWrite = true
 }) {
   const [allOptions1, setAllOptions1] = useState([])
   const [allOptions2, setAllOptions2] = useState([])
   const [selectedFolderType, setSelectedFolderType] = useState("Alle Mappen")
   const [selectedFolder, setSelectedFolder] = useState("Alle Mappen")
-  const allOptions3 = ["Bulkacties", "Verwijder map"]
+  const allOptions3 = ["Bulkacties", "Verwijder map", "Rol toevoegen", "Rol verwijderen"]
   const [selectedBulkAction, setSelectedBulkAction] = useState(allOptions3[0])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false)
+  const [isRemoveRoleModalOpen, setIsRemoveRoleModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
 
   const [expandedRoles, setExpandedRoles] = useState(new Set())
@@ -558,14 +564,92 @@ export default function MappenTab({
 
   const handleBulkAction = (action) => {
     setSelectedBulkAction(action)
+    const selectedCount = getSelectedFoldersCount()
+    
     if (action === "Verwijder map") {
-      const selectedCount = getSelectedFoldersCount()
       if (selectedCount > 0) {
         setIsDeleteModalOpen(true)
       } else {
         alert("Selecteer eerst mappen om te verwijderen.")
         setSelectedBulkAction("Bulkacties")
       }
+    } else if (action === "Rol toevoegen") {
+      if (selectedCount > 0) {
+        setIsAddRoleModalOpen(true)
+      } else {
+        alert("Selecteer eerst mappen om rollen aan toe te voegen.")
+        setSelectedBulkAction("Bulkacties")
+      }
+    } else if (action === "Rol verwijderen") {
+      if (selectedCount > 0) {
+        setIsRemoveRoleModalOpen(true)
+      } else {
+        alert("Selecteer eerst mappen om rollen van te verwijderen.")
+        setSelectedBulkAction("Bulkacties")
+      }
+    }
+  }
+
+  // Get selected folder names
+  const getSelectedFolderNames = useCallback(() => {
+    const selectedFolderNames = new Set()
+    
+    Array.from(selectedDocuments).forEach(docId => {
+      if (docId.startsWith('folder-only:')) {
+        selectedFolderNames.add(docId.replace('folder-only:', ''))
+      } else if (docId.startsWith('role-folder:')) {
+        const parts = docId.replace('role-folder:', '').split('::')
+        if (parts.length === 2) {
+          selectedFolderNames.add(parts[1]) // folder name
+        }
+      } else {
+        const doc = filteredDocuments.find(d => d.id === docId)
+        if (doc && doc.folder) {
+          selectedFolderNames.add(doc.folder)
+        }
+      }
+    })
+    
+    return Array.from(selectedFolderNames)
+  }, [selectedDocuments, filteredDocuments])
+
+  const handleAddRolesConfirm = async (selectedRoleNames) => {
+    try {
+      if (onAddRolesToFolders && selectedRoleNames.length > 0) {
+        const folderNames = getSelectedFolderNames()
+        const result = await onAddRolesToFolders(folderNames, selectedRoleNames)
+        if (result?.success) {
+          setSelectedDocuments(new Set())
+          setIsAddRoleModalOpen(false)
+          setSelectedBulkAction("Bulkacties")
+        } else {
+          throw new Error("Update failed")
+        }
+      }
+    } catch (err) {
+      console.error("Failed to add roles to folders:", err)
+      const errorMessage = err.message || "Kon rollen niet toevoegen. Probeer het opnieuw."
+      alert(errorMessage)
+    }
+  }
+
+  const handleRemoveRolesConfirm = async (selectedRoleNames) => {
+    try {
+      if (onRemoveRolesFromFolders && selectedRoleNames.length > 0) {
+        const folderNames = getSelectedFolderNames()
+        const result = await onRemoveRolesFromFolders(folderNames, selectedRoleNames)
+        if (result?.success) {
+          setSelectedDocuments(new Set())
+          setIsRemoveRoleModalOpen(false)
+          setSelectedBulkAction("Bulkacties")
+        } else {
+          throw new Error("Update failed")
+        }
+      }
+    } catch (err) {
+      console.error("Failed to remove roles from folders:", err)
+      const errorMessage = err.message || "Kon rollen niet verwijderen. Probeer het opnieuw."
+      alert(errorMessage)
     }
   }
 
@@ -1045,6 +1129,52 @@ export default function MappenTab({
               }}
               onConfirm={handleDeleteConfirm}
               isMultiple={getSelectedFoldersCount() > 1}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Add Role Modal */}
+      {isAddRoleModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={() => {
+            setIsAddRoleModalOpen(false);
+            setSelectedBulkAction("Bulkacties");
+          }}
+        >
+          <div className="p-6 w-fit max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <AddRoleModal
+              folders={getSelectedFolderNames()}
+              roles={roles}
+              onClose={() => {
+                setIsAddRoleModalOpen(false);
+                setSelectedBulkAction("Bulkacties");
+              }}
+              onConfirm={handleAddRolesConfirm}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Remove Role Modal */}
+      {isRemoveRoleModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          onClick={() => {
+            setIsRemoveRoleModalOpen(false);
+            setSelectedBulkAction("Bulkacties");
+          }}
+        >
+          <div className="p-6 w-fit max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <RemoveRoleModal
+              folders={getSelectedFolderNames()}
+              roles={roles}
+              onClose={() => {
+                setIsRemoveRoleModalOpen(false);
+                setSelectedBulkAction("Bulkacties");
+              }}
+              onConfirm={handleRemoveRolesConfirm}
             />
           </div>
         </div>

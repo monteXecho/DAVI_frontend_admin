@@ -17,12 +17,26 @@ export default function WijzigenTab({ roles = [], folders, onAddOrUpdateRole, on
   const [initialized, setInitialized] = useState(false)
 
   const availableModules = useMemo(() => {
-    if (!user?.modules) return []
-    return Object.entries(user.modules).map(([name, config]) => ({
-      name,
-      enabled: Boolean(config.enabled),
-      locked: !config.enabled
-    }))
+    // Use company_modules if available, otherwise fall back to user.modules
+    // Company modules determine what's available for roles
+    const modulesSource = user?.company_modules || user?.modules || [];
+    
+    if (Array.isArray(modulesSource)) {
+      // If it's an array (from company_modules serialized format)
+      return modulesSource.map(module => ({
+        name: module.name,
+        enabled: Boolean(module.enabled),
+        locked: !module.enabled,  // Lock modules that company doesn't have enabled
+      }))
+    } else if (typeof modulesSource === 'object') {
+      // If it's an object (from user.modules)
+      return Object.entries(modulesSource).map(([name, config]) => ({
+        name,
+        enabled: Boolean(config.enabled),
+        locked: !config.enabled
+      }))
+    }
+    return []
   }, [user])
 
   useEffect(() => {

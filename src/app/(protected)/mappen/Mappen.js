@@ -29,7 +29,7 @@ export default function Mappen() {
   const [currentUser, setCurrentUser] = useState(null)
   const [canWrite, setCanWrite] = useState(true)
 
-  const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser, getFolders } = useApi()
+  const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser, getFolders, addOrUpdateRole } = useApi()
 
   const router = useRouter()
 
@@ -98,7 +98,7 @@ export default function Mappen() {
     setSelectedDocName(docName)
     setSelectedDocFolder(folderName)
     setSelectedDocRole(roleName) 
-    setActiveIndex(2) 
+    setActiveIndex(3) 
   }
 
   const handleDeleteFolders = async (payload) => {
@@ -144,6 +144,106 @@ export default function Mappen() {
       }
     } catch (err) {
       console.error("Failed to add folders:", err)
+      throw err
+    }
+  }
+
+  const handleAddRolesToFolders = async (folderNames, roleNames) => {
+    try {
+      // For each role, add the folders to its folder list
+      const updatePromises = roleNames.map(async (roleName) => {
+        // Find the role to get its current folders and modules
+        const role = roles.find(r => (r.name || r) === roleName)
+        if (!role) {
+          console.warn(`Role ${roleName} not found`)
+          return { success: false, roleName }
+        }
+
+        const currentFolders = role.folders || []
+        const roleModules = role.modules || {}
+        
+        // Add new folders (avoid duplicates)
+        const updatedFolders = [...new Set([...currentFolders, ...folderNames])]
+        
+        // Convert modules from object format to array format
+        const modulesArray = Object.entries(roleModules).map(([name, config]) => ({
+          name,
+          enabled: config?.enabled === true || config?.enabled === "true"
+        }))
+        
+        // Update the role
+        const result = await addOrUpdateRole(roleName, updatedFolders, modulesArray, "update")
+        // Check for success: status should be "role_updated" or "role_created", not "error"
+        const isSuccess = result?.status === "role_updated" || result?.status === "role_created"
+        return { success: isSuccess, roleName, result }
+      })
+
+      const results = await Promise.all(updatePromises)
+      const failed = results.filter(r => !r.success)
+      
+      if (failed.length > 0) {
+        console.warn("Some role updates failed:", failed)
+        // Log the actual API responses for debugging
+        failed.forEach(f => {
+          console.error(`Role ${f.roleName} update failed. Response:`, f.result)
+        })
+        throw new Error(`Kon rollen niet volledig bijwerken: ${failed.map(f => f.roleName).join(', ')}`)
+      }
+
+      await refreshData()
+      return { success: true }
+    } catch (err) {
+      console.error("Failed to add roles to folders:", err)
+      throw err
+    }
+  }
+
+  const handleRemoveRolesFromFolders = async (folderNames, roleNames) => {
+    try {
+      // For each role, remove the folders from its folder list
+      const updatePromises = roleNames.map(async (roleName) => {
+        // Find the role to get its current folders and modules
+        const role = roles.find(r => (r.name || r) === roleName)
+        if (!role) {
+          console.warn(`Role ${roleName} not found`)
+          return { success: false, roleName }
+        }
+
+        const currentFolders = role.folders || []
+        const roleModules = role.modules || {}
+        
+        // Remove folders (keep only folders not in folderNames)
+        const updatedFolders = currentFolders.filter(folder => !folderNames.includes(folder))
+        
+        // Convert modules from object format to array format
+        const modulesArray = Object.entries(roleModules).map(([name, config]) => ({
+          name,
+          enabled: config?.enabled === true || config?.enabled === "true"
+        }))
+        
+        // Update the role
+        const result = await addOrUpdateRole(roleName, updatedFolders, modulesArray, "update")
+        // Check for success: status should be "role_updated" or "role_created", not "error"
+        const isSuccess = result?.status === "role_updated" || result?.status === "role_created"
+        return { success: isSuccess, roleName, result }
+      })
+
+      const results = await Promise.all(updatePromises)
+      const failed = results.filter(r => !r.success)
+      
+      if (failed.length > 0) {
+        console.warn("Some role updates failed:", failed)
+        // Log the actual API responses for debugging
+        failed.forEach(f => {
+          console.error(`Role ${f.roleName} update failed. Response:`, f.result)
+        })
+        throw new Error(`Kon rollen niet volledig bijwerken: ${failed.map(f => f.roleName).join(', ')}`)
+      }
+
+      await refreshData()
+      return { success: true }
+    } catch (err) {
+      console.error("Failed to remove roles from folders:", err)
       throw err
     }
   }
@@ -203,6 +303,8 @@ export default function Mappen() {
               onShowUsers={handleShowUsers} 
               onDeleteFolders={handleDeleteFolders}
               onAddFolders={handleAddFolders}
+              onAddRolesToFolders={handleAddRolesToFolders}
+              onRemoveRolesFromFolders={handleRemoveRolesFromFolders}
               onRefresh={refreshData}
               selectedUsers={selectedUsers} 
               selectedDocFolder={selectedDocFolder} 

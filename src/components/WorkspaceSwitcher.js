@@ -3,6 +3,7 @@
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useKeycloak } from '@react-keycloak/web';
 import { useApi } from '@/lib/useApi';
 
 // Helper function to get user initials for avatar
@@ -45,8 +46,16 @@ const UserAvatar = ({ name, email, isActive, size = 32 }) => {
 export default function WorkspaceSwitcher() {
   const { workspaces, selectedOwnerId, setSelectedOwnerId } = useWorkspace();
   const router = useRouter();
+  const { keycloak } = useKeycloak();
   const { getUser } = useApi();
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Check if user is super admin
+  const isSuperAdmin = useMemo(() => {
+    if (!keycloak?.authenticated || !keycloak?.tokenParsed) return false;
+    const roles = keycloak.tokenParsed.realm_access?.roles || [];
+    return roles.includes('super_admin');
+  }, [keycloak?.authenticated, keycloak?.tokenParsed]);
   const [isSwitching, setIsSwitching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [transitionInfo, setTransitionInfo] = useState(null); 
@@ -240,17 +249,34 @@ export default function WorkspaceSwitcher() {
   }, [selectedOwnerId, setSelectedOwnerId, options, currentUser]);
 
   // Fetch current user to determine if it's their own workspace
+  // Skip for super admins as they don't need workspace switching
   useEffect(() => {
+    // Wait for keycloak to be initialized
+    if (!keycloak?.authenticated) return;
+    
+    // Check if user is super admin directly in useEffect to avoid timing issues
+    const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
+    const isSuperAdminUser = roles.includes('super_admin');
+    
+    if (isSuperAdminUser) {
+      // Super admins don't need user data for workspace switching
+      return;
+    }
+    
     const fetchUser = async () => {
       try {
         const user = await getUser();
         setCurrentUser(user);
       } catch (err) {
-        console.error('Failed to fetch user:', err);
+        // Silently handle errors - user might not have access to this endpoint
+        // This is expected for some user types (e.g., super admins trying to access company-admin endpoints)
+        if (err.response?.status !== 403 && err.response?.status !== 404) {
+          console.error('Failed to fetch user:', err);
+        }
       }
     };
     fetchUser();
-  }, [getUser]);
+  }, [getUser, keycloak?.authenticated, keycloak?.tokenParsed]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

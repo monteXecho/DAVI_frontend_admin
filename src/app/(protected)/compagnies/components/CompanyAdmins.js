@@ -54,11 +54,11 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
 
       {isAddAdminOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
           onClick={() => setIsAddAdminOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
+            className="w-full max-w-[640px] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <AddAdmin
@@ -76,11 +76,11 @@ export default function CompanyAdmins({ admins, selectedId, onSelect, onCreateCo
 
     {isDeleteAdminOpen && (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50"
+        className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
         onClick={() => setIsDeleteAdminOpen(false)}
       >
         <div
-          className="bg-white rounded-2xl p-6 w-full max-w-[700px]"
+          className="w-full max-w-[680px] animate-in zoom-in-95 duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           <DeleteAdmin

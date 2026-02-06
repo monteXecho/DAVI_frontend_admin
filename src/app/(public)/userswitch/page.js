@@ -63,16 +63,28 @@ export default function UserSwitchPage() {
         }
 
         (workspaces?.guestOf || []).forEach((ws, index) => {
-          // For company users: if guest workspace has same ownerId as self, still show it
-          // (it represents teamlid permissions vs default permissions)
-          // For company admins: skip if it matches self (they're the same workspace)
-          const isCompanyUser = user && !user.is_teamlid && workspaces?.self?.ownerId === ws.ownerId;
+          // Determine user type
+          const isCompanyUser = user && user.user_type === "company_user";
+          const isCompanyAdmin = user && user.user_type === "admin";
           
-          if (!isCompanyUser && seenOwnerIds.has(ws.ownerId)) {
+          // For company admins: skip if guest workspace matches self (same ownerId = same workspace)
+          if (isCompanyAdmin && workspaces?.self?.ownerId === ws.ownerId) {
             return; // Skip duplicate for company admins
           }
           
-          seenOwnerIds.add(ws.ownerId);
+          // For company users: always show ALL guest workspaces
+          // - If same ownerId as self: shows teamlid permissions vs default permissions
+          // - If different ownerId: shows teamlid role for other admin
+          // For company admins: skip if already seen (different admin's workspace)
+          if (isCompanyAdmin && seenOwnerIds.has(ws.ownerId)) {
+            return; // Skip duplicate for company admins
+          }
+          
+          // Only track seen ownerIds for company admins (to avoid duplicates)
+          // Company users can have multiple workspaces with same ownerId (self + guest)
+          if (isCompanyAdmin) {
+            seenOwnerIds.add(ws.ownerId);
+          }
           
           normalized.push({
             ownerId: ws.ownerId,
