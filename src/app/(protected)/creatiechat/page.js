@@ -4,7 +4,7 @@ import CreatieChat from './CreatieChat';
 
 export default function CreatieChatPage() {
   return (
-    <div className="w-full h-full flex flex-col py-[81px] px-[97px] overflow-scroll scrollbar-hide">
+    <div className="w-full h-full flex flex-col md:py-[81px] md:px-[97px] py-[22px] px-[25px] overflow-scroll scrollbar-hide">
       <div className="pb-[17px] font-montserrat font-extrabold text-2xl">
         CreatieChat
       </div>

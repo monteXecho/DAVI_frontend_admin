@@ -18,7 +18,7 @@ import IssueBttn from "@/components/buttons/IssueBttn"
  * - See which folders are already imported
  * - Import selected folders (creates DAVI records with origin="imported")
  */
-export default function ImportTab({ onRefresh, canWrite = true }) {
+export default function ImportTab({ onRefresh, canWrite = true, hasNextcloud = false }) {
   const { listImportableFolders, importFolders, syncFoldersFromNextcloud } = useApi()
   
   const [folders, setFolders] = useState([])
@@ -253,6 +253,33 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
     return folder && !folder.imported && folder.selectable !== false
   }).length
 
+  // Show permission denied message if Nextcloud is not enabled
+  if (!hasNextcloud) {
+    return (
+      <div className="flex flex-col w-full items-center justify-center py-16">
+        <div className="max-w-md text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            Nextcloud niet beschikbaar
+          </h2>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">
+            De Nextcloud module is niet ingeschakeld voor uw bedrijf of account. 
+            Neem contact op met uw beheerder of super admin om Nextcloud toegang te krijgen.
+          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+            <p className="text-xs text-blue-800">
+              <strong>Opmerking:</strong> Nextcloud moet worden ingeschakeld op zowel bedrijfsniveau als accountniveau om folders te kunnen importeren.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* Header Section */}
@@ -263,39 +290,6 @@ export default function ImportTab({ onRefresh, canWrite = true }) {
         <p className="text-sm text-gray-600 leading-relaxed">
           Selecteer folders die u wilt importeren van Nextcloud naar DAVI. 
           Al geïmporteerde folders zijn gemarkeerd en kunnen niet opnieuw worden geïmporteerd.
-        </p>
-      </div>
-
-      {/* Import Root Input Card */}
-      <div className="mb-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Import Root (optioneel)
-        </label>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={importRoot}
-            onChange={(e) => setImportRoot(e.target.value)}
-            placeholder="bijv. company123/admin456"
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent transition-all"
-          />
-          <button
-            onClick={loadFolders}
-            disabled={loading}
-            className="px-6 py-2.5 bg-[#23BD92] text-white rounded-lg text-sm font-semibold hover:bg-[#1ea87a] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                Laden...
-              </span>
-            ) : (
-              "Vernieuwen"
-            )}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Laat leeg om alle beschikbare folders te tonen, of geef een specifiek pad op
         </p>
       </div>
 

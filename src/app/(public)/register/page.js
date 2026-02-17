@@ -61,10 +61,22 @@ export default function RegisterPage() {
     return "";
   };
 
+  const validateFullName = (fullName) => {
+    if (!fullName) return "";
+    // Check if name contains at least one space (separating first and last name)
+    // Trim to handle leading/trailing spaces, then check for space in the middle
+    const trimmedName = fullName.trim();
+    if (trimmedName.length > 0 && !trimmedName.includes(' ')) {
+      return "Voer achternaam in";
+    }
+    return "";
+  };
+
   useEffect(() => {
-    if (submitted || touched.email || touched.password || touched.passwordConfirm) {
+    if (submitted || touched.email || touched.password || touched.passwordConfirm || touched.fullName) {
       setErrors(prev => ({
         ...prev,
+        fullName: validateFullName(form.fullName),
         email: validateEmail(form.email),
         password: validatePassword(form.password),
         passwordConfirm: validatePasswordConfirm(form.password, form.passwordConfirm)
@@ -80,13 +92,14 @@ export default function RegisterPage() {
       setErrors(prev => ({ ...prev, emailExists: "", emailNotFound: "" }));
     }
     if (name === "fullName") {
-      setErrors(prev => ({ ...prev, usernameExists: "" }));
+      setErrors(prev => ({ ...prev, usernameExists: "", fullName: "" }));
     }
 
     if (touched[name]) {
       setErrors(prev => ({
         ...prev,
         [name]:
+          name === 'fullName' ? validateFullName(value) :
           name === 'email' ? validateEmail(value) :
           name === 'password' ? validatePassword(value) :
           name === 'passwordConfirm' ? validatePasswordConfirm(form.password, value) :
@@ -102,6 +115,7 @@ export default function RegisterPage() {
     setErrors(prev => ({
       ...prev,
       [name]:
+        name === "fullName" ? validateFullName(form.fullName) :
         name === "email" ? validateEmail(form.email) :
         name === "password" ? validatePassword(form.password) :
         name === "passwordConfirm" ? validatePasswordConfirm(form.password, form.passwordConfirm) :
@@ -161,12 +175,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setSubmitted(true);
 
+    const fullNameError = validateFullName(form.fullName);
     const emailError = validateEmail(form.email);
     const passwordError = validatePassword(form.password);
     const passwordConfirmError = validatePasswordConfirm(form.password, form.passwordConfirm);
 
     setErrors({
-      fullName: "",
+      fullName: fullNameError,
       email: emailError,
       password: passwordError,
       passwordConfirm: passwordConfirmError,
@@ -176,7 +191,7 @@ export default function RegisterPage() {
       roleMissing: ""
     });
 
-    if (emailError || passwordError || passwordConfirmError) return;
+    if (fullNameError || emailError || passwordError || passwordConfirmError) return;
 
     setLoading(true);
 
@@ -285,7 +300,7 @@ export default function RegisterPage() {
   const showPasswordError = (touched.password || submitted) && errors.password;
   const showPasswordConfirmError = (touched.passwordConfirm || submitted) && errors.passwordConfirm;
 
-  const showFullNameError = (touched.fullName || submitted) && errors.usernameExists;
+  const showFullNameError = (touched.fullName || submitted) && (errors.fullName || errors.usernameExists);
 
   const showRoleError = errors.roleMissing;
 
@@ -297,6 +312,7 @@ export default function RegisterPage() {
   };
 
   const isFormValid =
+    !errors.fullName &&
     !errors.email &&
     !errors.emailExists &&
     !errors.emailNotFound &&
@@ -305,6 +321,7 @@ export default function RegisterPage() {
     !errors.usernameExists &&
     !errors.roleMissing &&
     form.fullName.length > 0 &&
+    form.fullName.trim().includes(' ') &&
     form.email.length > 0 &&
     form.password.length >= 6 &&
     form.password === form.passwordConfirm;
@@ -343,7 +360,7 @@ export default function RegisterPage() {
 
               <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
 
-                {/* FULL NAME - Now shows username exists error */}
+                {/* FULL NAME - Shows validation error or username exists error */}
                 <div className={`relative w-full border-2 rounded-lg ${showFullNameError ? "bg-[#E94F4F] border-[#E94F4F]" : "border-[#23BD92]"}`}>
                   <input
                     name="fullName"
@@ -358,7 +375,7 @@ export default function RegisterPage() {
                   />
                   {showFullNameError && (
                     <div className="text-center text-white text-sm py-2 px-4 whitespace-pre-line">
-                      {errors.usernameExists}
+                      {errors.fullName || errors.usernameExists}
                     </div>
                   )}
                 </div>

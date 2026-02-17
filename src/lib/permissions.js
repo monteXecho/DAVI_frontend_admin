@@ -134,3 +134,27 @@ export function canWriteDocuments(user) {
   return canWrite(perms.document_modify_permission);
 }
 
+/**
+ * Check if user has Nextcloud module enabled
+ * Nextcloud permission is required at both company and user/admin level
+ * @param {object} user - User object from getUser()
+ * @returns {boolean} - True if Nextcloud is enabled for company and user/admin
+ */
+export function hasNextcloudPermission(user) {
+  if (!user) return false;
+  
+  // Check company-level modules (company_modules)
+  const companyModules = user.company_modules || [];
+  const companyHasNextcloud = companyModules.some(
+    module => (module.name === 'Nexcloud' || module.name === 'Nextcloud') && module.enabled === true
+  );
+  
+  if (!companyHasNextcloud) return false;
+  
+  // Check user/admin-level modules (modules)
+  const userModules = user.modules || {};
+  const nextcloudModule = userModules['Nexcloud'] || userModules['Nextcloud'];
+  
+  return nextcloudModule?.enabled === true;
+}
+

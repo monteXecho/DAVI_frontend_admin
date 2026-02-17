@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea';
 import PdfSnippetList from '@/components/PdfSnippetList';
 import { useApi } from '@/lib/useApi';
@@ -16,36 +16,82 @@ const UploadStates = {
   ERROR: 'error',
 };
 
+const CHAT_HISTORY_KEY = 'documentchat_history';
+
 export default function DocumentClient() {
   const { askQuestion, uploadDocument, loading: apiLoading, error } = useApi();
 
-  const [response, setResponse] = useState('');
-  const [documents, setDocuments] = useState([]);
+  // Chat history: array of { question, answer, documents, timestamp }
+  const [chatHistory, setChatHistory] = useState([]);
   const [uploadStatus, setUploadStatus] = useState(UploadStates.IDLE);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [successfulUploads, setSuccessfulUploads] = useState([]);
   const [failedUploads, setFailedUploads] = useState([]);
   const [loadingCardVisible, setLoadingCardVisible] = useState(false);
-  const [submittedQuestion, setSubmittedQuestion] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState('');
 
   const fileInputRef = useRef(null);
+
+  // Load chat history from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const savedHistory = sessionStorage.getItem(CHAT_HISTORY_KEY);
+      if (savedHistory) {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed)) {
+          setChatHistory(parsed);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+    }
+  }, []);
+
+  // Save chat history to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
+    } catch (err) {
+      console.error('Failed to save chat history:', err);
+    }
+  }, [chatHistory]);
 
   const handleQuestionSubmit = async (questionText) => {
     if (!questionText.trim()) return;
 
-    setResponse('');
-    setDocuments([]);
-    setSubmittedQuestion(questionText);
+    setCurrentQuestion(questionText);
     setLoadingCardVisible(true);
 
     try {
       const data = await askQuestion(questionText);
-      setResponse(data.answer || '');
-      setDocuments(data.documents || []);
+      const answer = data.answer || '';
+      const documents = data.documents || [];
+      
+      // Add new message to history instead of replacing
+      const newMessage = {
+        question: questionText,
+        answer: answer,
+        documents: documents,
+        timestamp: new Date().toISOString()
+      };
+      
+      setChatHistory(prev => [...prev, newMessage]);
+      setCurrentQuestion('');
     } catch (err) {
       console.error('Failed to fetch answer:', err);
-      setResponse('Er is een fout opgetreden bij het ophalen van het antwoord.');
+      const errorMessage = 'Er is een fout opgetreden bij het ophalen van het antwoord.';
+      
+      // Add error message to history
+      const errorMessageObj = {
+        question: questionText,
+        answer: errorMessage,
+        documents: [],
+        timestamp: new Date().toISOString()
+      };
+      
+      setChatHistory(prev => [...prev, errorMessageObj]);
+      setCurrentQuestion('');
     } finally {
       setLoadingCardVisible(false);
     }
@@ -210,27 +256,42 @@ export default function DocumentClient() {
 
         {renderUploadSection()}
 
-        {submittedQuestion && (
+        {/* Display all chat history */}
+        {chatHistory.map((message, index) => (
+          <div key={index} className="flex flex-col gap-[52px]">
+            {/* Question */}
+            <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
+              <p className="w-fit h-6 m-auto text-[#342222] text-[16px] leading-6 font-normal font-Montserrat">
+                {message.question}
+              </p>
+            </div>
+
+            {/* Answer */}
+            {message.answer && (
+              <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
+                {message.answer}
+              </div>
+            )}
+
+            {/* Documents */}
+            {Array.isArray(message.documents) && message.documents.length > 0 && (
+              <section className="w-full">
+                <PdfSnippetList documents={message.documents} />
+              </section>
+            )}
+          </div>
+        ))}
+
+        {/* Current question being processed */}
+        {currentQuestion && (
           <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
             <p className="w-fit h-6 m-auto text-[#342222] text-[16px] leading-6 font-normal font-Montserrat">
-              {submittedQuestion}
+              {currentQuestion}
             </p>
             {loadingCardVisible && (
               <div className="w-[29px] h-[29px] m-auto border-4 border-t-[#23BD92] border-[#F9FBFA] rounded-full animate-spin" />
             )}
           </div>
-        )}
-
-        {response && (
-          <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
-            {response}
-          </div>
-        )}
-
-        {Array.isArray(documents) && documents.length > 0 && (
-          <section className="w-full">
-            <PdfSnippetList documents={documents} />
-          </section>
         )}
         
         {error && (
@@ -239,13 +300,8 @@ export default function DocumentClient() {
           </div>
         )}
 
-        {!loadingCardVisible && submittedQuestion && (
-          <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
-        )}
-
-        {!submittedQuestion && !loadingCardVisible && (
-          <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading} />
-        )}
+        {/* Always show the input at the bottom */}
+        <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={apiLoading || loadingCardVisible} />
       </section>
 
       <ToastContainer 

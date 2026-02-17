@@ -24,7 +24,7 @@ const MENU_CONFIG = {
   publicModules: [
     {
       id: 'documentenchat',
-      label: 'Documentenchat',
+      label: 'DocumentenChat',
       icon: ChatItem,
       path: '/documentchat',
       moduleKey: 'Documenten chat'
@@ -81,18 +81,19 @@ const MENU_CONFIG = {
       requiredRoles: ['super_admin', 'company_admin']
     },
     {
-      id: 'bronnen',
-      label: 'Bronnen',
-      icon: RollenItem,
-      path: '/bronnen',
-      requiredRoles: ['super_admin', 'company_admin']
-    },
-    {
       id: 'users',
       label: 'Gebruikers',
       icon: GebruikersItem,
       path: '/gebruikers',
       requiredRoles: ['super_admin', 'company_admin']
+    },
+    {
+      id: 'webchat-admin',
+      label: 'WebChat',
+      icon: () => <WebChatIcon className="w-8 h-8" />,
+      path: '/bronnen',
+      requiredRoles: ['super_admin', 'company_admin'],
+      moduleKey: 'WebChat'
     },
   ]
 };
@@ -118,7 +119,7 @@ export default function LeftSidebar() {
   const userRef = useRef(null);          
   const [loading, setLoading] = useState(true);
   const getStable = useStableCallbacks();
-  const [activeTab, setActiveTab] = useState("Documentenchat");
+  const [activeTab, setActiveTab] = useState("DocumentenChat");
 
   const isAuthenticated = useMemo(
     () => initialized && keycloak?.authenticated,
@@ -275,38 +276,131 @@ export default function LeftSidebar() {
     let adminModules = [];
     
     if (userRoles.isSuperAdmin) {
-      // Super admins see everything
+      // Super admins see everything (including WebChat admin module)
       publicModules = MENU_CONFIG.publicModules;
       adminModules = MENU_CONFIG.adminModules;
     } else if (userRoles.isCompanyAdmin) {
       // Company admins: Only show BEHEER items, hide MODULES
       publicModules = [];
       adminModules = MENU_CONFIG.adminModules.filter(module => {
+        // First: Check if it's super_admin only
         if (module.requiredRole === "super_admin")
           return false; // Company admins can't access super_admin only modules
-        if (module.requiredRoles)
+        
+        // Second: Check module permission for modules that require it (like WebChat)
+        // This check must come BEFORE requiredRoles check
+        if (module.moduleKey) {
+          // Use user state (which triggers re-renders) instead of stableUser ref
+          const currentUser = user || stableUser;
+          
+          // If user data is not loaded yet, don't show the module
+          if (!currentUser) {
+            return false;
+          }
+          
+          // company_modules is an array: [{name: "WebChat", enabled: true, desc: "..."}, ...]
+          const companyModules = currentUser?.company_modules || [];
+          const companyModule = companyModules.find(m => m.name === module.moduleKey);
+          
+          // modules is an object: {"WebChat": {enabled: true, desc: "..."}, ...}
+          const userModules = currentUser?.modules || {};
+          const userModule = userModules[module.moduleKey];
+          
+          // Company must have the module enabled
+          const companyHasModule = companyModule?.enabled === true;
+          // Admin must have the module enabled
+          const adminHasModule = userModule?.enabled === true;
+          
+          // Both must be true for the admin to see the menu item
+          // If module permission check fails, return false immediately
+          if (!companyHasModule || !adminHasModule) {
+            return false;
+          }
+        }
+        
+        // Third: Check requiredRoles (only if module permission passed or no moduleKey)
+        if (module.requiredRoles) {
           return module.requiredRoles.some(role =>
             role === "company_admin" || (role === "super_admin" && false)
           );
+        }
+        
         return true;
       });
     } else if (userRoles.isCompanyUser) {
       // Company users: Show MODULES items
+      // Use user state (which triggers re-renders) instead of stableUser ref
+      const currentUser = user || stableUser;
+      
       publicModules = MENU_CONFIG.publicModules.filter(module => {
-        // Check against the user's own modules
-        const moduleInfo = stableUser?.modules?.[module.moduleKey];
-        return moduleInfo?.enabled === true;
+        // If user data is not loaded yet, don't show the module
+        if (!currentUser) {
+          return false;
+        }
+        
+        // Check both company-level and user-level module permissions
+        // company_modules is an array: [{name: "Documenten chat", enabled: true, desc: "..."}, ...]
+        const companyModules = currentUser?.company_modules || [];
+        const companyModule = companyModules.find(m => m.name === module.moduleKey);
+        
+        // modules is an object: {"Documenten chat": {enabled: true, desc: "..."}, ...}
+        const userModules = currentUser?.modules || {};
+        const userModule = userModules[module.moduleKey];
+        
+        // Company must have the module enabled
+        const companyHasModule = companyModule?.enabled === true;
+        // User must have the module enabled
+        const userHasModule = userModule?.enabled === true;
+        
+        // Both must be true for the user to see the menu item
+        return companyHasModule && userHasModule;
       });
       
       // Company users with teamlid access can see BEHEER items
       if (hasTeamlidAccess) {
         adminModules = MENU_CONFIG.adminModules.filter(module => {
+          // First: Check if it's super_admin only
           if (module.requiredRole === "super_admin")
             return false; // Company users can't access super_admin only modules
-          if (module.requiredRoles)
+          
+          // Second: Check module permission for modules that require it (like WebChat)
+          // This check must come BEFORE requiredRoles check
+          if (module.moduleKey) {
+            // Use user state (which triggers re-renders) instead of stableUser ref
+            const currentUser = user || stableUser;
+            
+            // If user data is not loaded yet, don't show the module
+            if (!currentUser) {
+              return false;
+            }
+            
+            // company_modules is an array: [{name: "WebChat", enabled: true, desc: "..."}, ...]
+            const companyModules = currentUser?.company_modules || [];
+            const companyModule = companyModules.find(m => m.name === module.moduleKey);
+            
+            // modules is an object: {"WebChat": {enabled: true, desc: "..."}, ...}
+            const userModules = currentUser?.modules || {};
+            const userModule = userModules[module.moduleKey];
+            
+            // Company must have the module enabled
+            const companyHasModule = companyModule?.enabled === true;
+            // User must have the module enabled
+            const userHasModule = userModule?.enabled === true;
+            
+            // Both must be true for the user to see the menu item
+            // If module permission check fails, return false immediately
+            if (!companyHasModule || !userHasModule) {
+              return false;
+            }
+          }
+          
+          // Third: Check requiredRoles (only if module permission passed or no moduleKey)
+          if (module.requiredRoles) {
             return module.requiredRoles.some(role =>
               role === "company_admin" // Allow access to company_admin modules when acting as teamlid
             );
+          }
+          
           return true;
         });
       } else {
@@ -315,16 +409,16 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, userRoles, hasTeamlidAccess]);
+  }, [stableUser, user, userRoles, hasTeamlidAccess]);
 
   const routeToTab = useMemo(() => {
     const map = {
-      "/documentchat": "Documentenchat",
-      "/documentchat/mijn": "Documentenchat",
+      "/documentchat": "DocumentenChat",
+      "/documentchat/mijn": "DocumentenChat",
       "/GGD": "GGD Checks",
       "/creatiechat": "CreatieChat",
       "/webchat": "WebChat",
-      "/bronnen": "Bronnen",
+      "/bronnen": "WebChat",
       "/compagnies": "Dashboard",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
@@ -336,7 +430,7 @@ export default function LeftSidebar() {
     map["/"] =
       filteredPublicModules[0]?.label ||
       filteredAdminModules[0]?.label ||
-      "Documentenchat";
+      "DocumentenChat";
 
     return map;
   }, [filteredPublicModules, filteredAdminModules]);

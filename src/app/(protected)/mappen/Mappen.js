@@ -7,7 +7,7 @@ import MappenTab from "./components/MappenTab"
 import MakenTab from "./components/MakenTab"
 import ImportTab from "./components/ImportTab"
 import { useApi } from "@/lib/useApi"
-import { canWriteFolders } from "@/lib/permissions"
+import { canWriteFolders, hasNextcloudPermission } from "@/lib/permissions"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
@@ -28,6 +28,7 @@ export default function Mappen() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState(null)
   const [canWrite, setCanWrite] = useState(true)
+  const [hasNextcloud, setHasNextcloud] = useState(false)
 
   const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser, getFolders, addOrUpdateRole } = useApi()
 
@@ -41,6 +42,10 @@ export default function Mappen() {
     }
     // Disable "Maken" tab if user doesn't have write permission
     if (tab.label === 'Maken' && !canWrite) {
+      return { ...tab, selectable: false }
+    }
+    // Disable "Importeren" tab if user doesn't have Nextcloud permission
+    if (tab.label === 'Importeren' && !hasNextcloud) {
       return { ...tab, selectable: false }
     }
     return tab
@@ -82,6 +87,7 @@ export default function Mappen() {
         const userData = await getUser()
         setCurrentUser(userData)
         setCanWrite(canWriteFolders(userData))
+        setHasNextcloud(hasNextcloudPermission(userData))
         
         await refreshData()
       } catch (err) {
@@ -265,7 +271,13 @@ export default function Mappen() {
                 key={tab.label}
                 onClick={() => handleTabClick(index)}
                 disabled={!isSelectable}
-                title={!isSelectable ? "Selecteer eerst een document" : ""}
+                title={
+                  !isSelectable 
+                    ? tab.label === 'Importeren' 
+                      ? "Nextcloud module is niet ingeschakeld voor uw account" 
+                      : "Selecteer eerst een document"
+                    : ""
+                }
                 className={`flex justify-center items-center rounded-tl-xl rounded-tr-xl transition-all relative
                   ${isActive ? 'bg-[#D6F5EB]' : 'bg-[#F9FBFA] h-8'}
                   ${isSelectable 
@@ -310,6 +322,7 @@ export default function Mappen() {
               selectedDocFolder={selectedDocFolder} 
               selectedDocRole={selectedDocRole}
               canWrite={canWrite}
+              hasNextcloud={hasNextcloud}
             />
           )}
         </div>

@@ -6,6 +6,8 @@ import UploadBttn from '@/components/buttons/UploadBttn'
 import UploadingBttn from '@/components/buttons/UploadingBttn'
 import AddIcon from "@/components/icons/AddIcon"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
+import SuccessBttn from "@/components/buttons/SuccessBttn"
+import IssueBttn from "@/components/buttons/IssueBttn"
 import { ToastContainer, toast } from 'react-toastify';
 
 const UploadStates = {
@@ -27,6 +29,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   const [currentFileIndex, setCurrentFileIndex] = useState(0) 
   const [uploadMode, setUploadMode] = useState('files') 
   const [selectedFolderName, setSelectedFolderName] = useState("")
+  const [showFolderSelection, setShowFolderSelection] = useState(false)
 
   const fileInputRef = useRef(null)
   const folderInputRef = useRef(null)
@@ -73,6 +76,15 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   }
 
   const handleUploadClick = () => {
+    if (!canWrite) return
+    
+    // Show folder selection if not already shown
+    if (!showFolderSelection) {
+      setShowFolderSelection(true)
+      return
+    }
+    
+    // If folder selection is shown, check if we have targets
     if (uploadTargets.length === 0) {
       toast.warn("Voeg minimaal één map toe voordat u uploadt.")
       return
@@ -255,6 +267,9 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
       if (targetFolderName) {
         toast.success(`Alle documenten zijn geüpload naar map "${targetFolderName}"`)
       }
+      // Reset folder selection after successful upload
+      setShowFolderSelection(false)
+      setUploadTargets([])
     } else if (successful.length > 0) {
       setUploadStatus(UploadStates.ERROR)
       toast.error("Sommige uploads zijn mislukt. Kijk in de notificaties voor details.")
@@ -267,17 +282,7 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   const renderUploadSection = () => {
     switch (uploadStatus) {
       case UploadStates.IDLE:
-        return (
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
-              <UploadBttn onClick={handleUploadClick} text="Upload documenten"/>
-              <UploadBttn onClick={handleFolderUploadClick} text="Upload map met documenten"/>
-            </div>
-            <p className="text-sm text-gray-600">
-              Selecteer documenten om naar bestaande mappen te uploaden, of selecteer een map om een nieuwe map aan te maken met alle documenten.
-            </p>
-          </div>
-        )
+        return null // Cards are shown in main render instead
       case UploadStates.UPLOADING:
         const currentFile = uploadedFiles[currentFileIndex]
         const totalFiles = uploadedFiles.length
@@ -335,8 +340,29 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
               )}
             </div>
             <div className="flex gap-3">
-              <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
-              <UploadBttn onClick={handleFolderUploadClick} text="Nog een map uploaden" />
+              <button
+                onClick={() => {
+                  setShowFolderSelection(true)
+                  setUploadStatus(UploadStates.IDLE)
+                  setSuccessfulUploads([])
+                  setFailedUploads([])
+                }}
+                className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+                </svg>
+                <span>Meer documenten uploaden</span>
+              </button>
+              <button
+                onClick={handleFolderUploadClick}
+                className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+                </svg>
+                <span>Nog een map uploaden</span>
+              </button>
             </div>
           </div>
         )
@@ -364,16 +390,58 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
                 </div>
               </div>
               <div className="flex gap-3">
-                <UploadBttn onClick={handleUploadClick} text="Meer documenten uploaden" />
-                <UploadBttn onClick={handleFolderUploadClick} text="Nog een map uploaden" />
+                <button
+                  onClick={() => {
+                    setShowFolderSelection(true)
+                    setUploadStatus(UploadStates.IDLE)
+                    setSuccessfulUploads([])
+                    setFailedUploads([])
+                  }}
+                  className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+                  </svg>
+                  <span>Meer documenten uploaden</span>
+                </button>
+                <button
+                  onClick={handleFolderUploadClick}
+                  className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+                  </svg>
+                  <span>Nog een map uploaden</span>
+                </button>
               </div>
             </div>
           )
         }
         return (
           <div className="flex gap-3">
-            <UploadBttn onClick={handleUploadClick} text="Probeer opnieuw te uploaden"/>
-            <UploadBttn onClick={handleFolderUploadClick} text="Of upload een map"/>
+            <button
+              onClick={() => {
+                setShowFolderSelection(true)
+                setUploadStatus(UploadStates.IDLE)
+                setSuccessfulUploads([])
+                setFailedUploads([])
+              }}
+              className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+              </svg>
+              <span>Probeer opnieuw te uploaden</span>
+            </button>
+            <button
+              onClick={handleFolderUploadClick}
+              className="w-fit h-10 bg-[#23BD92] rounded-lg flex items-center gap-2.5 px-[13px] py-[15px] font-montserrat font-bold text-[18px] text-white hover:bg-[#1ea87c] transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" fill="white"/>
+              </svg>
+              <span>Of upload een map</span>
+            </button>
           </div>
         )
       default:
@@ -391,67 +459,223 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
   const isFirstFolderSelected = selectedFolder === folders[0] && uploadTargets.length === 0
 
   return (
-    <div className="flex flex-col gap-11 w-full justify-between">
-      <div className="flex w-full gap-5">
-        <div className="flex flex-col w-full">
-          <span className="mb-2 font-montserrat text-[16px]">Selecteer een map en klik op ‘+’</span>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <DropdownMenu
-                value={selectedFolder}
-                onChange={setSelectedFolder}
-                allOptions={availableFolders}
-                disabled={!canWrite || availableFolders.length === 0}
-                placeholder="Selecteer een map..."
-              />
-            </div>
-            {canWrite && (
-              <button
-                onClick={handleAddUploadTarget}
-                title="Voeg map toe"
-                className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!selectedFolder || availableFolders.length === 0}
-              >
-                <AddIcon />
-              </button>
-            )}
-          </div>
-          
-          {folders.length === 0 ? (
-            <p className="text-sm text-gray-500 mt-2">
-              Geen mappen beschikbaar. Voeg eerst mappen toe in het &quot;Mappen&quot; tabblad.
-            </p>
-          ) : availableFolders.length === 0 ? (
-            <p className="text-sm text-gray-500 mt-2">
-              Alle mappen zijn al geselecteerd.
-            </p>
-          ) : null}
+    <div className="flex flex-col w-full gap-11">
+      {!canWrite && (
+        <div className="text-gray-500 text-sm italic py-4">
+          Alleen-lezen modus: U heeft geen schrijfrechten om documenten toe te voegen.
         </div>
-      </div>
-
-      {/* Display selected upload targets */}
-      {uploadTargets.length > 0 && (
-        <div className="flex flex-col w-2/3 gap-2">
-          <span className="font-montserrat text-[16px]">Toevoegen aan:</span>
-          <div className="flex flex-col gap-2 max-h-90 overflow-y-auto">
-            {uploadTargets.map((target, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-100 p-3 rounded">
-                <span className="font-montserrat text-[14px]">
-                  {target.folder}
-                </span>
-                {canWrite && (
-                  <button
-                    onClick={() => handleRemoveUploadTarget(index)}
-                    title="Verwijder"
-                    className="p-1 hover:bg-gray-200 rounded transition-colors"
-                  >
-                    <RedCancelIcon />
-                  </button>
-                )}
+      )}
+      
+      {canWrite && (
+        <>
+          {/* Action Cards Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upload Documenten Card */}
+            <div 
+              onClick={handleUploadClick}
+              className={`
+                group relative flex flex-col rounded-2xl border-2 transition-all duration-200 cursor-pointer
+                ${uploadStatus === UploadStates.UPLOADING
+                  ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed' 
+                  : 'border-[#23BD92]/20 bg-white hover:border-[#23BD92]/40 hover:shadow-lg hover:-translate-y-0.5'
+                }
+              `}
+            >
+              <div className="p-6 flex flex-col gap-4">
+                {/* Icon and Title Section */}
+                <div className="flex items-start gap-4">
+                  <div className={`
+                    flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors
+                    ${uploadStatus === UploadStates.UPLOADING
+                      ? 'bg-gray-100' 
+                      : 'bg-gradient-to-br from-[#23BD92] to-[#1ea87c] group-hover:from-[#1ea87c] group-hover:to-[#23BD92]'
+                    }
+                  `}>
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={uploadStatus === UploadStates.UPLOADING ? 'text-gray-400' : 'text-white'}
+                    >
+                      <path 
+                        d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" 
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`
+                      font-montserrat font-bold text-lg leading-tight mb-2
+                      ${uploadStatus === UploadStates.UPLOADING ? 'text-gray-500' : 'text-gray-900'}
+                    `}>
+                      Upload Documenten
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Upload een document van je PC. Je kunt meerdere documenten selecteren door de Ctrl-toets in te drukken.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Action Indicator */}
+                <div className="mt-2 flex items-center text-sm font-medium text-[#23BD92] group-hover:text-[#1ea87c] transition-colors">
+                  <span>Klik om te beginnen</span>
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Upload Map met Documenten Card */}
+            <div 
+              onClick={handleFolderUploadClick}
+              className={`
+                group relative flex flex-col rounded-2xl border-2 transition-all duration-200 cursor-pointer
+                ${uploadStatus === UploadStates.UPLOADING
+                  ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed' 
+                  : 'border-[#23BD92]/20 bg-white hover:border-[#23BD92]/40 hover:shadow-lg hover:-translate-y-0.5'
+                }
+              `}
+            >
+              <div className="p-6 flex flex-col gap-4">
+                {/* Icon and Title Section */}
+                <div className="flex items-start gap-4">
+                  <div className={`
+                    flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors
+                    ${uploadStatus === UploadStates.UPLOADING
+                      ? 'bg-gray-100' 
+                      : 'bg-gradient-to-br from-[#23BD92] to-[#1ea87c] group-hover:from-[#1ea87c] group-hover:to-[#23BD92]'
+                    }
+                  `}>
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={uploadStatus === UploadStates.UPLOADING ? 'text-gray-400' : 'text-white'}
+                    >
+                      <path 
+                        d="M19.479 7.092C19.267 3.141 16.006 0 12 0C7.995 0 4.733 3.141 4.521 7.092C1.951 7.555 0 9.798 0 12.5C0 15.537 2.463 18 5.5 18H18.5C21.537 18 24 15.537 24 12.5C24 9.798 22.049 7.555 19.479 7.092ZM12 6L16 10H13V14H11V10H8L12 6Z" 
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`
+                      font-montserrat font-bold text-lg leading-tight mb-2
+                      ${uploadStatus === UploadStates.UPLOADING ? 'text-gray-500' : 'text-gray-900'}
+                    `}>
+                      Upload map met documenten
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      De bestaande mapnaam en documenten worden overgenomen.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Action Indicator */}
+                <div className="mt-2 flex items-center text-sm font-medium text-[#23BD92] group-hover:text-[#1ea87c] transition-colors">
+                  <span>Klik om te uploaden</span>
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Folder Selection Section - Shown when Upload Documenten is clicked */}
+          {showFolderSelection && (
+            <div className="flex flex-col w-full gap-4 p-6 bg-gray-50 rounded-xl border border-gray-200">
+              <div className="flex flex-col w-full">
+                <span className="mb-2 font-montserrat text-[16px] font-semibold text-gray-900">
+                  Selecteer een map en klik op &apos;+&apos;
+                </span>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <DropdownMenu
+                      value={selectedFolder}
+                      onChange={setSelectedFolder}
+                      allOptions={availableFolders}
+                      disabled={!canWrite || availableFolders.length === 0}
+                      placeholder="Selecteer een map..."
+                    />
+                  </div>
+                  {canWrite && (
+                    <button
+                      onClick={handleAddUploadTarget}
+                      title="Voeg map toe"
+                      className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!selectedFolder || availableFolders.length === 0}
+                    >
+                      <AddIcon />
+                    </button>
+                  )}
+                </div>
+                
+                {folders.length === 0 ? (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Geen mappen beschikbaar. Voeg eerst mappen toe in het &quot;Mappen&quot; tabblad.
+                  </p>
+                ) : availableFolders.length === 0 ? (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Alle mappen zijn al geselecteerd.
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Display selected upload targets */}
+              {uploadTargets.length > 0 && (
+                <div className="flex flex-col gap-2 mt-4">
+                  <span className="font-montserrat text-[16px] font-semibold text-gray-900">Toevoegen aan:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {uploadTargets.map((target, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <SuccessBttn text={target.folder} />
+                        {canWrite && (
+                          <button
+                            onClick={() => handleRemoveUploadTarget(index)}
+                            title="Verwijder"
+                            className="hover:opacity-80 transition-opacity"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              {uploadTargets.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadStatus === UploadStates.UPLOADING}
+                    className={`
+                      w-fit h-12 px-6 rounded-lg font-montserrat font-bold text-base text-white transition-all
+                      ${uploadStatus === UploadStates.UPLOADING
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-[#23BD92] hover:bg-[#1ea87c] shadow-sm hover:shadow-md'
+                      }
+                    `}
+                  >
+                    {uploadStatus === UploadStates.UPLOADING ? 'Uploaden...' : 'Upload documenten'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Upload Status Section */}
+          {uploadStatus !== UploadStates.IDLE && (
+            <div className="flex flex-col w-full gap-4">
+              {renderUploadSection()}
+            </div>
+          )}
+        </>
       )}
 
       <input
@@ -472,17 +696,6 @@ export default function ToevoegenTab({ folders = [], onUploadDocument, onAddFold
         directory=""
         multiple
       />
-
-      {!canWrite && (
-        <div className="text-gray-500 text-sm italic py-4">
-          Alleen-lezen modus: U heeft geen schrijfrechten om documenten toe te voegen.
-        </div>
-      )}
-      {canWrite && (
-        <div className="flex flex-col w-2/3 gap-4">
-          {renderUploadSection()}
-        </div>
-      )}
       
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>

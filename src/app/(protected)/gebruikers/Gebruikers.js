@@ -314,6 +314,7 @@ export default function Gebruikers() {
               onDocumentenForUser={handleDocumentenForUser}
               onAddUser={handleAddUser}
               onAssignTeamlidPermissions={handleAssignTeamlidPermissions}
+              onGetUsers={getUsers}
               onUpdateUser={handleUpdateUser}
               onDeleteUsers={handleDeleteUsers}
               onDeleteRoleFromUsers={handleDeleteRoleFromUsers}
