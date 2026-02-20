@@ -8,7 +8,7 @@ import SuccessBttn from "@/components/buttons/SuccessBttn"
 import IssueBttn from "@/components/buttons/IssueBttn"
 
 /**
- * ImportTab Component
+ * NextcloudTab Component
  * 
  * Scenario B2: SharePoint → Nextcloud → DAVI (partial import)
  * 
@@ -18,7 +18,7 @@ import IssueBttn from "@/components/buttons/IssueBttn"
  * - See which folders are already imported
  * - Import selected folders (creates DAVI records with origin="imported")
  */
-export default function ImportTab({ onRefresh, canWrite = true, hasNextcloud = false }) {
+export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud = false }) {
   const { listImportableFolders, importFolders, syncFoldersFromNextcloud } = useApi()
   
   const [folders, setFolders] = useState([])
@@ -56,7 +56,18 @@ export default function ImportTab({ onRefresh, canWrite = true, hasNextcloud = f
       }
     } catch (err) {
       console.error("Failed to load folders:", err)
-      setError(err?.response?.data?.detail || "Kon folders niet laden van Nextcloud")
+      const errorDetail = err?.response?.data?.detail
+      // Handle Pydantic validation errors (array of objects)
+      if (Array.isArray(errorDetail)) {
+        const errorMessages = errorDetail.map(e => 
+          typeof e === 'object' && e.msg ? e.msg : String(e)
+        ).join(', ')
+        setError(errorMessages || "Kon folders niet laden van Nextcloud")
+      } else if (typeof errorDetail === 'string') {
+        setError(errorDetail)
+      } else {
+        setError("Kon folders niet laden van Nextcloud")
+      }
     } finally {
       setLoading(false)
     }
@@ -121,7 +132,18 @@ export default function ImportTab({ onRefresh, canWrite = true, hasNextcloud = f
       }
     } catch (err) {
       console.error("Failed to import folders:", err)
-      setError(err?.response?.data?.detail || "Import mislukt")
+      const errorDetail = err?.response?.data?.detail
+      // Handle Pydantic validation errors (array of objects)
+      if (Array.isArray(errorDetail)) {
+        const errorMessages = errorDetail.map(e => 
+          typeof e === 'object' && e.msg ? e.msg : String(e)
+        ).join(', ')
+        setError(errorMessages || "Import mislukt")
+      } else if (typeof errorDetail === 'string') {
+        setError(errorDetail)
+      } else {
+        setError("Import mislukt")
+      }
     } finally {
       setImporting(false)
     }
@@ -157,7 +179,18 @@ export default function ImportTab({ onRefresh, canWrite = true, hasNextcloud = f
       }
     } catch (err) {
       console.error("Failed to sync folders:", err)
-      setError(err?.response?.data?.detail || "Synchronisatie mislukt")
+      const errorDetail = err?.response?.data?.detail
+      // Handle Pydantic validation errors (array of objects)
+      if (Array.isArray(errorDetail)) {
+        const errorMessages = errorDetail.map(e => 
+          typeof e === 'object' && e.msg ? e.msg : String(e)
+        ).join(', ')
+        setError(errorMessages || "Synchronisatie mislukt")
+      } else if (typeof errorDetail === 'string') {
+        setError(errorDetail)
+      } else {
+        setError("Synchronisatie mislukt")
+      }
     } finally {
       setSyncing(false)
     }

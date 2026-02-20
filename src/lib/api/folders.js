@@ -76,11 +76,22 @@ export function useFolders() {
 
   const importFolders = useCallback(
     (payload) =>
-      withAuth((token) =>
-        apiClient
-          .post('/company-admin/folders/import', payload, createAuthHeaders(token))
+      withAuth((token) => {
+        // Handle both array (legacy) and object formats
+        const requestPayload = Array.isArray(payload) 
+          ? { folder_paths: payload }
+          : payload.folder_paths 
+            ? payload 
+            : { folder_paths: payload };
+        
+        return apiClient
+          .post('/company-admin/folders/import', requestPayload, createAuthHeaders(token))
           .then((res) => res.data)
-      ),
+          .catch((err) => {
+            console.error('[useApi] Import folders failed:', err.response?.data || err);
+            throw err;
+          });
+      }),
     [withAuth]
   );
 

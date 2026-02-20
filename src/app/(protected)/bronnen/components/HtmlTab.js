@@ -14,6 +14,7 @@ export default function HtmlTab({
   onUploadHtml, 
   onDelete, 
   onUpdate,
+  onDownloadSource,
   formatDate
 }) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -22,6 +23,16 @@ export default function HtmlTab({
   const [error, setError] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const fileInputRef = useRef(null)
+
+  const handleViewSource = async (filePath, fileName) => {
+    if (!filePath || !onDownloadSource) return
+    try {
+      await onDownloadSource(filePath, fileName)
+    } catch (err) {
+      console.error('Failed to view source:', err)
+      alert('Kon bestand niet openen. Probeer het opnieuw.')
+    }
+  }
 
   const htmlSources = useMemo(() => {
     return sources.filter(s => s.type === "html")
@@ -246,9 +257,33 @@ export default function HtmlTab({
                           onChange={(checked) => handleSourceSelect(source.id, checked)}
                           color="#23BD92" 
                         />
-                        <span className="font-montserrat text-[16px] text-black">
-                          {source.file_name || "-"}
-                        </span>
+                        {source.file_name ? (
+                          fullSource?.url ? (
+                            <a
+                              href={fullSource.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-montserrat text-[16px] text-[#23BD92] hover:underline cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {source.file_name}
+                            </a>
+                          ) : fullSource?.file_path ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewSource(fullSource.file_path, source.file_name)
+                              }}
+                              className="font-montserrat text-[16px] text-[#23BD92] hover:underline cursor-pointer text-left"
+                            >
+                              {source.file_name}
+                            </button>
+                          ) : (
+                            <span className="font-montserrat text-[16px] text-black">{source.file_name}</span>
+                          )
+                        ) : (
+                          <span className="font-montserrat text-[16px] text-black">-</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">

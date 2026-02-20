@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation"
 import UsersTab from "./components/UsersTab"
 import MappenTab from "./components/MappenTab"
 import MakenTab from "./components/MakenTab"
-import ImportTab from "./components/ImportTab"
+import NextcloudTab from "./components/NextcloudTab"
 import { useApi } from "@/lib/useApi"
 import { canWriteFolders, hasNextcloudPermission } from "@/lib/permissions"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
   { label: 'Maken', component: MakenTab, selectable: true },
-  { label: 'Importeren', component: ImportTab, selectable: true },
+  { label: 'Nextcloud', component: NextcloudTab, selectable: true },
   { label: 'Gebruikers', component: UsersTab, selectable: false }
 ]
 

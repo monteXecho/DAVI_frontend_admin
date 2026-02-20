@@ -11,7 +11,7 @@ const tabsConfig = [
 
 export default function Bronnen() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getSources, addUrlSource, uploadHtmlSource, deleteSource, updateSource, syncSources } = useSources()
+  const { getSources, addUrlSource, uploadHtmlSource, deleteSource, updateSource, syncSources, downloadSource } = useSources()
   const [sources, setSources] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastSync, setLastSync] = useState(null)
@@ -48,8 +48,11 @@ export default function Bronnen() {
   const handleAddUrl = async (data) => {
     try {
       if (data.sourceId) {
-        // Edit mode - update existing source
-        await updateSource(data.sourceId, data.status)
+        // Edit mode - remove the original source and add the new updated one
+        // This ensures the URL is properly updated and re-indexed
+        await deleteSource(data.sourceId)
+        // Add the new source with updated URL
+        await addUrlSource(data.url)
       } else {
         // Add mode - create new source
         await addUrlSource(data.url)
@@ -193,6 +196,7 @@ export default function Bronnen() {
           onDelete={handleDeleteSource}
           onUpdate={handleUpdateSource}
           onSync={handleSync}
+          onDownloadSource={downloadSource}
           formatDate={formatDate}
           lastSync={lastSync}
           nextSync={nextSync}

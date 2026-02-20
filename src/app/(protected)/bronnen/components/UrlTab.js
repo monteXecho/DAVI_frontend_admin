@@ -260,9 +260,19 @@ export default function UrlTab({
                           onChange={(checked) => handleSourceSelect(source.id, checked)}
                           color="#23BD92" 
                         />
-                        <span className="font-montserrat text-[16px] text-black">
-                          {source.url || "-"}
-                        </span>
+                        {source.url ? (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-montserrat text-[16px] text-[#23BD92] hover:underline cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {source.url}
+                          </a>
+                        ) : (
+                          <span className="font-montserrat text-[16px] text-black">-</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">

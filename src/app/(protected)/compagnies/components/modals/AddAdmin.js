@@ -135,9 +135,9 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
   const selectedCompanyObj = companies.find(c => c.name === selected);
 
   return (
-    <div className="relative w-full max-w-[640px] bg-white rounded-3xl shadow-2xl overflow-hidden">
+    <div className="relative w-full max-w-[640px] bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
       {/* Header with gradient */}
-      <div className="relative bg-gradient-to-r from-[#23BD92] to-[#1a9d7a] px-8 py-6">
+      <div className="sticky top-0 z-10 relative bg-gradient-to-r from-[#23BD92] to-[#1a9d7a] px-8 py-6">
         <button
           onClick={onClose}
           className="absolute right-6 top-6 text-white/80 hover:text-white transition-colors duration-200 p-1.5 rounded-lg hover:bg-white/10"

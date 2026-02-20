@@ -1,0 +1,19 @@
+{
+    "creativeChat": {
+      "title": "CreativeChat",
+      "description": "Write, rewrite and brainstorm with the help of AI.",
+      "placeholder": "Type your message...",
+      "submit": "Submit",
+      "language": "Language",
+      "errorGeneric": "An error occurred. Please try again.",
+      "cancel": "Stop",
+      "cancelledMessage": "Response cancelled.",
+      "options": {
+        "Schrijven": "Writing",
+        "Herschrijven": "Rewriting",
+        "Brainstormen": "Brainstorming",
+        "SMART": "SMART"
+      }
+    }
+  }
+  

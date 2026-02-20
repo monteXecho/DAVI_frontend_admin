@@ -99,6 +99,45 @@ export function useSources() {
     [withAuth]
   );
 
+  const downloadSource = useCallback(
+    (filePath, fileName) =>
+      withAuth(async (token) => {
+        const encodedPath = encodeURIComponent(filePath);
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+        const url = `${baseUrl}/company-admin/sources/download?file_path=${encodedPath}`;
+
+        try {
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
+                ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+                : {}),
+              ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                ? { 'X-Acting-Owner-Is-Guest': 'true' }
+                : {}),
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to download source: ${response.statusText}`);
+          }
+
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const newWindow = window.open(blobUrl, '_blank');
+          if (newWindow) {
+            // Clean up blob URL after a delay
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+          }
+        } catch (err) {
+          console.error('Failed to download source:', err);
+          throw err;
+        }
+      }),
+    [withAuth]
+  );
+
   return {
     getSources,
     addUrlSource,
@@ -106,5 +145,6 @@ export function useSources() {
     updateSource,
     deleteSource,
     syncSources,
+    downloadSource,
   };
 }

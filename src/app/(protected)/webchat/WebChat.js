@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
 import { useWebChat } from '@/lib/api/webchat'
+import WebChatSourceList from './components/WebChatSourceList'
 
 const CHAT_HISTORY_KEY = 'webchat_history'
 
@@ -127,20 +128,29 @@ export default function WebChat() {
       const data = await askQuestion(questionText)
       const answer = data.answer || ''
       
-      // Format sources from documents
-      const formattedSources = (data.documents || []).map((doc, index) => ({
-        id: index,
-        url: doc.meta?.url || '',
-        title: doc.meta?.file_name || getDomainName(doc.meta?.url || ''),
-        content: doc.content || '',
-        date: new Date().toLocaleDateString('nl-NL', { 
-          day: 'numeric', 
-          month: 'short', 
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }))
+      // Format sources from documents - extract URL and title from meta
+      const formattedSources = (data.documents || []).map((doc, index) => {
+        const url = doc.meta?.url || ''
+        const fileName = doc.meta?.file_name || ''
+        
+        // Use file_name as title, or domain name if file_name is not available
+        let title = fileName
+        if (!title && url) {
+          title = getDomainName(url)
+        } else if (!title) {
+          title = 'Unknown Source'
+        }
+        
+        const domainName = url ? getDomainName(url) : title
+        
+        return {
+          id: index,
+          url: url,
+          title: title,
+          content: doc.content || '',
+          domainName: domainName
+        }
+      })
       
       // Add new message to history
       const newMessage = {
@@ -201,59 +211,7 @@ export default function WebChat() {
             {/* Sources Section - Similar to PdfSnippetList */}
             {Array.isArray(message.sources) && message.sources.length > 0 && (
               <section className="w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="font-montserrat font-bold text-[16px] leading-6 tracking-normal">
-                    Bronnen
-                  </div>
-                  <a
-                    href="/bronnen"
-                    className="text-sm text-[#23BD92] hover:text-[#1ea87c] font-medium"
-                  >
-                    Beheer bronnen
-                  </a>
-                </div>
-                <div className="space-y-2">
-                  {message.sources.map((source, sourceIndex) => {
-                    const domainName = source.url ? getDomainName(source.url) : source.title
-                    return (
-                      <div key={sourceIndex} className="border-t-2 border-t-[#C5BEBE] py-2">
-                        <div className="w-full flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            <div className="font-montserrat font-normal text-[15px] leading-normal tracking-normal">
-                              {domainName}
-                            </div>
-                          </div>
-                          {source.url && (
-                            <a
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#23BD92] hover:text-[#1ea87c] flex-shrink-0"
-                              title={`Open ${domainName} in nieuw tabblad`}
-                            >
-                              <svg width="19" height="20" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0 0.5V19.5H19V0.5H0ZM8.97196 16.3333H3.16667V10.528L4.95029 12.3109L7.32688 9.94458L9.56571 12.1834L7.18913 14.5497L8.97196 16.3333ZM15.8333 9.47196L14.0497 7.68913L11.7388 10L9.5 7.76117L11.8109 5.45029L10.028 3.66667H15.8333V9.47196Z" fill="currentColor"/>
-                              </svg>
-                            </a>
-                          )}
-                        </div>
-                        {source.content && (
-                          <div className="mt-2 pl-7">
-                            <div className="font-montserrat font-normal text-[12px] text-gray-600">
-                              {source.content.length > 150
-                                ? source.content.slice(0, 150) + '...'
-                                : source.content}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                  <div className="h-0.5 w-full bg-[#C5BEBE]"></div>
-                </div>
+                <WebChatSourceList sources={message.sources} />
               </section>
             )}
           </div>
