@@ -2,9 +2,12 @@
 
 import { ReactKeycloakProvider } from '@react-keycloak/web';
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import keycloak from '@/lib/keycloak';
 
 export default function KeycloakProviderWrapper({ children }) {
+  const pathname = usePathname();
+  
   useEffect(() => {
     const handleAuthError = (event) => {
       console.log('Global auth error detected:', event.detail);
@@ -20,11 +23,14 @@ export default function KeycloakProviderWrapper({ children }) {
     };
   });
 
+  // Check if we're on a public route that doesn't require authentication
+  const isPublicRoute = pathname?.includes('/publicChat') || pathname?.includes('/publicchat') || pathname?.includes('/register');
+
   return (
     <ReactKeycloakProvider
       authClient={keycloak}
       initOptions={{ 
-        onLoad: 'check-sso',
+        onLoad: isPublicRoute ? 'check-sso' : 'check-sso',
         checkLoginIframe: false, 
         pkceMethod: 'S256' 
       }}
@@ -37,6 +43,11 @@ export default function KeycloakProviderWrapper({ children }) {
         }
       }}
       onEvent={(event, error) => {
+        // Don't force login for public routes
+        if (isPublicRoute) {
+          return;
+        }
+        
         if (event === 'onAuthError' || event === 'onTokenExpired') {
           console.warn('[KeycloakProvider] Auth error:', event, error);
           if (error?.error !== 'invalid_grant') {

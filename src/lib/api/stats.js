@@ -50,10 +50,28 @@ export function useStats() {
     [withAuth]
   );
 
+  const getSuperAdminPublicChatsCount = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get(`/super-admin/public-chats/count`, createAuthHeaders(token))
+          .then((res) => res.data)
+          .catch((err) => {
+            // Silently handle 404 errors - endpoint doesn't exist yet
+            if (err.response?.status === 404) {
+              return {};
+            }
+            throw err;
+          })
+      ),
+    [withAuth]
+  );
+
   return {
     getCompanyStats,
     getSuperAdminStats,
     getSuperAdminRolesCount,
+    getSuperAdminPublicChatsCount,
   };
 }
 

@@ -18,6 +18,7 @@ const MODULES = [
   { key: 'GGD Checks', label: 'GGD Checks', shortLabel: 'GGD' },
   { key: 'CreatieChat', label: 'CreatieChat', shortLabel: 'Creatie' },
   { key: 'WebChat', label: 'WebChat', shortLabel: 'WebChat' },
+  { key: 'PublicChat', label: 'PublicChat', shortLabel: 'Public' },
 ];
 
 export default function ModulesDetail() {
@@ -83,7 +84,12 @@ export default function ModulesDetail() {
           // Handle array format (serialized modules)
           if (Array.isArray(admin.modules)) {
             // Find module by name in the array
-            moduleData = admin.modules.find(m => m && m.name === module.key);
+            // For Nextcloud, check both "Nextcloud" and "Nexcloud" for backward compatibility
+            if (module.key === 'Nextcloud') {
+              moduleData = admin.modules.find(m => m && (m.name === 'Nextcloud' || m.name === 'Nexcloud'));
+            } else {
+              moduleData = admin.modules.find(m => m && m.name === module.key);
+            }
             if (moduleData) {
               // Check enabled status - handle both boolean and string "true"
               isEnabled = moduleData.enabled === true || 
@@ -92,7 +98,12 @@ export default function ModulesDetail() {
             }
           } else if (typeof admin.modules === 'object' && admin.modules !== null) {
             // Handle object/dictionary format (if not serialized)
-            moduleData = admin.modules[module.key];
+            // For Nextcloud, check both "Nextcloud" and "Nexcloud" for backward compatibility
+            if (module.key === 'Nextcloud') {
+              moduleData = admin.modules['Nextcloud'] || admin.modules['Nexcloud'];
+            } else {
+              moduleData = admin.modules[module.key];
+            }
             if (moduleData) {
               // Handle both object format {enabled: true, desc: "..."} and direct boolean
               if (typeof moduleData === 'object' && moduleData !== null) {

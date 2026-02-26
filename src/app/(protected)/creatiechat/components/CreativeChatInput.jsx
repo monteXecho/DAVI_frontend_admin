@@ -6,11 +6,20 @@ import ChatSubmitIcon from "./icons/ChatSubmitIcon";
 
 const TONE_OPTIONS = ["Schrijven", "Herschrijven", "Brainstormen", "SMART"];
 
+const PLACEHOLDERS = {
+  Schrijven: "Geef je opzet voor een bericht, brief, email...",
+  Herschrijven: "Herschrijf een tekst vriendelijker, korter, zakelijker...",
+  Brainstormen: "Geef 5 ideeën voor...",
+  SMART: "Maak je doelen concreet en meetbaar...",
+};
+
 export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
   const { t } = useCreativeChatI18n();
   const [input, setInput] = useState("");
   const [tone, setTone] = useState("Schrijven");
   const textareaRef = useRef(null);
+  
+  const placeholder = PLACEHOLDERS[tone] || PLACEHOLDERS.Schrijven;
 
   const handleSubmit = () => {
     if (loading) return;
@@ -36,7 +45,7 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
       <div className="relative">
         <textarea
           ref={textareaRef}
-          placeholder={t("creativeChat.placeholder")}
+          placeholder={placeholder}
           rows={3}
           value={input}
           onChange={(e) => setInput(e.target.value)}

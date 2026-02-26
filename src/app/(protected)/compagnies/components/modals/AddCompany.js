@@ -25,9 +25,10 @@ export default function AddCompany({ onClose, onCreate }) {
     'GGD Checks': false,
     'CreatieChat': false,
     'WebChat': false,
+    'PublicChat': false,
     'Admin Dashboard': false,
     'Webcrawler': false,
-    'Nexcloud': false,
+    'Nextcloud': false,
   });
 
   const handleNumberChange = (setter, value, min = 0) => {
@@ -71,7 +72,7 @@ export default function AddCompany({ onClose, onCreate }) {
         let backendName = moduleName;
         if (moduleName === 'Admin Dashboard') backendName = 'Admin Dashboard';
         else if (moduleName === 'Webcrawler') backendName = 'Webcrawler';
-        else if (moduleName === 'Nexcloud') backendName = 'Nexcloud';
+        else if (moduleName === 'Nextcloud' || moduleName === 'Nexcloud') backendName = 'Nextcloud';
         
         modules[backendName] = { enabled };
       });

@@ -61,6 +61,9 @@ export function useCompanies() {
         if (limits.max_roles !== undefined && limits.max_roles !== null) {
           params.append('max_roles', String(limits.max_roles));
         }
+        if (limits.max_public_chats !== undefined && limits.max_public_chats !== null) {
+          params.append('max_public_chats', String(limits.max_public_chats));
+        }
         const url = `/super-admin/companies/${companyId}/limits?${params.toString()}`;
         console.log('Updating company limits:', url, limits);
         return apiClient

@@ -88,6 +88,14 @@ const MENU_CONFIG = {
       requiredRoles: ['super_admin', 'company_admin']
     },
     {
+      id: 'publicchat',
+      label: 'PublicChat',
+      icon: ChatItem,
+      path: '/publicchat',
+      requiredRoles: ['super_admin', 'company_admin'],
+      moduleKey: 'PublicChat'
+    },
+    {
       id: 'webchat-admin',
       label: 'WebChat',
       icon: () => <WebChatIcon className="w-8 h-8" />,
@@ -424,6 +432,7 @@ export default function LeftSidebar() {
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
       "/documenten": "Documenten",
+      "/publicchat": "PublicChat",
       "/mappen": "Mappen"
     };
 

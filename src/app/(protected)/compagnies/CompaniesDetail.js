@@ -13,9 +13,10 @@ const ITEMS_PER_PAGE = 10;
 
 export default function CompaniesDetail() {
   const router = useRouter();
-  const { getCompanies, getSuperAdminRolesCount, createCompany, updateCompanyLimits, updateCompanyModules } = useApi();
+  const { getCompanies, getSuperAdminRolesCount, getSuperAdminPublicChatsCount, createCompany, updateCompanyLimits, updateCompanyModules } = useApi();
   const [companies, setCompanies] = useState([]);
   const [rolesByCompany, setRolesByCompany] = useState({});
+  const [publicChatsByCompany, setPublicChatsByCompany] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,30 @@ export default function CompaniesDetail() {
           });
           setRolesByCompany(rolesMap);
         }
+
+        // Fetch public chats count per company
+        try {
+          const publicChatsCountData = await getSuperAdminPublicChatsCount();
+          // Expected format: { [companyId]: count }
+          if (publicChatsCountData && typeof publicChatsCountData === 'object') {
+            setPublicChatsByCompany(publicChatsCountData);
+          } else {
+            // Fallback: initialize with zeros
+            const chatsMap = {};
+            companiesList.forEach(company => {
+              chatsMap[company.id] = 0;
+            });
+            setPublicChatsByCompany(chatsMap);
+          }
+        } catch (chatsErr) {
+          // If endpoint doesn't exist yet, initialize with zeros
+          console.log('Public chats count endpoint not available, using fallback');
+          const chatsMap = {};
+          companiesList.forEach(company => {
+            chatsMap[company.id] = 0;
+          });
+          setPublicChatsByCompany(chatsMap);
+        }
       } catch (err) {
         console.error("Error fetching companies:", err);
       } finally {
@@ -60,7 +85,7 @@ export default function CompaniesDetail() {
     };
 
     fetchCompanies();
-  }, [getCompanies, getSuperAdminRolesCount]);
+  }, [getCompanies, getSuperAdminRolesCount, getSuperAdminPublicChatsCount]);
 
   // Format company data for table
   const formatCompanyData = useCallback((company) => {
@@ -89,6 +114,10 @@ export default function CompaniesDetail() {
     const maxDocsValue = company.max_documents !== undefined && company.max_documents !== null ? company.max_documents : -1;
     const maxDocs = maxDocsValue === -1 ? '∞' : maxDocsValue;
 
+    const currentPublicChats = publicChatsByCompany[company.id] || 0;
+    const maxPublicChatsValue = company.max_public_chats !== undefined && company.max_public_chats !== null ? company.max_public_chats : -1;
+    const maxPublicChats = maxPublicChatsValue === -1 ? '∞' : maxPublicChatsValue;
+
     return {
       id: company.id,
       name: company.name || "—",
@@ -97,8 +126,9 @@ export default function CompaniesDetail() {
       users: `${currentUsers}/${maxUsers}`,
       roles: `${currentRoles}/${maxRoles}`,
       maxDocs: `${currentDocs}/${maxDocs}`,
+      public: `${currentPublicChats}/${maxPublicChats}`,
     };
-  }, [rolesByCompany]);
+  }, [rolesByCompany, publicChatsByCompany]);
 
   const formattedCompanies = useMemo(() => {
     return companies.map(formatCompanyData);
@@ -281,6 +311,14 @@ export default function CompaniesDetail() {
                       >
                         Max docs
                       </SortableHeader>
+                      <SortableHeader 
+                        sortKey="public" 
+                        onSort={requestSort} 
+                        currentSort={sortConfig}
+                        className="px-6 py-3"
+                      >
+                        Public
+                      </SortableHeader>
                       <th className="w-20 px-6 py-3 font-montserrat font-bold text-[16px] text-gray-900 text-center">
                         
                       </th>
@@ -330,6 +368,11 @@ export default function CompaniesDetail() {
                           <td className="px-6 py-4">
                             <span className="font-montserrat text-[15px] text-gray-700 font-medium">
                               {company.maxDocs}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-montserrat text-[15px] text-gray-700 font-medium">
+                              {company.public}
                             </span>
                           </td>
                           <td className="px-6 py-4">

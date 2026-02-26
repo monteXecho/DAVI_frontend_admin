@@ -13,7 +13,7 @@ const TONE_TO_TASK_TYPE = {
 };
 
 export default function CreativeChatClient() {
-  const { t } = useCreativeChatI18n();
+  const { t, language } = useCreativeChatI18n();
   const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
   const smartSessionIdRef = useRef(null);
@@ -64,6 +64,7 @@ export default function CreativeChatClient() {
       const body = {
         message: content,
         task_type: taskType,
+        lang: language
       };
       if (taskType === "smart" && smartSessionIdRef.current) {
         body.session_id = smartSessionIdRef.current;
@@ -107,16 +108,17 @@ export default function CreativeChatClient() {
   };
 
   return (
-    <div className="w-full flex flex-col min-h-0 lg:h-full h-[calc(100vh-210px)] lg:py-[81px] lg:px-[97px] px-[25px] py-[22px] scrollbar-hide">
-      <div className="mb-4">
-        <h1 className="text-4xl font-bold font-montserrat mb-2">CreatieChat</h1>
-        <p className="text-gray-600 font-montserrat">
-          Schrijf, herschrijf en brainstorm met hulp van AI.
-        </p>
-      </div>
-      <div className={`flex flex-col items-center min-h-0 w-full mx-auto ${hasHistory ? "flex-1" : ""}`}>
+    <div
+      className="w-full flex flex-col min-h-0 lg:h-full h-[calc(100vh-210px)] lg:py-[81px] lg:px-[97px] px-[25px] py-[22px] scrollbar-hide">
+      <div className={`flex flex-col min-h-0 w-full mx-auto ${hasHistory ? "flex-1" : ""}`}>
+        <div className="mb-4">
+          <h1 className="text-4xl font-bold font-montserrat mb-2">CreatieChat</h1>
+          <p className="text-gray-600 font-montserrat">
+            Schrijf, herschrijf en brainstorm met hulp van AI.
+          </p>
+        </div>
         {hasHistory && (
-          <div className="w-full flex-1 min-h-0 overflow-y-auto scrollbar-hide space-y-6 mb-6 pr-2">
+          <div className="w-full flex-1 min-h-0 overflow-y-auto space-y-6 mb-6 pr-2">
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -125,9 +127,9 @@ export default function CreativeChatClient() {
                 }`}
               >
                 <div
-                  className={`w-fit max-w-[85%] rounded-xl px-4 py-3 font-montserrat ${
+                  className={`w-fit max-w-[85%] rounded-xl px-4 py-3 font-montserrat text-[16px] leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-[#F9FBFA] text-[#342222] ml-auto text-[16px] leading-relaxed"
+                      ? "bg-[#F9FBFA] text-[#342222] ml-auto"
                       : "text-black"
                   }`}
                 >

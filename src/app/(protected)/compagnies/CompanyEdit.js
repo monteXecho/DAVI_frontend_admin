@@ -36,10 +36,12 @@ export default function CompanyEdit() {
   const [maxAdmins, setMaxAdmins] = useState(4);
   const [maxDocuments, setMaxDocuments] = useState(2048);
   const [maxRoles, setMaxRoles] = useState(512);
+  const [maxPublicChats, setMaxPublicChats] = useState(10);
   const [unlimitedUsers, setUnlimitedUsers] = useState(false);
   const [unlimitedAdmins, setUnlimitedAdmins] = useState(false);
   const [unlimitedDocuments, setUnlimitedDocuments] = useState(false);
   const [unlimitedRoles, setUnlimitedRoles] = useState(false);
+  const [unlimitedPublicChats, setUnlimitedPublicChats] = useState(false);
   
   // Module permissions state
   const [modulePermissions, setModulePermissions] = useState({
@@ -47,9 +49,10 @@ export default function CompanyEdit() {
     'GGD Checks': false,
     'CreatieChat': false,
     'WebChat': false,
+    'PublicChat': false,
     'Admin Dashboard': false,
     'Webcrawler': false,
-    'Nexcloud': false,
+    'Nextcloud': false,
   });
 
   useEffect(() => {
@@ -78,15 +81,18 @@ export default function CompanyEdit() {
         const maxAdmins = foundCompany.max_admins !== undefined && foundCompany.max_admins !== null ? foundCompany.max_admins : -1;
         const maxDocuments = foundCompany.max_documents !== undefined && foundCompany.max_documents !== null ? foundCompany.max_documents : -1;
         const maxRoles = foundCompany.max_roles !== undefined && foundCompany.max_roles !== null ? foundCompany.max_roles : -1;
+        const maxPublicChats = foundCompany.max_public_chats !== undefined && foundCompany.max_public_chats !== null ? foundCompany.max_public_chats : -1;
         
         setMaxUsers(maxUsers === -1 ? 1024 : maxUsers);
         setMaxAdmins(maxAdmins === -1 ? 4 : maxAdmins);
         setMaxDocuments(maxDocuments === -1 ? 2048 : maxDocuments);
         setMaxRoles(maxRoles === -1 ? 512 : maxRoles);
+        setMaxPublicChats(maxPublicChats === -1 ? 10 : maxPublicChats);
         setUnlimitedUsers(maxUsers === -1);
         setUnlimitedAdmins(maxAdmins === -1);
         setUnlimitedDocuments(maxDocuments === -1);
         setUnlimitedRoles(maxRoles === -1);
+        setUnlimitedPublicChats(maxPublicChats === -1);
 
         // Fetch roles count
         try {
@@ -104,9 +110,10 @@ export default function CompanyEdit() {
           'GGD Checks': false,
           'CreatieChat': false,
           'WebChat': false,
+          'PublicChat': false,
           'Admin Dashboard': false,
           'Webcrawler': false,
-          'Nexcloud': false,
+          'Nextcloud': false,
         };
 
         // Get company modules (company-level permissions)
@@ -124,12 +131,14 @@ export default function CompanyEdit() {
                   modulePerms['CreatieChat'] = moduleItem.enabled === true;
                 } else if (moduleName === 'WebChat') {
                   modulePerms['WebChat'] = moduleItem.enabled === true;
+                } else if (moduleName === 'PublicChat') {
+                  modulePerms['PublicChat'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Admin Dashboard' || moduleName === 'Dashboard') {
                   modulePerms['Admin Dashboard'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Webcrawler' || moduleName === 'Web Crawler') {
                   modulePerms['Webcrawler'] = moduleItem.enabled === true;
                 } else if (moduleName === 'Nexcloud' || moduleName === 'Nextcloud') {
-                  modulePerms['Nexcloud'] = moduleItem.enabled === true;
+                  modulePerms['Nextcloud'] = moduleItem.enabled === true;
                 }
               }
             });
@@ -147,12 +156,14 @@ export default function CompanyEdit() {
                   modulePerms['CreatieChat'] = enabled;
                 } else if (moduleKey === 'WebChat') {
                   modulePerms['WebChat'] = enabled;
+                } else if (moduleKey === 'PublicChat') {
+                  modulePerms['PublicChat'] = enabled;
                 } else if (moduleKey === 'Admin Dashboard' || moduleKey === 'Dashboard') {
                   modulePerms['Admin Dashboard'] = enabled;
                 } else if (moduleKey === 'Webcrawler' || moduleKey === 'Web Crawler') {
                   modulePerms['Webcrawler'] = enabled;
                 } else if (moduleKey === 'Nexcloud' || moduleKey === 'Nextcloud') {
-                  modulePerms['Nexcloud'] = enabled;
+                  modulePerms['Nextcloud'] = enabled;
                 }
               }
             });
@@ -253,6 +264,7 @@ export default function CompanyEdit() {
         max_admins: unlimitedAdmins ? -1 : maxAdmins,
         max_documents: unlimitedDocuments ? -1 : maxDocuments,
         max_roles: unlimitedRoles ? -1 : maxRoles,
+        max_public_chats: unlimitedPublicChats ? -1 : maxPublicChats,
       };
       
       console.log('Saving limits:', limits);
@@ -292,6 +304,11 @@ export default function CompanyEdit() {
           setMaxRoles(maxRoles);
           setUnlimitedRoles(savedLimits.max_roles === -1);
         }
+        if (savedLimits.max_public_chats !== undefined) {
+          const maxPublicChats = savedLimits.max_public_chats === -1 ? 10 : savedLimits.max_public_chats;
+          setMaxPublicChats(maxPublicChats);
+          setUnlimitedPublicChats(savedLimits.max_public_chats === -1);
+        }
       }
       
       // Save module permissions
@@ -301,7 +318,8 @@ export default function CompanyEdit() {
         let backendName = moduleName;
         if (moduleName === 'Admin Dashboard') backendName = 'Admin Dashboard';
         else if (moduleName === 'Webcrawler') backendName = 'Webcrawler';
-        else if (moduleName === 'Nexcloud') backendName = 'Nexcloud';
+        else if (moduleName === 'Nextcloud' || moduleName === 'Nexcloud') backendName = 'Nextcloud';
+        // PublicChat uses the same name in frontend and backend
         
         modulesToSave[backendName] = { enabled };
       });
@@ -783,6 +801,47 @@ export default function CompanyEdit() {
                     <CheckBox
                       toggle={unlimitedRoles}
                       onChange={setUnlimitedRoles}
+                      color="#23BD92"
+                    />
+                    <span className="font-montserrat text-sm font-medium text-gray-700">Onbeperkt</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Max Public Chats */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100/50 transition-colors duration-200 border border-transparent hover:border-gray-200">
+                <label className="font-montserrat text-base font-semibold text-gray-800 sm:w-64 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#23BD92]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Maximaal aantal publieke chats
+                </label>
+                <div className="flex items-center gap-3 flex-1">
+                  <button
+                    onClick={() => handleNumberDecrement(setMaxPublicChats, maxPublicChats, 1, 0)}
+                    disabled={unlimitedPublicChats}
+                    className="w-10 h-10 rounded-lg border-2 border-[#23BD92] text-[#23BD92] font-bold hover:bg-[#23BD92] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 shadow-sm"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={unlimitedPublicChats ? '∞' : maxPublicChats}
+                    onChange={(e) => !unlimitedPublicChats && handleNumberChange(setMaxPublicChats, e.target.value, 0)}
+                    disabled={unlimitedPublicChats}
+                    className="w-28 h-10 border-2 border-gray-300 rounded-lg px-4 text-center font-montserrat font-semibold disabled:bg-gray-200 disabled:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent transition-all"
+                  />
+                  <button
+                    onClick={() => handleNumberIncrement(setMaxPublicChats, maxPublicChats, 1)}
+                    disabled={unlimitedPublicChats}
+                    className="w-10 h-10 rounded-lg border-2 border-[#23BD92] text-[#23BD92] font-bold hover:bg-[#23BD92] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 shadow-sm"
+                  >
+                    +
+                  </button>
+                  <div className="flex items-center gap-2 ml-4">
+                    <CheckBox
+                      toggle={unlimitedPublicChats}
+                      onChange={setUnlimitedPublicChats}
                       color="#23BD92"
                     />
                     <span className="font-montserrat text-sm font-medium text-gray-700">Onbeperkt</span>
