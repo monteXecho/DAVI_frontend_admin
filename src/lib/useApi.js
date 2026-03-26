@@ -17,6 +17,7 @@ import { useFolders } from './api/folders';
 import { useStats } from './api/stats';
 import { useDocumentChat } from './api/documentChat';
 import { useAuth } from './api/auth';
+import { useMaintenanceApi } from './api/maintenance';
 import { useApiCore } from './api/useApiCore';
 
 export function useApi() {
@@ -25,6 +26,7 @@ export function useApi() {
 
   // Get all domain-specific hooks
   const companies = useCompanies();
+  const maintenanceApi = useMaintenanceApi();
   const admins = useAdmins();
   const users = useUsers();
   const documents = useDocuments();
@@ -62,6 +64,9 @@ export function useApi() {
 
     // Auth
     ...auth,
+
+    // Maintenance (construction page - super admin)
+    ...maintenanceApi,
 
     // Core state
     loading,

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { usePublicChat } from "@/lib/api/publicChat"
 import { Lock, Key, X, Check, Eye, EyeOff } from "lucide-react"
 import UrlSection from "./sections/UrlSection"
@@ -8,12 +8,15 @@ import FilesSection from "./sections/FilesSection"
 
 export default function WijzigenTab({
   selectedChat,
+  canWrite = true,
   onRefresh,
   onUpdateChat,
 }) {
-  const { getChatSources, addUrlSource, addHtmlSource, addFileSource, deleteChatSource } = usePublicChat()
+  const { getChatSources, addUrlSource, addHtmlSource, addFileSource, syncChatSources, deleteChatSource } = usePublicChat()
   const [sources, setSources] = useState([])
   const [loading, setLoading] = useState(false)
+  const [lastSync, setLastSync] = useState(null)
+  const [nextSync, setNextSync] = useState(null)
   
   // Password management state
   const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -22,15 +25,7 @@ export default function WijzigenTab({
   const [passwordError, setPasswordError] = useState("")
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
 
-  useEffect(() => {
-    if (selectedChat?.id) {
-      loadSources()
-    } else {
-      setSources([])
-    }
-  }, [selectedChat])
-
-  const loadSources = async () => {
+  const loadSources = useCallback(async () => {
     if (!selectedChat?.id) return
     
     try {
@@ -39,12 +34,37 @@ export default function WijzigenTab({
       if (res?.sources) {
         setSources(res.sources)
       }
+      if (res?.last_sync) setLastSync(new Date(res.last_sync))
+      if (res?.next_sync) setNextSync(new Date(res.next_sync))
     } catch (err) {
       console.error("Failed to load sources:", err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedChat?.id, getChatSources])
+
+  useEffect(() => {
+    if (selectedChat?.id) {
+      loadSources()
+    } else {
+      setSources([])
+      setLastSync(null)
+      setNextSync(null)
+    }
+  }, [selectedChat?.id, loadSources])
+
+  const handleSync = useCallback(async () => {
+    if (!selectedChat?.id) return
+    try {
+      const res = await syncChatSources(selectedChat.id)
+      if (res?.last_sync) setLastSync(new Date(res.last_sync))
+      if (res?.next_sync) setNextSync(new Date(res.next_sync))
+      await loadSources()
+      onRefresh()
+    } catch (err) {
+      throw err
+    }
+  }, [selectedChat?.id, syncChatSources, loadSources, onRefresh])
 
   const handleAddUrl = async (url) => {
     try {
@@ -148,6 +168,26 @@ export default function WijzigenTab({
     )
   }
 
+  const formatDateTime = (date) => {
+    if (!date) return ""
+    const d = new Date(date)
+    const months = ["januari", "februari", "maart", "april", "mei", "juni",
+      "juli", "augustus", "september", "oktober", "november", "december"]
+    const hours = String(d.getHours()).padStart(2, "0")
+    const minutes = String(d.getMinutes()).padStart(2, "0")
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} om ${hours}:${minutes}`
+  }
+
+  const formatNextSync = (date) => {
+    if (!date) return ""
+    const now = new Date()
+    const d = new Date(date)
+    if (d.toDateString() === now.toDateString()) {
+      return `Vannacht om ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+    }
+    return formatDateTime(date)
+  }
+
   const urlSources = sources.filter(s => s.type === "url")
   const htmlSources = sources.filter(s => s.type === "html")
   const fileSources = sources.filter(s => s.type === "file")
@@ -248,26 +288,28 @@ export default function WijzigenTab({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={handleUpdatePassword}
-                disabled={isUpdatingPassword || !newPassword.trim()}
-                className="px-6 py-3 bg-[#23BD92] hover:bg-[#1ea87c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
-              >
-                <Key className="w-4 h-4" />
-                {isUpdatingPassword ? "Bijwerken..." : "Wachtwoord Bijwerken"}
-              </button>
-              {selectedChat.password && (
+            {canWrite && (
+              <div className="flex items-center gap-3 pt-2">
                 <button
-                  onClick={handleRemovePassword}
-                  disabled={isUpdatingPassword}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
+                  onClick={handleUpdatePassword}
+                  disabled={isUpdatingPassword || !newPassword.trim()}
+                  className="px-6 py-3 bg-[#23BD92] hover:bg-[#1ea87c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <X className="w-4 h-4" />
-                  {isUpdatingPassword ? "Verwijderen..." : "Wachtwoord Verwijderen"}
+                  <Key className="w-4 h-4" />
+                  {isUpdatingPassword ? "Bijwerken..." : "Wachtwoord Bijwerken"}
                 </button>
-              )}
-            </div>
+                {selectedChat.password && (
+                  <button
+                    onClick={handleRemovePassword}
+                    disabled={isUpdatingPassword}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    {isUpdatingPassword ? "Verwijderen..." : "Wachtwoord Verwijderen"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -276,14 +318,21 @@ export default function WijzigenTab({
       <UrlSection
         sources={urlSources}
         loading={loading}
+        canWrite={canWrite}
         onAddUrl={handleAddUrl}
         onDeleteSource={handleDeleteSource}
+        onSync={handleSync}
+        lastSync={lastSync}
+        nextSync={nextSync}
+        formatDateTime={formatDateTime}
+        formatNextSync={formatNextSync}
       />
 
       {/* HTML Section */}
       <HtmlSection
         sources={htmlSources}
         loading={loading}
+        canWrite={canWrite}
         onAddHtml={handleAddHtml}
         onDeleteSource={handleDeleteSource}
       />
@@ -292,6 +341,7 @@ export default function WijzigenTab({
       <FilesSection
         sources={fileSources}
         loading={loading}
+        canWrite={canWrite}
         onAddFile={handleAddFile}
         onDeleteSource={handleDeleteSource}
       />

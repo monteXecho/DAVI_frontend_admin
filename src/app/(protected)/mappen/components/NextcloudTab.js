@@ -18,8 +18,29 @@ import IssueBttn from "@/components/buttons/IssueBttn"
  * - See which folders are already imported
  * - Import selected folders (creates DAVI records with origin="imported")
  */
+function formatNextSync(nextSyncAt) {
+  if (!nextSyncAt) return null
+  try {
+    const d = new Date(nextSyncAt)
+    return d.toLocaleString('nl-NL', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    })
+  } catch {
+    return null
+  }
+}
+
+function formatInterval(minutes) {
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60)
+    return h === 1 ? '1 uur' : `${h} uur`
+  }
+  return `${minutes} min`
+}
+
 export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud = false }) {
-  const { listImportableFolders, importFolders, syncFoldersFromNextcloud } = useApi()
+  const { listImportableFolders, importFolders, syncFoldersFromNextcloud, getNextcloudSyncSchedule } = useApi()
   
   const [folders, setFolders] = useState([])
   const [loading, setLoading] = useState(false)
@@ -31,6 +52,18 @@ export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud 
   const [successMessage, setSuccessMessage] = useState("")
   const [importResult, setImportResult] = useState(null)
   const [syncResult, setSyncResult] = useState(null)
+
+  // Auto-sync schedule (next_sync_at, interval_minutes)
+  const [syncSchedule, setSyncSchedule] = useState({ next_sync_at: null, interval_minutes: 60 })
+
+  const fetchSyncSchedule = async () => {
+    try {
+      const data = await getNextcloudSyncSchedule()
+      if (data) setSyncSchedule({ next_sync_at: data.next_sync_at, interval_minutes: data.interval_minutes ?? 60 })
+    } catch (err) {
+      console.error('Failed to fetch Nextcloud sync schedule:', err)
+    }
+  }
 
   // Load folders from Nextcloud
   const loadFolders = async () => {
@@ -76,6 +109,11 @@ export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud 
   useEffect(() => {
     loadFolders()
   }, [])
+
+  useEffect(() => {
+    if (!hasNextcloud) return
+    fetchSyncSchedule()
+  }, [hasNextcloud])
 
   // Handle folder selection
   const handleToggleFolder = (path) => {
@@ -168,7 +206,9 @@ export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud 
         } else {
           setSuccessMessage("Geen nieuwe documenten gevonden in Nextcloud")
         }
-        
+
+        await fetchSyncSchedule()
+
         // Refresh folder list and parent data
         await loadFolders()
         if (onRefresh) {
@@ -493,6 +533,29 @@ export default function NextcloudTab({ onRefresh, canWrite = true, hasNextcloud 
             </div>
           )}
         </div>
+      </div>
+
+      {/* Auto-sync schedule info */}
+      <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium text-slate-700">Automatische synchronisatie</span>
+          </div>
+          <div className="text-sm text-slate-600">
+            <span className="font-medium">Interval:</span>{' '}
+            {formatInterval(syncSchedule.interval_minutes)}
+          </div>
+          <div className="text-sm text-slate-600">
+            <span className="font-medium">Volgende sync:</span>{' '}
+            {formatNextSync(syncSchedule.next_sync_at) || '—'}
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mt-2">
+          Synchroniseert automatisch bij inloggen en elk uur zolang u ingelogd bent.
+        </p>
       </div>
 
       {/* Action Buttons */}

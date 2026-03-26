@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useApi } from '@/lib/useApi';
 
 // Define which paths are admin-only (BEHEER) vs module paths (MODULES)
-const ADMIN_PATHS = ['/rollen', '/rol-pz', '/gebruikers', '/documenten', '/mappen', '/compagnies'];
+const ADMIN_PATHS = ['/rollen', '/rol-pz', '/gebruikers', '/documenten', '/mappen', '/compagnies', '/company-dashboard'];
 const MODULE_PATHS = ['/documentchat', '/GGD', '/creatiechat', '/webchat', '/bkr', '/vgc', '/3-uurs'];
 
 export default function ProtectedRoute({ children }) {

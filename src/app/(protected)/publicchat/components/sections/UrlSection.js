@@ -8,17 +8,27 @@ import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 import AddUrlModal from "../modals/AddUrlModal"
 import DeleteSourceModal from "../modals/DeleteSourceModal"
+import UrlErrorModal from "@/app/(protected)/bronnen/components/modals/UrlErrorModal"
 
 export default function UrlSection({
   sources = [],
   loading,
+  canWrite = true,
   onAddUrl,
   onDeleteSource,
+  onSync,
+  lastSync,
+  nextSync,
+  formatDateTime,
+  formatNextSync,
 }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSources, setSelectedSources] = useState(new Set())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [errorInfo, setErrorInfo] = useState(null)
 
   const filteredSources = useMemo(() => {
     if (!searchQuery.trim()) return sources
@@ -97,13 +107,29 @@ export default function UrlSection({
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="mb-[29px] font-montserrat font-extrabold text-[18px] leading-[100%]">
-        {sources.length} URL bron{sources.length !== 1 ? 'nen' : ''}
+        {sources.length} URL bron{sources.length !== 1 ? "nen" : ""}
         {selectedSources.size > 0 && (
           <span className="ml-2 text-gray-600">
             ({selectedSources.size} geselecteerd)
           </span>
         )}
       </div>
+
+      {/* Sync info */}
+      {onSync && (lastSync || nextSync) && (
+        <div className="mb-4 text-sm text-gray-600 font-montserrat flex flex-col gap-1">
+          {lastSync && formatDateTime && (
+            <div>
+              <span className="font-bold">Laatste synchronisatie:</span> {formatDateTime(lastSync)}.
+            </div>
+          )}
+          {nextSync && formatNextSync && (
+            <div>
+              <span className="font-bold">Volgende synchronisatie:</span> {formatNextSync(nextSync)}.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Bar */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5 gap-4">
@@ -117,12 +143,34 @@ export default function UrlSection({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <AddButton onClick={() => setIsAddModalOpen(true)} text="Toevoegen" />
+          {canWrite && onSync && sources.length > 0 && (
+            <button
+              onClick={async () => {
+                try {
+                  setSyncing(true)
+                  await onSync()
+                } catch (err) {
+                  alert(err.response?.data?.detail || err.message || "Synchroniseren mislukt")
+                } finally {
+                  setSyncing(false)
+                }
+              }}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {syncing ? "Synchroniseren..." : "Nu synchroniseren"}
+            </button>
+          )}
+          {canWrite && <AddButton onClick={() => setIsAddModalOpen(true)} text="Toevoegen" />}
+          {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen</div>}
         </div>
       </div>
 
       {/* Table */}
-      {filteredSources.length === 0 ? (
+      {filteredSources.length === 0 ? (  
         <div className="text-center py-4 text-gray-500 font-montserrat">
           {loading ? "Laden..." : "Geen URL bronnen gevonden."}
         </div>
@@ -199,15 +247,19 @@ export default function UrlSection({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleDeleteClick(fullSource)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
-                      </div>
+                      {canWrite ? (
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => handleDeleteClick(fullSource)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Verwijder"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -218,7 +270,7 @@ export default function UrlSection({
       )}
 
       {/* Bulk Delete Button */}
-      {selectedSources.size > 0 && (
+      {selectedSources.size > 0 && canWrite && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleBulkDelete}
@@ -238,7 +290,14 @@ export default function UrlSection({
                 await onAddUrl(url)
                 setIsAddModalOpen(false)
               } catch (err) {
-                alert(err.message || "Failed to add URL")
+                // Extract error message from axios error response
+                const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || "Er is een fout opgetreden bij het toevoegen van de URL."
+                setErrorInfo({
+                  error: { message: errorMessage, detail: err.response?.data?.detail },
+                  url: url
+                })
+                setIsErrorModalOpen(true)
+                // Keep the add modal open so user can see the error and try again
               }
             }}
             onClose={() => setIsAddModalOpen(false)}
@@ -256,7 +315,19 @@ export default function UrlSection({
           />
         </div>
       )}
+
+      {isErrorModalOpen && errorInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50">
+          <UrlErrorModal
+            error={errorInfo.error}
+            url={errorInfo.url}
+            onClose={() => {
+              setIsErrorModalOpen(false)
+              setErrorInfo(null)
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }
-

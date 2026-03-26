@@ -7,6 +7,7 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import SuccessRoleModal from "./modals/SuccessRoleModal"
 import DropdownMenu from "@/components/input/DropdownMenu"
 import IssueBttn from "@/components/buttons/IssueBttn"
+import { isCompanyRoleAssignableModule } from "@/lib/companyRoleModules"
 
 export default function MakenTab({ user, folders, onAddOrUpdateRole, canWrite = true }) {
   const [roleName, setRoleName] = useState("")
@@ -17,34 +18,35 @@ export default function MakenTab({ user, folders, onAddOrUpdateRole, canWrite = 
   const [errorMessage, setErrorMessage] = useState("") 
 
   useEffect(() => {
-    // Use company_modules if available, otherwise fall back to user.modules
-    // Company modules determine what's available for roles
-    const modulesSource = user?.company_modules || user?.modules || [];
-    
-    // Modules that should not be assignable to company roles (admin-only)
-    const adminOnlyModules = ['Admin Dashboard', 'Webcrawler', 'Nextcloud', 'Nexcloud'];
-    
-    if (Array.isArray(modulesSource)) {
-      // If it's an array (from company_modules serialized format)
-      const userModules = modulesSource
-        .filter(module => !adminOnlyModules.includes(module.name))
-        .map(module => ({
-          name: module.name,
-          enabled: Boolean(module.enabled),
-          locked: !module.enabled,  // Lock modules that company doesn't have enabled
-        }))
-      setModules(userModules)
-    } else if (typeof modulesSource === 'object') {
-      // If it's an object (from user.modules)
-      const userModules = Object.entries(modulesSource)
-        .filter(([name]) => !adminOnlyModules.includes(name))
-        .map(([name, val]) => ({
-          name,
-          enabled: Boolean(val.enabled),
-          locked: !val.enabled,
-        }))
-      setModules(userModules)
+    // Only modules company users can use: Documenten chat, GGD, CreatieChat, WebChat — and only if company + admin have them
+    const companyList = Array.isArray(user?.company_modules) ? user.company_modules : [];
+    const adminAssigned = user?.modules && typeof user.modules === 'object' ? user.modules : null;
+
+    let list = [];
+    if (companyList.length > 0 && adminAssigned && Object.keys(adminAssigned).length > 0) {
+      list = companyList.filter(
+        (m) =>
+          m?.name &&
+          isCompanyRoleAssignableModule(m.name) &&
+          m.enabled === true &&
+          adminAssigned[m.name]?.enabled === true
+      );
+    } else if (companyList.length > 0) {
+      list = companyList.filter(
+        (m) => m?.name && isCompanyRoleAssignableModule(m.name) && m.enabled === true
+      );
+    } else if (adminAssigned) {
+      list = Object.entries(adminAssigned)
+        .filter(([name]) => isCompanyRoleAssignableModule(name))
+        .map(([name, val]) => ({ name, enabled: Boolean(val?.enabled) }));
     }
+
+    const userModules = list.map((m) => ({
+      name: m.name,
+      enabled: Boolean(m.enabled),
+      locked: !m.enabled,
+    }));
+    setModules(userModules);
   }, [user])
 
   useEffect(() => {

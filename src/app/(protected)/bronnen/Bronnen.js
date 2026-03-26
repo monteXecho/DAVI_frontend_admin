@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
 import { useSources } from "@/lib/api/sources"
+import { useApi } from "@/lib/useApi"
+import { canWriteWebchat } from "@/lib/permissions"
 import UrlTab from "./components/UrlTab"
 import HtmlTab from "./components/HtmlTab"
 
@@ -12,10 +14,12 @@ const tabsConfig = [
 export default function Bronnen() {
   const [activeIndex, setActiveIndex] = useState(0)
   const { getSources, addUrlSource, uploadHtmlSource, deleteSource, updateSource, syncSources, downloadSource } = useSources()
+  const { getUser } = useApi()
   const [sources, setSources] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastSync, setLastSync] = useState(null)
   const [nextSync, setNextSync] = useState(null)
+  const [canWrite, setCanWrite] = useState(true)
 
   const ActiveComponent = tabsConfig[activeIndex].component
 
@@ -45,22 +49,30 @@ export default function Bronnen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run once on mount
 
-  const handleAddUrl = async (data) => {
-    try {
-      if (data.sourceId) {
-        // Edit mode - remove the original source and add the new updated one
-        // This ensures the URL is properly updated and re-indexed
-        await deleteSource(data.sourceId)
-        // Add the new source with updated URL
-        await addUrlSource(data.url)
-      } else {
-        // Add mode - create new source
-        await addUrlSource(data.url)
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await getUser()
+        setCanWrite(canWriteWebchat(userData))
+      } catch (err) {
+        console.error("Failed to fetch user for permissions:", err)
       }
-      await fetchSources()
-    } catch (err) {
-      throw err
     }
+    loadUser()
+  }, [getUser])
+
+  const handleAddUrl = async (data) => {
+    if (data.sourceId) {
+      // Edit mode - remove the original source and add the new updated one
+      // This ensures the URL is properly updated and re-indexed
+      await deleteSource(data.sourceId)
+      // Add the new source with updated URL
+      await addUrlSource(data.url)
+    } else {
+      // Add mode - create new source
+      await addUrlSource(data.url)
+    }
+    await fetchSources()
   }
 
   const handleUploadHtml = async (file) => {
@@ -191,6 +203,7 @@ export default function Bronnen() {
         <ActiveComponent
           sources={sources}
           loading={loading}
+          canWrite={canWrite}
           onAddUrl={handleAddUrl}
           onUploadHtml={handleUploadHtml}
           onDelete={handleDeleteSource}

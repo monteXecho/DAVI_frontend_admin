@@ -135,6 +135,38 @@ export function canWriteDocuments(user) {
 }
 
 /**
+ * Check if user can write to WebChat (Bronnen)
+ * @param {object} user - User object from getUser()
+ * @returns {boolean}
+ */
+export function canWriteWebchat(user) {
+  if (!user) return false;
+  if (isActingOnOwnWorkspace(user)) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_webchat_write);
+  }
+  const perms = user.teamlid_permissions || {};
+  return canWrite(perms.webchat_modify_permission);
+}
+
+/**
+ * Check if user can write to PublicChat
+ * @param {object} user - User object from getUser()
+ * @returns {boolean}
+ */
+export function canWritePublicChat(user) {
+  if (!user) return false;
+  if (isActingOnOwnWorkspace(user)) return true;
+  if (!user.is_teamlid && !user.guest_permissions) return true;
+  if (user.guest_permissions) {
+    return canWrite(user.guest_permissions.can_publicchat_write);
+  }
+  const perms = user.teamlid_permissions || {};
+  return canWrite(perms.publicchat_modify_permission);
+}
+
+/**
  * Check if user has Nextcloud module enabled
  * Nextcloud permission is required at both company and user/admin level
  * @param {object} user - User object from getUser()

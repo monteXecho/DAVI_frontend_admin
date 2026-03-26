@@ -1,25 +1,42 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useCreativeChatI18n } from "../contexts/CreativeChatI18nContext";
 import ChatSubmitIcon from "./icons/ChatSubmitIcon";
 
 const TONE_OPTIONS = ["Schrijven", "Herschrijven", "Brainstormen", "SMART"];
 
-const PLACEHOLDERS = {
+const PLACEHOLDERS_DESKTOP = {
   Schrijven: "Geef je opzet voor een bericht, brief, email...",
   Herschrijven: "Herschrijf een tekst vriendelijker, korter, zakelijker...",
   Brainstormen: "Geef 5 ideeën voor...",
   SMART: "Maak je doelen concreet en meetbaar...",
 };
 
+const PLACEHOLDERS_MOBILE = {
+  Schrijven: "Bericht, brief, email...",
+  Herschrijven: "Vriendelijker, korter, zakelijker...",
+  Brainstormen: "5 ideeën voor...",
+  SMART: "Doelen concreet en meetbaar...",
+};
+
 export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
   const { t } = useCreativeChatI18n();
   const [input, setInput] = useState("");
   const [tone, setTone] = useState("Schrijven");
+  const [isMobile, setIsMobile] = useState(true);
   const textareaRef = useRef(null);
-  
-  const placeholder = PLACEHOLDERS[tone] || PLACEHOLDERS.Schrijven;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const placeholders = isMobile ? PLACEHOLDERS_MOBILE : PLACEHOLDERS_DESKTOP;
+  const placeholder = placeholders[tone] ?? placeholders.Schrijven;
 
   const handleSubmit = () => {
     if (loading) return;
@@ -41,12 +58,12 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
 
   return (
     <div className="w-full rounded-xl border border-[#23BD92] overflow-hidden bg-white font-montserrat">
-      {/* Text area */}
+      {/* Text area - compact on mobile (like DocumentChat), taller on desktop */}
       <div className="relative">
         <textarea
           ref={textareaRef}
           placeholder={placeholder}
-          rows={3}
+          rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -55,13 +72,13 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
             e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
           }}
           disabled={loading}
-          className="w-full px-4 pt-4 pb-2 resize-none overflow-hidden font-montserrat text-[16px] leading-6 text-[#342222] placeholder:text-slate-400 focus:outline-none min-h-[80px] disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full px-4 pr-12 py-4 resize-none overflow-hidden font-montserrat text-[16px] leading-6 text-[#342222] placeholder:text-slate-400 focus:outline-none disabled:opacity-70 disabled:cursor-not-allowed min-h-[56px]"
         />
         {loading ? (
           <button
             type="button"
             onClick={onCancel}
-            className="absolute right-4 top-4 size-6 border border-[#757575] rounded-full flex items-center justify-center cursor-pointer"
+            className="absolute right-4 top-4 size-6 shrink-0 border border-[#757575] rounded-full flex items-center justify-center cursor-pointer"
             aria-label={t("creativeChat.cancel")}
           >
             <div className="size-3 bg-[#23BD92]"></div>
@@ -71,7 +88,7 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
             type="button"
             onClick={handleSubmit}
             disabled={!input.trim()}
-            className="absolute right-4 top-4 size-6 flex items-center justify-center cursor-pointer disabled:opacity-50"
+            className="absolute right-4 top-4 size-6 shrink-0 flex items-center justify-center cursor-pointer disabled:opacity-50"
             aria-label={t("creativeChat.submit")}
           >
             <ChatSubmitIcon
@@ -82,8 +99,8 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
         )}
       </div>
 
-      {/* Options row + Language + Submit - matches page-no chat.svg / page-mobile view.svg */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#D6F5EB] border-t border-[#23BD92]">
+      {/* Options row + Language - compact on mobile like DocumentChat */}
+      <div className="flex flex-wrap items-center justify-between gap-2 lg:gap-3 px-3 py-2 lg:px-4 lg:py-3 bg-[#D6F5EB] border-t border-[#23BD92]">
         {/* Tone options: select on small, buttons on lg+ */}
         <div className="flex flex-wrap items-center gap-4">
           <select
@@ -128,24 +145,28 @@ export default function CreativeChatInput({ onSubmit, onCancel, loading }) {
 }
 
 CreativeChatInput.LanguageSelector = function LanguageSelectorInline() {
-  const { language, changeLanguage, t } = useCreativeChatI18n();
+  const { language, changeLanguage } = useCreativeChatI18n();
   return (
-    <div className="flex items-center">
+    <div className="flex items-center text-sm">
       <button
-        className={`px-2 pt-1 pb-0.5 rounded-s-lg border border-[#23BD92] ${
-          language === "nl" ? "bg-[#23BD92] text-white" : "text-[#23BD92]"
+        type="button"
+        className={`px-2 py-1 rounded-s-lg border border-[#23BD92] font-medium ${
+          language === "nl" ? "bg-[#23BD92] text-white" : "bg-white text-[#23BD92]"
         }`}
         onClick={() => changeLanguage("nl")}
       >
-        Nederlands
+        <span className="hidden sm:inline">Nederlands</span>
+        <span className="sm:hidden">NL</span>
       </button>
       <button
-        className={`px-2 pt-1 pb-0.5 rounded-e-lg border border-[#23BD92] ${
-          language === "en" ? "bg-[#23BD92] text-white" : "text-[#23BD92]"
+        type="button"
+        className={`px-2 py-1 rounded-e-lg border border-[#23BD92] font-medium ${
+          language === "en" ? "bg-[#23BD92] text-white" : "bg-white text-[#23BD92]"
         }`}
         onClick={() => changeLanguage("en")}
       >
-        English
+        <span className="hidden sm:inline">English</span>
+        <span className="sm:hidden">EN</span>
       </button>
     </div>
   );

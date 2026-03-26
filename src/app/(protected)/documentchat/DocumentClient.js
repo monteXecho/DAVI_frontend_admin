@@ -8,6 +8,8 @@ import UploadBttn from '@/components/buttons/UploadBttn';
 import UploadingBttn from '@/components/buttons/UploadingBttn';
 import SuccessBttn from '@/components/buttons/SuccessBttn';
 import { ToastContainer, toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
+import { filterDocumentsByCitations } from '@/lib/utils/citations';
      
 const UploadStates = {
   IDLE: 'idle',
@@ -66,7 +68,11 @@ export default function DocumentClient() {
     try {
       const data = await askQuestion(questionText);
       const answer = data.answer || '';
-      const documents = data.documents || [];
+      const allDocuments = data.documents || [];
+      
+      // Filter documents to only include cited ones
+      // This is a safety measure - backend should already filter, but we ensure correctness here
+      const documents = filterDocumentsByCitations(allDocuments, answer);
       
       // Add new message to history instead of replacing
       const newMessage = {
@@ -243,7 +249,7 @@ export default function DocumentClient() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-[50px] lg:py-[143px] lg:px-[97px] px-[25px] py-[22px] overflow-scroll scrollbar-hide">
+    <div className="w-full h-full min-h-[calc(100dvh-220px)] lg:min-h-0 flex flex-col gap-6 lg:gap-[50px] px-[25px] py-3 pb-4 lg:px-[97px] lg:py-[143px] overflow-scroll scrollbar-hide">
       <section className="flex flex-col gap-[52px]">
         <input
           type="file"
@@ -258,7 +264,7 @@ export default function DocumentClient() {
 
         {/* Display all chat history */}
         {chatHistory.map((message, index) => (
-          <div key={index} className="flex flex-col gap-[52px]">
+          <div key={index} className="flex flex-col gap-6 lg:gap-[52px]">
             {/* Question */}
             <div className="w-fit h-[61px] bg-[#F9FBFA] rounded-lg flex justify-between items-start px-4 gap-11">
               <p className="w-fit h-6 m-auto text-[#342222] text-[16px] leading-6 font-normal font-Montserrat">
@@ -268,8 +274,17 @@ export default function DocumentClient() {
 
             {/* Answer */}
             {message.answer && (
-              <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
-                {message.answer}
+              <div className="w-full font-montserrat font-normal text-[16px] leading-normal prose prose-sm max-w-none">
+                <ReactMarkdown
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a {...props} className="text-[#23BD92] hover:text-[#1ea87c] underline font-medium" target="_blank" rel="noopener noreferrer" />
+                    ),
+                    p: ({ node, ...props }) => <p {...props} className="mb-2" />,
+                  }}
+                >
+                  {message.answer}
+                </ReactMarkdown>
               </div>
             )}
 

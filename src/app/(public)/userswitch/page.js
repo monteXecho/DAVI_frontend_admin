@@ -244,10 +244,9 @@ function RoleCard({ option, onClick }) {
       <div className="mt-3 space-y-1 text-sm text-slate-600">
         {permissions ? (
           <>
-            <PermissionLine label="Rollen" value={permissions.role_write ? "Schrijven" : "Lezen"} />
+            <PermissionLine label="Rollen-Mappen" value={(permissions.role_write || permissions.folder_write) ? "Schrijven" : "Lezen"} />
             <PermissionLine label="Gebruikers" value={permissions.user_write ? "Schrijven" : "Lezen"} />
             <PermissionLine label="Documenten" value={permissions.document_write ? "Schrijven" : "Lezen"} />
-            <PermissionLine label="Mappen" value={permissions.folder_write ? "Schrijven" : "Lezen"} />
           </>
         ) : (
           <div className="text-slate-500">Volledige toegang tot eigen workspace.</div>

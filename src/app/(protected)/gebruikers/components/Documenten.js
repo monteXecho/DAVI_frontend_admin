@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useCallback } from "react"
 import Image from "next/image"
+import { useKeycloak } from "@react-keycloak/web"
 
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
@@ -10,6 +11,7 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 import DeleteDocumentModal from "../../documenten/components/modals/DeleteDocumentModal"
+import DocumentViewer from "@/components/DocumentViewer"
 
 export default function DocumentenTab({ 
   users = [],
@@ -29,6 +31,8 @@ export default function DocumentenTab({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single")
+  const [viewerDoc, setViewerDoc] = useState(null)
+  const { keycloak } = useKeycloak()
 
   useEffect(() => {
     const roleNames = roles.map(role => role.name || role)
@@ -203,6 +207,44 @@ export default function DocumentenTab({
     setIsDeleteModalOpen(true)
   }
 
+  const handleOpenDocument = useCallback(async (doc) => {
+    const path = doc.path
+    const fileName = doc.file
+    if (!path || !keycloak?.token) return
+    try {
+      const fileExt = (fileName || path.split('/').pop() || '').toLowerCase().split('.').pop()
+      if (['doc', 'docx'].includes(fileExt)) {
+        setViewerDoc({ filePath: path, fileName })
+      } else {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+        const encodedPath = encodeURIComponent(path)
+        const url = `${baseUrl}/company-admin/documents/download?file_path=${encodedPath}`
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
+              ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+              : {}),
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+              ? { 'X-Acting-Owner-Is-Guest': 'true' }
+              : {}),
+          },
+        })
+        if (response.ok) {
+          const blob = await response.blob()
+          const blobUrl = window.URL.createObjectURL(blob)
+          window.open(blobUrl, '_blank')
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+        } else {
+          throw new Error(`Failed to open document: ${response.statusText}`)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to open document:', err)
+      alert('Kon document niet openen. Probeer het opnieuw.')
+    }
+  }, [keycloak?.token])
+
   const getSelectedDocumentsData = () =>
     Array.from(selectedDocuments).map(docId => filteredDocuments.find(doc => doc.id === docId)).filter(Boolean)
 
@@ -370,7 +412,18 @@ export default function DocumentenTab({
                   )}
 
                   <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                    {doc.file}
+                    {doc.path && keycloak?.token ? (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDocument(doc)}
+                        className="text-[#23BD92] hover:text-[#1ea87a] hover:underline cursor-pointer text-left"
+                        title="Open document"
+                      >
+                        {doc.file}
+                      </button>
+                    ) : (
+                      doc.file
+                    )}
                   </td>
 
                   <td className="px-4 py-2">
@@ -412,6 +465,17 @@ export default function DocumentenTab({
             />
           </div>
         </div>
+      )}
+
+      {/* Document Viewer Modal for Word docs */}
+      {viewerDoc && keycloak?.authenticated && (
+        <DocumentViewer
+          filePath={viewerDoc.filePath}
+          fileName={viewerDoc.fileName}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}
+          authToken={keycloak.token}
+          onClose={() => setViewerDoc(null)}
+        />
       )}
     </div>
   )

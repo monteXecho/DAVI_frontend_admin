@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
 import { useWebChat } from '@/lib/api/webchat'
 import WebChatSourceList from './components/WebChatSourceList'
+import ReactMarkdown from 'react-markdown'
+import { filterDocumentsByCitations } from '@/lib/utils/citations'
 
 const CHAT_HISTORY_KEY = 'webchat_history'
 
@@ -17,61 +19,6 @@ const getDomainName = (url) => {
   }
 }
 
-// Helper function to make URLs in text clickable with website names
-const renderTextWithLinks = (text) => {
-  if (!text) return text
-  
-  // URL regex pattern
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g
-  const parts = []
-  let lastIndex = 0
-  let match
-  
-  while ((match = urlRegex.exec(text)) !== null) {
-    // Add text before the URL
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', content: text.substring(lastIndex, match.index) })
-    }
-    
-    // Process the URL
-    let url = match[0]
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = `https://${url}`
-    }
-    
-    const domainName = getDomainName(url)
-    
-    parts.push({ type: 'link', url, domainName })
-    lastIndex = match.index + match[0].length
-  }
-  
-  // Add remaining text
-  if (lastIndex < text.length) {
-    parts.push({ type: 'text', content: text.substring(lastIndex) })
-  }
-  
-  if (parts.length === 0) {
-    return text
-  }
-  
-  return parts.map((part, index) => {
-    if (part.type === 'link') {
-      return (
-        <a
-          key={index}
-          href={part.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#23BD92] hover:text-[#1ea87c] underline font-medium"
-        >
-          {part.domainName}
-        </a>
-      )
-    }
-    return <span key={index}>{part.content}</span>
-  })
-}
-
 // Load chat history from sessionStorage
 const loadChatHistory = () => {
   try {
@@ -79,9 +26,7 @@ const loadChatHistory = () => {
     const savedHistory = sessionStorage.getItem(CHAT_HISTORY_KEY)
     if (savedHistory) {
       const parsed = JSON.parse(savedHistory)
-      if (Array.isArray(parsed)) {
-        return parsed
-      }
+      if (Array.isArray(parsed)) return parsed
     }
   } catch (err) {
     console.error('Failed to load chat history:', err)
@@ -106,16 +51,12 @@ export default function WebChat() {
   const [loading, setLoading] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState('')
 
-  // Save chat history to sessionStorage whenever it changes
   useEffect(() => {
     saveChatHistory(chatHistory)
   }, [chatHistory])
 
-  // Save on unmount as well
   useEffect(() => {
-    return () => {
-      saveChatHistory(chatHistory)
-    }
+    return () => saveChatHistory(chatHistory)
   }, [chatHistory])
 
   const handleQuestionSubmit = useCallback(async (questionText) => {
@@ -127,54 +68,53 @@ export default function WebChat() {
     try {
       const data = await askQuestion(questionText)
       const answer = data.answer || ''
-      
-      // Format sources from documents - extract URL and title from meta
-      const formattedSources = (data.documents || []).map((doc, index) => {
-        const url = doc.meta?.url || ''
+      const allDocuments = data.documents || []
+
+      const documents = filterDocumentsByCitations(allDocuments, answer)
+
+      const formattedSources = documents.map((doc, index) => {
+        const url = doc.meta?.source_url || doc.meta?.url || ''
         const fileName = doc.meta?.file_name || ''
-        
-        // Use file_name as title, or domain name if file_name is not available
-        let title = fileName
-        if (!title && url) {
-          title = getDomainName(url)
-        } else if (!title) {
-          title = 'Unknown Source'
-        }
-        
+        const filePath = doc.meta?.file_path || ''
+        const sourceTitle = doc.meta?.source_title || ''
+        const sourceType = doc.meta?.type || ''
+        let title = sourceTitle || fileName
+        if (!title && url) title = getDomainName(url)
+        else if (!title) title = 'Unknown Source'
         const domainName = url ? getDomainName(url) : title
-        
+        const isHtml = sourceType === 'html' || (fileName && fileName.toLowerCase().endsWith('.html'))
         return {
           id: index,
-          url: url,
-          title: title,
+          url,
+          title,
           content: doc.content || '',
-          domainName: domainName
+          domainName,
+          filePath,
+          isHtml,
         }
       })
-      
-      // Add new message to history
-      const newMessage = {
-        question: questionText,
-        answer: answer,
-        sources: formattedSources,
-        timestamp: new Date().toISOString()
-      }
-      
-      setChatHistory(prev => [...prev, newMessage])
+
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          question: questionText,
+          answer,
+          sources: formattedSources,
+          timestamp: new Date().toISOString(),
+        },
+      ])
       setCurrentQuestion('')
     } catch (err) {
       console.error('Failed to fetch answer:', err)
-      const errorMessage = 'Er is een fout opgetreden bij het ophalen van het antwoord.'
-      
-      // Add error message to history
-      const errorMessageObj = {
-        question: questionText,
-        answer: errorMessage,
-        sources: [],
-        timestamp: new Date().toISOString()
-      }
-      
-      setChatHistory(prev => [...prev, errorMessageObj])
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          question: questionText,
+          answer: 'Er is een fout opgetreden bij het ophalen van het antwoord.',
+          sources: [],
+          timestamp: new Date().toISOString(),
+        },
+      ])
       setCurrentQuestion('')
     } finally {
       setLoading(false)
@@ -203,12 +143,21 @@ export default function WebChat() {
 
             {/* Answer with clickable URLs */}
             {message.answer && (
-              <div className="w-full font-montserrat font-normal text-[16px] whitespace-pre-wrap leading-normal">
-                {renderTextWithLinks(message.answer)}
+              <div className="w-full font-montserrat font-normal text-[16px] leading-normal prose prose-sm max-w-none">
+                <ReactMarkdown
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a {...props} className="text-[#23BD92] hover:text-[#1ea87c] underline font-medium" target="_blank" rel="noopener noreferrer" />
+                    ),
+                    p: ({ node, ...props }) => <p {...props} className="mb-2" />,
+                  }}
+                >
+                  {message.answer}
+                </ReactMarkdown>
               </div>
             )}
 
-            {/* Sources Section - Similar to PdfSnippetList */}
+            {/* Sources Section - Document Chat style */}
             {Array.isArray(message.sources) && message.sources.length > 0 && (
               <section className="w-full">
                 <WebChatSourceList sources={message.sources} />
@@ -229,10 +178,9 @@ export default function WebChat() {
           </div>
         )}
 
-        {/* Always show the input at the bottom */}
+        {/* Input at the bottom */}
         <AutoGrowingTextarea onSubmit={handleQuestionSubmit} loading={loading} />
       </section>
     </div>
   )
 }
-

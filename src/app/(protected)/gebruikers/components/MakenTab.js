@@ -6,9 +6,23 @@ import Toggle from "@/components/buttons/Toggle"
 import SuccessBttn from "@/components/buttons/SuccessBttn"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
+import { Settings } from "lucide-react"
 import "react-toastify/dist/ReactToastify.css"
 
-export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions, onAddRoleToUsers, onGetUsers, canWrite = true }) {
+// Short labels for modules when adding a company-admin (Beheerder)
+const MODULE_LABELS = {
+  'Documenten chat': 'Mappen, Documenten, Rollen, Gebruikers',
+  'Admin Dashboard': 'Dashboard',
+  'WebChat': "URL's en HTML uploaden",
+  'PublicChat': "URL's, HTML en Documenten",
+  'Nextcloud': 'Nextcloud gebruiken'
+}
+
+function getModuleLabel(name) {
+  return MODULE_LABELS[name] || name
+}
+
+export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions, onAddRoleToUsers, onGetUsers, canWrite = true, companyModules = [] }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
@@ -28,6 +42,31 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
   const [roleFolderPermission, setRoleFolderPermission] = useState(false)
   const [userPermission, setUserPermission] = useState(false)
   const [documentPermission, setDocumentPermission] = useState(false)
+  const [publicchatPermission, setPublicchatPermission] = useState(false)
+  const [webchatPermission, setWebchatPermission] = useState(false)
+
+  // Company modules (enabled for this company) - for Beheerder module assignment
+  const companyModulesObj = useMemo(() => {
+    if (!Array.isArray(companyModules)) return {}
+    const obj = {}
+    companyModules.forEach((m) => {
+      if (m && m.name) obj[m.name] = { enabled: m.enabled === true, desc: m.desc || '' }
+    })
+    return obj
+  }, [companyModules])
+  const companyModuleNames = useMemo(
+    () => Object.keys(companyModulesObj).filter((k) => companyModulesObj[k]?.enabled === true),
+    [companyModulesObj]
+  )
+
+  // Module selection for new Beheerder (which modules the new admin can use)
+  const [selectedAdminModules, setSelectedAdminModules] = useState({})
+
+  useEffect(() => {
+    const next = {}
+    companyModuleNames.forEach((name) => { next[name] = false })
+    setSelectedAdminModules((prev) => ({ ...next, ...prev }))
+  }, [companyModuleNames.join(',')])
 
   // Check if user has selected special roles (Beheerder or Teamlid)
   const hasBeheerder = useMemo(() => selectedRoles.includes("Beheerder"), [selectedRoles])
@@ -78,6 +117,11 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
     if (!selected) setSelected(role)
   }
 
+  const handleAdminModuleToggle = (moduleName) => {
+    if (companyModulesObj[moduleName]?.enabled !== true) return
+    setSelectedAdminModules((prev) => ({ ...prev, [moduleName]: !prev[moduleName] }))
+  }
+
   const handleSave = async () => {
     if (!canWrite) {
       toast.error("U heeft geen toestemming om gebruikers toe te voegen.")
@@ -104,7 +148,10 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
 
       // Handle Beheerder role (creates company_admin)
       if (hasBeheerder) {
-        await onAddUser(email.trim(), "company_admin", "")
+        const modulesToSave = companyModuleNames
+          .filter((name) => selectedAdminModules[name] === true)
+          .map((name) => ({ name, enabled: true }))
+        await onAddUser(email.trim(), "company_admin", "", { modules: modulesToSave })
         toast.success("Gebruiker toegevoegd als Beheerder")
       }
       // Handle Teamlid role
@@ -112,7 +159,9 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
         const team_permissions = {
           role_folder_modify_permission: roleFolderPermission,
           user_create_modify_permission: userPermission,
-          document_modify_permission: documentPermission
+          document_modify_permission: documentPermission,
+          publicchat_modify_permission: publicchatPermission,
+          webchat_modify_permission: webchatPermission
         }
         await onAssignTeamlidPermissions(email.trim(), team_permissions)
         toast.success("Gebruiker toegevoegd als Teamlid")
@@ -184,6 +233,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
       setRoleFolderPermission(false)
       setUserPermission(false)
       setDocumentPermission(false)
+      setSelectedAdminModules({})
     } catch (err) {
       console.error("Failed to add user:", err)
       toast.error(err?.message || "Fout bij het toevoegen van de gebruiker.")
@@ -257,6 +307,82 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
         </div>
       </div>
 
+      {/* Module assignment when adding a Beheerder (company-admin) */}
+      {hasBeheerder && companyModuleNames.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Settings size={18} className="text-gray-600" />
+            <label className="text-sm font-semibold text-gray-700">
+              Module Toewijzingen
+            </label>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {companyModuleNames.map((moduleName) => {
+                const isEnabled = companyModulesObj[moduleName]?.enabled === true
+                const isSelected = selectedAdminModules[moduleName] === true
+                return (
+                  <div
+                    key={moduleName}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "bg-gradient-to-r from-[#F0FDF4] to-white border-[#23BD92]/30 shadow-sm"
+                        : "bg-white border-gray-200 hover:border-gray-300"
+                    } ${
+                      !isEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                    onClick={() => isEnabled && handleAdminModuleToggle(moduleName)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                          isSelected ? "bg-[#23BD92]/20" : "bg-gray-200"
+                        }`}
+                      >
+                        <svg
+                          className={`w-4 h-4 ${isSelected ? "text-[#23BD92]" : "text-gray-400"}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span
+                          className={`font-montserrat text-sm font-medium ${
+                            isSelected ? "text-gray-900" : "text-gray-600"
+                          }`}
+                        >
+                          {moduleName}
+                        </span>
+                        <span className="font-montserrat text-xs text-gray-500">
+                          {getModuleLabel(moduleName)}
+                        </span>
+                      </div>
+                    </div>
+                    <Toggle
+                      checked={isSelected}
+                      onChange={() => isEnabled && handleAdminModuleToggle(moduleName)}
+                      activeColor="#23BD92"
+                      disabled={!isEnabled}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">
+            Selecteer de modules die deze beheerder mag gebruiken. Alleen modules die voor uw bedrijf zijn ingeschakeld, zijn beschikbaar.
+          </p>
+        </div>
+      )}
+
       {/* Conditional Teamlid Permissions Section */}
       {hasTeamlid && (
         <div className="flex flex-col w-fit gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -306,10 +432,38 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
                 {documentPermission ? "Maken en wijzigen" : "Alleen lezen"}
               </span>
             </div>
+
+            <div className="flex items-center gap-3">
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">
+                PublicChat
+              </span>
+              <Toggle
+                checked={publicchatPermission}
+                onChange={setPublicchatPermission}
+                activeColor="#23BD92"
+              />
+              <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">
+                WebChat
+              </span>
+              <Toggle
+                checked={webchatPermission}
+                onChange={setWebchatPermission}
+                activeColor="#23BD92"
+              />
+              <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                {webchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+              </span>
+            </div>
           </div>
           
           <p className="text-sm text-gray-500 mt-2">
-            Deze permissies zijn alleen van toepassing op gebruikers met de &apos;Teamlid&apos; rol.
+            Alleen toegewezen permissies zijn zichtbaar in de sidebar voor deze teamlid.
           </p>
         </div>
       )}

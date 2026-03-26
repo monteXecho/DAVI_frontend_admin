@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useCallback } from "react"
 import Image from "next/image"
+import { useKeycloak } from "@react-keycloak/web"
 
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
@@ -12,6 +13,7 @@ import RollenItem from "@/assets/rollen_item.png"
 import GebruikersItem from "@/assets/gebruikers_item.png"
 import DeleteDocumentModal from "./modals/DeleteDocumentModal"
 import ReplaceDocumentsModal from "./modals/ReplaceDocumentsModal"
+import DocumentViewer from "@/components/DocumentViewer"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 
@@ -38,6 +40,8 @@ export default function AllDocumentsTab({
   const [selectedDocuments, setSelectedDocuments] = useState(new Set())
   const [deleteMode, setDeleteMode] = useState("single")
   const [expandedRoles, setExpandedRoles] = useState(new Set())
+  const [viewerDoc, setViewerDoc] = useState(null)
+  const { keycloak } = useKeycloak()
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -386,6 +390,43 @@ export default function AllDocumentsTab({
     setIsDeleteModalOpen(true)
   }
 
+  const handleOpenDocument = async (group) => {
+    const path = group.path
+    const fileName = group.file
+    if (!path || !keycloak?.token) return
+    try {
+      const fileExt = (fileName || path.split('/').pop() || '').toLowerCase().split('.').pop()
+      if (['doc', 'docx'].includes(fileExt)) {
+        setViewerDoc({ filePath: path, fileName })
+      } else {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+        const encodedPath = encodeURIComponent(path)
+        const url = `${baseUrl}/company-admin/documents/download?file_path=${encodedPath}`
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
+              ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+              : {}),
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+              ? { 'X-Acting-Owner-Is-Guest': 'true' }
+              : {}),
+          },
+        })
+        if (response.ok) {
+          const blob = await response.blob()
+          const blobUrl = window.URL.createObjectURL(blob)
+          window.open(blobUrl, '_blank')
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+        } else {
+          throw new Error(`Failed to open document: ${response.statusText}`)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to open document:', err)
+      alert('Kon document niet openen. Probeer het opnieuw.')
+    }
+  }
 
   const getHeaderText = () => {
     const uniqueDocCount = groupedDocuments.length
@@ -546,7 +587,15 @@ export default function AllDocumentsTab({
                     )}
 
                     <td className="px-4 py-2 font-montserrat text-[16px] text-black font-normal">
-                      {group.file}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDocument(group)}
+                        disabled={!group.path || !keycloak?.token}
+                        className="text-[#23BD92] hover:text-[#1ea87a] hover:underline cursor-pointer text-left disabled:text-gray-400 disabled:cursor-not-allowed disabled:no-underline"
+                        title="Open document"
+                      >
+                        {group.file}
+                      </button>
                     </td>
 
                     <td className="px-4 py-2">
@@ -656,6 +705,17 @@ export default function AllDocumentsTab({
             />
           </div>
         </div>
+      )}
+
+      {/* Document Viewer Modal for Word docs */}
+      {viewerDoc && keycloak?.authenticated && (
+        <DocumentViewer
+          filePath={viewerDoc.filePath}
+          fileName={viewerDoc.fileName}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}
+          authToken={keycloak.token}
+          onClose={() => setViewerDoc(null)}
+        />
       )}
     </div>
   )

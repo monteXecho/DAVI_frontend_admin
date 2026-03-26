@@ -273,8 +273,31 @@ export default function MijnTab() {
                                   fileName: doc.file_name
                                 });
                               } else {
-                                // For PDFs and other files, use existing download logic
-                                await downloadDocument(doc.path, doc.file_name);
+                                // For PDFs and other files, open in new tab instead of downloading
+                                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+                                const encodedPath = encodeURIComponent(doc.path);
+                                const url = `${baseUrl}/company-admin/documents/download?file_path=${encodedPath}`;
+                                
+                                const response = await fetch(url, {
+                                  headers: {
+                                    Authorization: `Bearer ${keycloak.token}`,
+                                    ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
+                                      ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+                                      : {}),
+                                    ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                                      ? { 'X-Acting-Owner-Is-Guest': 'true' }
+                                      : {}),
+                                  },
+                                });
+                                
+                                if (response.ok) {
+                                  const blob = await response.blob();
+                                  const blobUrl = window.URL.createObjectURL(blob);
+                                  window.open(blobUrl, '_blank');
+                                  setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+                                } else {
+                                  throw new Error(`Failed to open document: ${response.statusText}`);
+                                }
                               }
                             } catch (err) {
                               console.error('Failed to open document:', err);

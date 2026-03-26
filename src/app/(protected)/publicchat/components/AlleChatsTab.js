@@ -13,11 +13,13 @@ import DeleteChatModal from "./modals/DeleteChatModal"
 export default function AlleChatsTab({
   chats = [],
   loading,
+  canWrite = true,
   onCreateChat,
   onUpdateChat,
   onDeleteChat,
   onSelectChat,
   onRefresh,
+  onSyncAll,
   adminUserId,
 }) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -26,6 +28,7 @@ export default function AlleChatsTab({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [editingChat, setEditingChat] = useState(null)
+  const [syncing, setSyncing] = useState(false)
 
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats
@@ -182,7 +185,29 @@ export default function AlleChatsTab({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <AddButton onClick={handleAddClick} text="Toevoegen" />
+          {canWrite && onSyncAll && chats.length > 0 && (
+            <button
+              onClick={async () => {
+                try {
+                  setSyncing(true)
+                  await onSyncAll()
+                } catch (err) {
+                  alert(err.response?.data?.detail || err.message || "Synchroniseren mislukt")
+                } finally {
+                  setSyncing(false)
+                }
+              }}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {syncing ? "Synchroniseren..." : "URL's synchroniseren"}
+            </button>
+          )}
+          {canWrite && <AddButton onClick={handleAddClick} text="Toevoegen" />}
+          {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
         </div>
       </div>
 
@@ -274,24 +299,34 @@ export default function AlleChatsTab({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-4">
+                      {canWrite ? (
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => {
+                              onSelectChat(fullChat.id)
+                            }}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Bewerken bronnen"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(fullChat)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Verwijder"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => {
-                            onSelectChat(fullChat.id)
-                          }}
+                          onClick={() => onSelectChat(fullChat.id)}
                           className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Bewerken bronnen"
+                          title="Bekijken"
                         >
                           <EditIcon />
                         </button>
-                        <button
-                          onClick={() => handleDeleteClick(fullChat)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 )
@@ -302,7 +337,7 @@ export default function AlleChatsTab({
       )}
 
       {/* Bulk Delete Button */}
-      {selectedChats.size > 0 && (
+      {selectedChats.size > 0 && canWrite && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleBulkDelete}

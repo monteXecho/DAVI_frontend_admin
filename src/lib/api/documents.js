@@ -5,8 +5,24 @@
 import { useCallback } from 'react';
 import { useApiCore } from './useApiCore';
 
+function buildDownloadAuthHeaders(token) {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')) {
+    headers['X-Acting-Owner-Id'] = window.localStorage.getItem('daviActingOwnerId');
+  }
+  if (
+    typeof window !== 'undefined' &&
+    window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+  ) {
+    headers['X-Acting-Owner-Is-Guest'] = 'true';
+  }
+  return headers;
+}
+
 export function useDocuments() {
-  const { withAuth, apiClient, createAuthHeaders } = useApiCore();
+  const { withAuth, getToken, apiClient, createAuthHeaders } = useApiCore();
 
   const uploadDocument = useCallback(
     (formData, uploadType = 'document') =>
@@ -87,7 +103,7 @@ export function useDocuments() {
     (documentsToDelete) =>
       withAuth((token) =>
         apiClient
-          .post('/company-admin/documents/delete-private', { documents: documentsToDelete }, createAuthHeaders(token))
+          .post('/company-admin/documents/delete/private', { documents: documentsToDelete }, createAuthHeaders(token))
           .then((res) => res.data)
       ),
     [withAuth]
@@ -151,15 +167,7 @@ export function useDocuments() {
 
           try {
             const response = await fetch(url, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
-                  ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
-                  : {}),
-                ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
-                  ? { 'X-Acting-Owner-Is-Guest': 'true' }
-                  : {}),
-              },
+              headers: buildDownloadAuthHeaders(token),
             });
 
             if (!response.ok) {
@@ -194,6 +202,30 @@ export function useDocuments() {
     [withAuth]
   );
 
+  /** Opens the file in a new browser tab (blob URL) using the authenticated download endpoint. */
+  const openDocumentInNewTab = useCallback(
+    async (filePath) => {
+      if (!filePath) return;
+      const token = await getToken();
+      const encodedPath = encodeURIComponent(filePath);
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+      const url = `${baseUrl}/company-admin/documents/download?file_path=${encodedPath}`;
+      const response = await fetch(url, { headers: buildDownloadAuthHeaders(token) });
+      if (!response.ok) {
+        throw new Error(response.statusText || 'Download mislukt');
+      }
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const win = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!win) {
+        window.URL.revokeObjectURL(blobUrl);
+        throw new Error('Pop-up geblokkeerd');
+      }
+      window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 120000);
+    },
+    [getToken]
+  );
+
   return {
     uploadDocument,
     uploadDocumentForRole,
@@ -204,6 +236,7 @@ export function useDocuments() {
     getAllUserDocuments,
     downloadDocument,
     getDocumentViewUrl,
+    openDocumentInNewTab,
   };
 }
 

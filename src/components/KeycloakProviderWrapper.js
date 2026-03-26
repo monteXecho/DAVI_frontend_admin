@@ -43,11 +43,19 @@ export default function KeycloakProviderWrapper({ children }) {
         }
       }}
       onEvent={(event, error) => {
+        if (event === 'onAuthLogout' || (event === 'onReady' && !keycloak.authenticated)) {
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+          } catch (e) {
+            /* ignore */
+          }
+        }
         // Don't force login for public routes
         if (isPublicRoute) {
           return;
         }
-        
+
         if (event === 'onAuthError' || event === 'onTokenExpired') {
           console.warn('[KeycloakProvider] Auth error:', event, error);
           if (error?.error !== 'invalid_grant') {

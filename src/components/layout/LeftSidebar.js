@@ -60,32 +60,47 @@ const MENU_CONFIG = {
       requiredRole: 'super_admin'
     },
     {
+      id: 'company-dashboard',
+      label: 'Dashboard',
+      icon: DashboardIcon,
+      path: '/company-dashboard',
+      requiredRoles: ['company_admin'],
+      moduleKey: 'Admin Dashboard',
+    },
+    {
       id: 'mappen',
       label: 'Mappen',
       icon: GrayFolderIcon,
       path: '/mappen',
-      requiredRoles: ['super_admin', 'company_admin']
+      requiredRoles: ['super_admin', 'company_admin'],
+      moduleKey: 'Documenten chat',
+      teamlidPermission: 'roles_folders'
     },
     {
       id: 'documents',
       label: 'Documenten',
       icon: DocumentenItem,
       path: '/documenten',
-      requiredRoles: ['super_admin', 'company_admin']
+      requiredRoles: ['super_admin', 'company_admin'],
+      moduleKey: 'Documenten chat',
+      teamlidPermission: 'documents'
     },
     {
       id: 'roles',
       label: 'Rollen',
       icon: RollenItem,
       path: '/rollen',
-      requiredRoles: ['super_admin', 'company_admin']
+      requiredRoles: ['super_admin', 'company_admin'],
+      moduleKey: 'Documenten chat',
+      teamlidPermission: 'roles_folders'
     },
     {
       id: 'users',
       label: 'Gebruikers',
       icon: GebruikersItem,
       path: '/gebruikers',
-      requiredRoles: ['super_admin', 'company_admin']
+      requiredRoles: ['super_admin', 'company_admin'],
+      teamlidPermission: 'users'
     },
     {
       id: 'publicchat',
@@ -93,7 +108,8 @@ const MENU_CONFIG = {
       icon: ChatItem,
       path: '/publicchat',
       requiredRoles: ['super_admin', 'company_admin'],
-      moduleKey: 'PublicChat'
+      moduleKey: 'PublicChat',
+      teamlidPermission: 'publicchat'
     },
     {
       id: 'webchat-admin',
@@ -101,7 +117,8 @@ const MENU_CONFIG = {
       icon: () => <WebChatIcon className="w-8 h-8" />,
       path: '/bronnen',
       requiredRoles: ['super_admin', 'company_admin'],
-      moduleKey: 'WebChat'
+      moduleKey: 'WebChat',
+      teamlidPermission: 'webchat'
     },
   ]
 };
@@ -121,7 +138,7 @@ export default function LeftSidebar() {
   const pathname = usePathname();
   const { keycloak, initialized } = useKeycloak();
   const { getUser } = useApi();
-  const { workspaces, selectedOwnerId } = useWorkspace();
+  const { workspaces, selectedOwnerId, permissions: workspacePermissions } = useWorkspace();
 
   const [user, setUser] = useState(null);
   const userRef = useRef(null);          
@@ -284,23 +301,39 @@ export default function LeftSidebar() {
     let adminModules = [];
     
     if (userRoles.isSuperAdmin) {
-      // Super admins see everything (including WebChat admin module)
       publicModules = MENU_CONFIG.publicModules;
-      adminModules = MENU_CONFIG.adminModules;
+      const currentUser = user || stableUser;
+      const companyModules = currentUser?.company_modules || [];
+      // Filter admin modules by company/user module permissions (e.g. Mappen, Documenten, Rollen require Documenten chat)
+      adminModules = MENU_CONFIG.adminModules.filter(module => {
+        if (!module.moduleKey) return true; // No moduleKey (e.g. Dashboard, Gebruikers) = always show
+        if (!currentUser || !companyModules?.length) return true; // No company context = super admin sees all
+        const companyModule = Array.isArray(companyModules)
+          ? companyModules.find(m => m && m.name === module.moduleKey)
+          : companyModules[module.moduleKey];
+        const companyHasModule = companyModule?.enabled === true;
+        const userModules = currentUser?.modules || {};
+        const userModule = userModules[module.moduleKey];
+        const userHasModule = userModule?.enabled !== false; // If not set, treat as allowed for super admin
+        return companyHasModule && userHasModule;
+      });
     } else if (userRoles.isCompanyAdmin) {
       // Company admins: Only show BEHEER items, hide MODULES
       publicModules = [];
+      const currentUser = user || stableUser;
       adminModules = MENU_CONFIG.adminModules.filter(module => {
         // First: Check if it's super_admin only
         if (module.requiredRole === "super_admin")
           return false; // Company admins can't access super_admin only modules
+
+        // When company admin is acting as teamlid: show only teamlid-assigned modules (ignore admin's own module list)
+        if (currentUser?.is_teamlid && workspacePermissions) {
+          return !!module.teamlidPermission;
+        }
         
         // Second: Check module permission for modules that require it (like WebChat)
         // This check must come BEFORE requiredRoles check
         if (module.moduleKey) {
-          // Use user state (which triggers re-renders) instead of stableUser ref
-          const currentUser = user || stableUser;
-          
           // If user data is not loaded yet, don't show the module
           if (!currentUser) {
             return false;
@@ -328,87 +361,48 @@ export default function LeftSidebar() {
         
         // Third: Check requiredRoles (only if module permission passed or no moduleKey)
         if (module.requiredRoles) {
-          return module.requiredRoles.some(role =>
+          if (!module.requiredRoles.some(role =>
             role === "company_admin" || (role === "super_admin" && false)
-          );
+          )) {
+            return false;
+          }
         }
         
+        // Fourth: When company admin is acting as teamlid but no workspace permissions yet, hide teamlid modules
+        if (currentUser?.is_teamlid && module.teamlidPermission && !workspacePermissions) {
+          return false;
+        }
+
         return true;
       });
     } else if (userRoles.isCompanyUser) {
-      // Company users: Show MODULES items
       // Use user state (which triggers re-renders) instead of stableUser ref
       const currentUser = user || stableUser;
-      
-      publicModules = MENU_CONFIG.publicModules.filter(module => {
-        // If user data is not loaded yet, don't show the module
-        if (!currentUser) {
-          return false;
-        }
-        
-        // Check both company-level and user-level module permissions
-        // company_modules is an array: [{name: "Documenten chat", enabled: true, desc: "..."}, ...]
-        const companyModules = currentUser?.company_modules || [];
-        const companyModule = companyModules.find(m => m.name === module.moduleKey);
-        
-        // modules is an object: {"Documenten chat": {enabled: true, desc: "..."}, ...}
-        const userModules = currentUser?.modules || {};
-        const userModule = userModules[module.moduleKey];
-        
-        // Company must have the module enabled
-        const companyHasModule = companyModule?.enabled === true;
-        // User must have the module enabled
-        const userHasModule = userModule?.enabled === true;
-        
-        // Both must be true for the user to see the menu item
-        return companyHasModule && userHasModule;
-      });
-      
-      // Company users with teamlid access can see BEHEER items
+
       if (hasTeamlidAccess) {
+        // When Teamlid role is selected: show only teamlid-assigned modules (BEHEER), hide user's own modules (MODULES)
+        publicModules = [];
+      } else {
+        // Normal mode: Show user's MODULES items
+        publicModules = MENU_CONFIG.publicModules.filter(module => {
+          if (!currentUser) return false;
+          const companyModules = currentUser?.company_modules || [];
+          const companyModule = companyModules.find(m => m.name === module.moduleKey);
+          const userModules = currentUser?.modules || {};
+          const userModule = userModules[module.moduleKey];
+          const companyHasModule = companyModule?.enabled === true;
+          const userHasModule = userModule?.enabled === true;
+          return companyHasModule && userHasModule;
+        });
+      }
+
+      // Company users with teamlid access can see BEHEER items (teamlid-assigned only when in teamlid mode)
+      if (hasTeamlidAccess) {
+        // When Teamlid role is selected: show only teamlid-assigned modules (ignore user's own module list)
         adminModules = MENU_CONFIG.adminModules.filter(module => {
-          // First: Check if it's super_admin only
-          if (module.requiredRole === "super_admin")
-            return false; // Company users can't access super_admin only modules
-          
-          // Second: Check module permission for modules that require it (like WebChat)
-          // This check must come BEFORE requiredRoles check
-          if (module.moduleKey) {
-            // Use user state (which triggers re-renders) instead of stableUser ref
-            const currentUser = user || stableUser;
-            
-            // If user data is not loaded yet, don't show the module
-            if (!currentUser) {
-              return false;
-            }
-            
-            // company_modules is an array: [{name: "WebChat", enabled: true, desc: "..."}, ...]
-            const companyModules = currentUser?.company_modules || [];
-            const companyModule = companyModules.find(m => m.name === module.moduleKey);
-            
-            // modules is an object: {"WebChat": {enabled: true, desc: "..."}, ...}
-            const userModules = currentUser?.modules || {};
-            const userModule = userModules[module.moduleKey];
-            
-            // Company must have the module enabled
-            const companyHasModule = companyModule?.enabled === true;
-            // User must have the module enabled
-            const userHasModule = userModule?.enabled === true;
-            
-            // Both must be true for the user to see the menu item
-            // If module permission check fails, return false immediately
-            if (!companyHasModule || !userHasModule) {
-              return false;
-            }
-          }
-          
-          // Third: Check requiredRoles (only if module permission passed or no moduleKey)
-          if (module.requiredRoles) {
-            return module.requiredRoles.some(role =>
-              role === "company_admin" // Allow access to company_admin modules when acting as teamlid
-            );
-          }
-          
+          if (module.requiredRole === "super_admin") return false;
+          if (!module.teamlidPermission) return false;
+          if (!workspacePermissions) return false;
           return true;
         });
       } else {
@@ -417,7 +411,7 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, user, userRoles, hasTeamlidAccess]);
+  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions]);
 
   const routeToTab = useMemo(() => {
     const map = {
@@ -428,6 +422,13 @@ export default function LeftSidebar() {
       "/webchat": "WebChat",
       "/bronnen": "WebChat",
       "/compagnies": "Dashboard",
+      "/company-dashboard": "Dashboard",
+      "/company-dashboard/active-users": "Dashboard",
+      "/company-dashboard/document-chat-unanswered": "Dashboard",
+      "/company-dashboard/top-faq": "Dashboard",
+      "/company-dashboard/documents-older-than-2y": "Dashboard",
+      "/company-dashboard/last-user-activity": "Dashboard",
+      "/company-dashboard/document-changes": "Dashboard",
       "/rollen": "Rollen",
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
@@ -464,20 +465,21 @@ export default function LeftSidebar() {
   }, [router]);
 
   const handleLogout = useCallback(() => {
+    // Never clear localStorage before keycloak.logout(): Keycloak needs adapter state
+    // for id_token_hint; clearing first causes intermittent Keycloak logout screens/errors.
+    if (keycloak?.authenticated) {
+      keycloak.logout({ redirectUri: window.location.origin });
+      return;
+    }
     try {
       if (typeof window !== "undefined") {
         window.localStorage.clear();
         window.sessionStorage.clear();
       }
     } catch (e) {
-      // ignore storage errors on logout
+      /* ignore */
     }
-
-    if (keycloak?.authenticated) {
-      keycloak.logout({ redirectUri: window.location.origin });
-    } else {
-      router.push("/");
-    }
+    router.push("/");
   }, [keycloak, router]);
 
   const handleHomeClick = useCallback(() => {

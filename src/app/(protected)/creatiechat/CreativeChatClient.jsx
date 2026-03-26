@@ -109,16 +109,16 @@ export default function CreativeChatClient() {
 
   return (
     <div
-      className="w-full flex flex-col min-h-0 lg:h-full h-[calc(100vh-210px)] lg:py-[81px] lg:px-[97px] px-[25px] py-[22px] scrollbar-hide">
-      <div className={`flex flex-col min-h-0 w-full mx-auto ${hasHistory ? "flex-1" : ""}`}>
-        <div className="mb-4">
-          <h1 className="text-4xl font-bold font-montserrat mb-2">CreatieChat</h1>
-          <p className="text-gray-600 font-montserrat">
+      className="w-full flex flex-col min-h-[calc(100dvh-220px)] lg:min-h-0 h-full px-[25px] py-3 pb-4 lg:px-[97px] lg:py-[81px] scrollbar-hide">
+      <div className={`flex flex-col min-h-0 flex-1 w-full mx-auto`}>
+        <div className="mb-2 lg:mb-4 shrink-0">
+          <h1 className="text-2xl lg:text-4xl font-bold font-montserrat mb-1 lg:mb-2">CreatieChat</h1>
+          <p className="text-gray-600 font-montserrat text-sm lg:text-base">
             Schrijf, herschrijf en brainstorm met hulp van AI.
           </p>
         </div>
         {hasHistory && (
-          <div className="w-full flex-1 min-h-0 overflow-y-auto space-y-6 mb-6 pr-2">
+          <div className="w-full flex-1 min-h-0 overflow-y-auto space-y-6 mb-4 lg:mb-6 pr-2">
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -162,8 +162,8 @@ export default function CreativeChatClient() {
           </div>
         )}
 
-        {/* Input at bottom - matches SVG layout */}
-        <div className="w-full shrink-0">
+        {/* Input at bottom */}
+        <div className="w-full shrink-0 mt-auto">
           <CreativeChatInput
           onSubmit={handleSubmit}
           onCancel={handleCancel}

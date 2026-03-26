@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo, useCallback } from "react"
 import Image from "next/image"
+import { useKeycloak } from "@react-keycloak/web"
 
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
@@ -13,6 +14,7 @@ import AddRoleModal from "./modals/AddRoleModal"
 import RemoveRoleModal from "./modals/RemoveRoleModal"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
+import DocumentViewer from "@/components/DocumentViewer"
 
 export default function MappenTab({ 
   documents = {}, 
@@ -39,6 +41,8 @@ export default function MappenTab({
 
   const [expandedRoles, setExpandedRoles] = useState(new Set())
   const [expandedDocuments, setExpandedDocuments] = useState(new Set())
+  const [viewerDoc, setViewerDoc] = useState(null)
+  const { keycloak } = useKeycloak()
 
   useEffect(() => {
     setAllOptions1(["Alle Mappen", "Mappen met rollen", "Mappen zonder rollen"])
@@ -409,6 +413,60 @@ export default function MappenTab({
     )
   }
 
+  const handleOpenDocument = useCallback(async (doc) => {
+    const path = doc.path
+    const fileName = doc.file
+    if (!path || !keycloak?.token) return
+    try {
+      const fileExt = (fileName || path.split('/').pop() || '').toLowerCase().split('.').pop()
+      if (['doc', 'docx'].includes(fileExt)) {
+        setViewerDoc({ filePath: path, fileName })
+      } else {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+        const encodedPath = encodeURIComponent(path)
+        const url = `${baseUrl}/company-admin/documents/download?file_path=${encodedPath}`
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerId')
+              ? { 'X-Acting-Owner-Id': window.localStorage.getItem('daviActingOwnerId') }
+              : {}),
+            ...(typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+              ? { 'X-Acting-Owner-Is-Guest': 'true' }
+              : {}),
+          },
+        })
+        if (response.ok) {
+          const blob = await response.blob()
+          const blobUrl = window.URL.createObjectURL(blob)
+          window.open(blobUrl, '_blank')
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+        } else {
+          throw new Error(`Failed to open document: ${response.statusText}`)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to open document:', err)
+      alert('Kon document niet openen. Probeer het opnieuw.')
+    }
+  }, [keycloak?.token])
+
+  const renderDocumentName = (doc) => {
+    if (!doc.path || !keycloak?.token) {
+      return <span className="wrap-break-words">{doc.file}</span>
+    }
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); handleOpenDocument(doc) }}
+        className="text-[#23BD92] hover:text-[#1ea87a] hover:underline cursor-pointer text-left disabled:text-gray-400 disabled:cursor-not-allowed"
+        title="Open document"
+      >
+        <span className="wrap-break-words">{doc.file}</span>
+      </button>
+    )
+  }
+
   const renderDocuments = (folderName) => {
     const uniqueDocuments = getUniqueDocumentsForFolder(folderName)
     const documentCount = uniqueDocuments.length
@@ -437,7 +495,7 @@ export default function MappenTab({
                 {uniqueDocuments.map((doc) => (
                   <div key={doc.id} className="flex items-center gap-2">
                     <span className="w-1 h-1 bg-gray-400 rounded-full shrink-0"></span>
-                    <span className="wrap-break-words">{doc.file}</span>
+                    {renderDocumentName(doc)}
                   </div>
                 ))}
               </div>
@@ -445,7 +503,7 @@ export default function MappenTab({
           </>
         ) : (
           <span className="text-gray-800 text-sm">
-            {uniqueDocuments[0].file}
+            {renderDocumentName(uniqueDocuments[0])}
           </span>
         )}
       </div>
@@ -1178,6 +1236,17 @@ export default function MappenTab({
             />
           </div>
         </div>
+      )}
+
+      {/* Document Viewer Modal for Word docs */}
+      {viewerDoc && keycloak?.authenticated && (
+        <DocumentViewer
+          filePath={viewerDoc.filePath}
+          fileName={viewerDoc.fileName}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}
+          authToken={keycloak.token}
+          onClose={() => setViewerDoc(null)}
+        />
       )}
     </div>
   )

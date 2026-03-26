@@ -9,10 +9,12 @@ import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 import AddEditUrlModal from "./modals/AddEditUrlModal"
 import DeleteSourceModal from "./modals/DeleteSourceModal"
+import UrlErrorModal from "./modals/UrlErrorModal"
 
 export default function UrlTab({ 
   sources, 
   loading, 
+  canWrite = true,
   onAddUrl, 
   onDelete, 
   onUpdate, 
@@ -28,6 +30,8 @@ export default function UrlTab({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [errorInfo, setErrorInfo] = useState(null)
   const [editingSource, setEditingSource] = useState(null)
   const [syncing, setSyncing] = useState(false)
 
@@ -97,7 +101,13 @@ export default function UrlTab({
       setIsAddModalOpen(false)
       setSelectedSources(new Set())
     } catch (err) {
-      alert(err.message || "Failed to add/update URL source")
+      // Extract error message from axios error response
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || "Er is een fout opgetreden bij het toevoegen van de URL."
+      setErrorInfo({
+        error: { message: errorMessage, detail: err.response?.data?.detail },
+        url: data.url
+      })
+      setIsErrorModalOpen(true)
     }
   }
 
@@ -108,7 +118,13 @@ export default function UrlTab({
       setEditingSource(null)
       setSelectedSources(new Set())
     } catch (err) {
-      alert(err.message || "Failed to update URL source")
+      // Extract error message from axios error response
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || "Er is een fout opgetreden bij het bijwerken van de URL."
+      setErrorInfo({
+        error: { message: errorMessage, detail: err.response?.data?.detail },
+        url: data.url
+      })
+      setIsErrorModalOpen(true)
     }
   }
 
@@ -166,26 +182,29 @@ export default function UrlTab({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              try {
-                setSyncing(true)
-                await onSync()
-              } catch (err) {
-                alert(err.message || "Failed to sync sources")
-              } finally {
-                setSyncing(false)
-              }
-            }}
-            disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {syncing ? "Synchroniseren..." : "Nu synchroniseren"}
-          </button>
-          <AddButton onClick={handleAddClick} text="Toevoegen" />
+          {canWrite && (
+            <button
+              onClick={async () => {
+                try {
+                  setSyncing(true)
+                  await onSync()
+                } catch (err) {
+                  alert(err.message || "Failed to sync sources")
+                } finally {
+                  setSyncing(false)
+                }
+              }}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {syncing ? "Synchroniseren..." : "Nu synchroniseren"}
+            </button>
+          )}
+          {canWrite && <AddButton onClick={handleAddClick} text="Toevoegen" />}
+          {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
         </div>
       </div>
 
@@ -299,22 +318,26 @@ export default function UrlTab({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleEditClick(fullSource)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Bewerken"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(fullSource)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
-                      </div>
+                      {canWrite ? (
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => handleEditClick(fullSource)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Bewerken"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(fullSource)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Verwijder"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -325,7 +348,7 @@ export default function UrlTab({
       )}
 
       {/* Bulk Delete Button */}
-      {selectedSources.size > 0 && (
+      {selectedSources.size > 0 && canWrite && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleBulkDelete}
@@ -367,6 +390,19 @@ export default function UrlTab({
             onConfirm={handleDeleteConfirm}
             onClose={() => setIsDeleteModalOpen(false)}
             isMultiple={selectedSources.size > 1}
+          />
+        </div>
+      )}
+
+      {isErrorModalOpen && errorInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50">
+          <UrlErrorModal
+            error={errorInfo.error}
+            url={errorInfo.url}
+            onClose={() => {
+              setIsErrorModalOpen(false)
+              setErrorInfo(null)
+            }}
           />
         </div>
       )}

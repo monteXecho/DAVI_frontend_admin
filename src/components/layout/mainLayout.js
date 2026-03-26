@@ -14,7 +14,7 @@ export default function MainLayout({ children }) {
           <div className='lg:block hidden'> <LeftSidebar /> </div>
           <div className='lg:hidden'> <Header /> </div>
 
-          <main className="flex-1 mt-[90px] mb-[120px] lg:mt-0 lg:mb-0">
+          <main className="flex-1 min-h-0 mt-[90px] mb-[120px] lg:mt-0 lg:mb-0">
                 {children}                
           </main>
           <div className='lg:hidden'> <Footer /> </div>

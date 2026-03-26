@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
 import PdfSnippetList from '@/components/PdfSnippetList'
+import ReactMarkdown from 'react-markdown'
+import { filterDocumentsByCitations } from '@/lib/utils/citations'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://demo.daviapp.nl/api"
 const CHAT_HISTORY_KEY = 'publicchat_history'
@@ -143,26 +145,19 @@ export default function PublicChatPage({ params }) {
           },
           body: JSON.stringify({
             question: questionText,
-            password: passwordRequired ? password : null,
+            // Password is not needed for queries - it's only required for initial access
           }),
         }
       )
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setPasswordError("Ongeldig wachtwoord")
-          setPasswordRequired(true)
-          setPasswordVerified(false)
-          setLoadingCardVisible(false)
-          return
-        }
         const error = await response.json().catch(() => ({ detail: "Failed to get response" }))
         throw new Error(error.detail || `HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
       const answer = data.answer || ''
-      const documents = data.documents || (data.sources || []).map((source, index) => {
+      const allDocuments = data.documents || (data.sources || []).map((source, index) => {
         return {
           content: source.file_name || source.url || `Bron ${index + 1}`,
           meta: {
@@ -170,10 +165,15 @@ export default function PublicChatPage({ params }) {
             file_name: source.file_name || source.url || '',
             page_number: index + 1,
             type: source.type,
-            url: source.url
+            url: source.url,
+            source_url: source.url,
+            source_title: source.title || source.file_name || source.url
           }
         }
       })
+      
+      // Filter documents to only include cited ones
+      const documents = filterDocumentsByCitations(allDocuments, answer)
       
       const newMessage = {
         question: questionText,
@@ -336,8 +336,17 @@ export default function PublicChatPage({ params }) {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="w-full font-montserrat font-normal text-[17px] leading-relaxed text-gray-800 whitespace-pre-wrap">
-                          {message.answer}
+                        <div className="w-full font-montserrat font-normal text-[17px] leading-relaxed text-gray-800 prose prose-sm max-w-none">
+                          <ReactMarkdown
+                            components={{
+                              a: ({ node, ...props }) => (
+                                <a {...props} className="text-[#23BD92] hover:text-[#1ea87c] underline font-medium" target="_blank" rel="noopener noreferrer" />
+                              ),
+                              p: ({ node, ...props }) => <p {...props} className="mb-2" />,
+                            }}
+                          >
+                            {message.answer}
+                          </ReactMarkdown>
                         </div>
                       </div>
                     </div>
@@ -350,7 +359,13 @@ export default function PublicChatPage({ params }) {
                 <div className="flex justify-start">
                   <section className="w-full max-w-3xl">
                     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transform transition-all duration-300 hover:shadow-xl">
-                      <PdfSnippetList documents={message.documents} />
+                      <PdfSnippetList 
+                        documents={message.documents} 
+                        publicChatContext={{
+                          companyAdmin: companyAdmin,
+                          chatName: chatName
+                        }}
+                      />
                     </div>
                   </section>
                 </div>

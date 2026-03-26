@@ -155,20 +155,19 @@ export default function Footer () {
 
   // Handle logout
   const handleLogout = useCallback(() => {
+    if (keycloak?.authenticated) {
+      keycloak.logout({ redirectUri: window.location.origin });
+      return;
+    }
     try {
       if (typeof window !== "undefined") {
         window.localStorage.clear();
         window.sessionStorage.clear();
       }
     } catch (e) {
-      // ignore storage errors on logout
+      /* ignore */
     }
-
-    if (keycloak?.authenticated) {
-      keycloak.logout({ redirectUri: window.location.origin });
-    } else {
-      router.push("/");
-    }
+    router.push("/");
   }, [keycloak, router])
 
   if (footerItems.length === 0 && !keycloak?.authenticated) {

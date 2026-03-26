@@ -11,6 +11,7 @@ import DeleteSourceModal from "./modals/DeleteSourceModal"
 export default function HtmlTab({ 
   sources, 
   loading, 
+  canWrite = true,
   onUploadHtml, 
   onDelete, 
   onUpdate,
@@ -170,14 +171,17 @@ export default function HtmlTab({
             type="file"
             accept=".html,.htm"
             onChange={handleFileSelect}
-            disabled={uploading}
+            disabled={uploading || !canWrite}
             className="hidden"
           />
-          <AddButton 
-            onClick={handleAddClick} 
-            text={uploading ? "Uploaden..." : "Toevoegen"}
-            disabled={uploading}
-          />
+          {canWrite && (
+            <AddButton 
+              onClick={handleAddClick} 
+              text={uploading ? "Uploaden..." : "Toevoegen"}
+              disabled={uploading}
+            />
+          )}
+          {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen modus: U heeft geen schrijfrechten</div>}
         </div>
       </div>
 
@@ -310,15 +314,19 @@ export default function HtmlTab({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleDeleteClick(fullSource)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
-                      </div>
+                      {canWrite ? (
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => handleDeleteClick(fullSource)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Verwijder"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -329,7 +337,7 @@ export default function HtmlTab({
       )}
 
       {/* Bulk Delete Button */}
-      {selectedSources.size > 0 && (
+      {selectedSources.size > 0 && canWrite && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleBulkDelete}

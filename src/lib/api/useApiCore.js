@@ -105,6 +105,7 @@ export function useApiCore() {
 
   return {
     withAuth,
+    getToken,
     apiClient,
     createAuthHeaders,
     loading,

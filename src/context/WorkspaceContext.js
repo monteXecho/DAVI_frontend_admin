@@ -112,8 +112,15 @@ export function WorkspaceProvider({ children }) {
       return;
     }
 
+    // When same owner has both "self" and "guest" (teamlid) workspace, use IsGuest flag to pick permissions
+    const isGuestMode = typeof window !== 'undefined' && window.localStorage.getItem('daviActingOwnerIsGuest') === 'true';
     if (workspaces.self && workspaces.self.ownerId === selectedOwnerId) {
-      setPermissions(workspaces.self.permissions || null);
+      if (isGuestMode) {
+        const guestWithSameOwner = (workspaces.guestOf || []).find((ws) => ws.ownerId === selectedOwnerId);
+        setPermissions(guestWithSameOwner?.permissions || null);
+      } else {
+        setPermissions(workspaces.self.permissions || null);
+      }
       return;
     }
 

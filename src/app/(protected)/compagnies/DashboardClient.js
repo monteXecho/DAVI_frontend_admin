@@ -2,14 +2,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/lib/useApi";
+import { useMaintenance } from "@/context/MaintenanceContext";
 import DashboardCard from "./components/DashboardCard";
 import { BuildingIcon, CompanyAdminIcon, PersonIcon, PeopleIcon, DocumentIcon, LightningIcon, SettingsIcon, RoleIcon, ModuleIcon } from "./components/DashboardIcons";
 
 export default function DashboardClient() {
   const router = useRouter();
-  const { getSuperAdminStats, getCompanies, error } = useApi();
+  const { getSuperAdminStats, getCompanies, getMaintenanceStatus, activateMaintenance, deactivateMaintenance, error } = useApi();
+  const { maintenanceEnabled, refetch } = useMaintenance();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -233,6 +236,49 @@ export default function DashboardClient() {
   return (
     <div className="w-full h-full p-4 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto scrollbar-hide">
       <div className="max-w-7xl mx-auto">
+        {/* Maintenance toggle */}
+        <div className="mb-6 rounded-xl border-2 border-[#23BD92]/30 bg-[#D6F5EB]/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#23BD92]/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#23BD92]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-montserrat font-bold text-[#342222]">Onderhoudspagina</p>
+              <p className="font-montserrat text-sm text-gray-600">
+                {maintenanceEnabled ? "Actief – alle gebruikers (behalve super admin) zien de onderhoudspagina" : "Inactief"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              setMaintenanceLoading(true);
+              try {
+                if (maintenanceEnabled) {
+                  await deactivateMaintenance();
+                } else {
+                  await activateMaintenance();
+                }
+                await refetch();
+              } catch (e) {
+                console.error("Maintenance toggle failed:", e);
+              } finally {
+                setMaintenanceLoading(false);
+              }
+            }}
+            disabled={maintenanceLoading}
+            className={`px-4 py-2 rounded-lg font-montserrat font-bold text-sm transition-colors ${
+              maintenanceEnabled
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-[#23BD92] text-white hover:bg-[#1ea87c]"
+            } disabled:opacity-60`}
+          >
+            {maintenanceLoading ? "Bezig..." : maintenanceEnabled ? "Onderhoudspagina uitzetten" : "Onderhoudspagina inschakelen"}
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-8 sm:mb-10 lg:mb-12">
           <div className="flex flex-col gap-3">

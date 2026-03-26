@@ -4,8 +4,20 @@ import DropdownMenu from "@/components/input/DropdownMenu"
 import SuccessBttn from "@/components/buttons/SuccessBttn"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
+import Toggle from "@/components/buttons/Toggle"
 
-export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, onResetPass, canWrite = true }) {
+const MODULE_LABELS = {
+  'Documenten chat': 'Mappen, Documenten, Rollen, Gebruikers',
+  'Admin Dashboard': 'Dashboard',
+  'WebChat': "URL's en HTML uploaden",
+  'PublicChat': "URL's, HTML en Documenten",
+  'Nextcloud': 'Nextcloud gebruiken'
+}
+function getModuleLabel(name) {
+  return MODULE_LABELS[name] || name
+}
+
+export default function WijzigenTab({ user, roles = [], onUpdateUser, onAssignUserModules, onAssignTeamlidPermissions, loading, onResetPass, canWrite = true, companyModules = [] }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
@@ -17,6 +29,26 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
   const [selected, setSelected] = useState("") 
   const [isSaving, setIsSaving] = useState(false)
 
+  const companyModulesObj = useMemo(() => {
+    if (!Array.isArray(companyModules)) return {}
+    const obj = {}
+    companyModules.forEach((m) => {
+      if (m && m.name) obj[m.name] = { enabled: m.enabled === true, desc: m.desc || '' }
+    })
+    return obj
+  }, [companyModules])
+  const companyModuleNames = useMemo(
+    () => Object.keys(companyModulesObj).filter((k) => companyModulesObj[k]?.enabled === true),
+    [companyModulesObj]
+  )
+
+  const [selectedAdminModules, setSelectedAdminModules] = useState({})
+  const [roleFolderPermission, setRoleFolderPermission] = useState(false)
+  const [userPermission, setUserPermission] = useState(false)
+  const [documentPermission, setDocumentPermission] = useState(false)
+  const [publicchatPermission, setPublicchatPermission] = useState(false)
+  const [webchatPermission, setWebchatPermission] = useState(false)
+
   const isAdmin = useMemo(() => {
     if (!user) return false
     
@@ -27,6 +59,9 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
     
     return hasBeheerderRole
   }, [user])
+
+  const isTeamlid = useMemo(() => user?.is_teamlid === true, [user])
+  const hasTeamlidRole = useMemo(() => updatedRoles.includes("Teamlid"), [updatedRoles])
 
   useEffect(() => {
     if (!user) {
@@ -48,7 +83,30 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
     }
     setUpdatedRoles(userRoles)
     setSelected("")
-  }, [user])
+    const perms = user?.teamlid_permissions
+    if (perms) {
+      setRoleFolderPermission(perms.roles_folders === true || perms.role_folder_modify_permission === true)
+      setUserPermission(perms.users === true || perms.user_create_modify_permission === true)
+      setDocumentPermission(perms.documents === true || perms.document_modify_permission === true)
+      setPublicchatPermission(perms.publicchat_modify_permission === true)
+      setWebchatPermission(perms.webchat_modify_permission === true)
+    } else {
+      setRoleFolderPermission(false)
+      setUserPermission(false)
+      setDocumentPermission(false)
+      setPublicchatPermission(false)
+      setWebchatPermission(false)
+    }
+    const mods = user?.modules
+    const next = {}
+    companyModuleNames.forEach((name) => { next[name] = false })
+    if (mods && Array.isArray(mods)) {
+      mods.forEach((m) => {
+        if (m && m.name && companyModuleNames.includes(m.name)) next[m.name] = m.enabled === true
+      })
+    }
+    setSelectedAdminModules(next)
+  }, [user?.id, user?.is_teamlid, JSON.stringify(user?.modules), JSON.stringify(user?.Rol), companyModuleNames.join(",")])
 
   const availableRoles = useMemo(() => {
     if (isAdmin) return [] 
@@ -92,6 +150,11 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
     setSelected(nextAvailable.length > 0 ? nextAvailable[0] : "")
   }
 
+  const handleAdminModuleToggle = (moduleName) => {
+    if (companyModulesObj[moduleName]?.enabled !== true) return
+    setSelectedAdminModules((prev) => ({ ...prev, [moduleName]: !prev[moduleName] }))
+  }
+
   const handleSave = async () => {
     if (!user) return
     if (!canWrite) {
@@ -110,8 +173,24 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
         assigned_roles: updatedRoles,
         user_type: userType 
       }
-      console.log(' --- Updted admin data --- :', payload)
       await onUpdateUser(payload)
+      if (isAdmin && onAssignUserModules && companyModuleNames.length > 0) {
+        const modulesToSave = companyModuleNames.map((name) => ({
+          name,
+          enabled: selectedAdminModules[name] === true
+        }))
+        await onAssignUserModules(user.id, modulesToSave)
+      }
+      if (hasTeamlidRole && onAssignTeamlidPermissions && email.trim()) {
+        const team_permissions = {
+          role_folder_modify_permission: roleFolderPermission,
+          user_create_modify_permission: userPermission,
+          document_modify_permission: documentPermission,
+          publicchat_modify_permission: publicchatPermission,
+          webchat_modify_permission: webchatPermission
+        }
+        await onAssignTeamlidPermissions(email.trim(), team_permissions)
+      }
       alert("Gebruiker succesvol bijgewerkt!")
     } catch (err) {
       console.error("Update failed:", err)
@@ -191,6 +270,134 @@ export default function WijzigenTab({ user, roles = [], onUpdateUser, loading, o
                 <AddIcon />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Admin roles - Beheerder + Teamlid (with remove) when applicable */}
+        {isAdmin && hasTeamlidRole && (
+          <div className="flex flex-col gap-2 mt-4">
+            <span className="font-montserrat text-[16px]">Rol</span>
+            <div className="flex flex-wrap gap-3">
+              <SuccessBttn text="Beheerder" />
+              <div className="flex items-center gap-2">
+                <SuccessBttn text="Teamlid" />
+                {canWrite && (
+                  <button
+                    onClick={() => handleRemoveRole("Teamlid")}
+                    aria-label="Remove Teamlid"
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <RedCancelIcon />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Module assignment - Only for admins (Beheerder) */}
+        {isAdmin && companyModuleNames.length > 0 && (
+          <div className="flex flex-col w-fit gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 mt-4">
+            <h3 className="font-montserrat font-semibold text-lg text-gray-700 mb-2">
+              Modules toewijzen
+            </h3>
+            <div className="flex flex-col gap-3">
+              {companyModuleNames.map((moduleName) => {
+                const isEnabled = companyModulesObj[moduleName]?.enabled === true
+                const isSelected = selectedAdminModules[moduleName] === true
+                return (
+                  <div key={moduleName} className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-montserrat text-sm font-medium text-gray-800">{moduleName}</span>
+                      <span className="font-montserrat text-xs text-gray-500">{getModuleLabel(moduleName)}</span>
+                    </div>
+                    <Toggle
+                      checked={isSelected}
+                      onChange={() => isEnabled && handleAdminModuleToggle(moduleName)}
+                      activeColor="#23BD92"
+                      disabled={!canWrite || !isEnabled}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-xs text-gray-500">
+              Selecteer de modules die deze beheerder mag gebruiken.
+            </p>
+          </div>
+        )}
+
+        {/* Teamlid permissions - Only when Teamlid is in current roles (hides when removed via cancel) */}
+        {hasTeamlidRole && (
+          <div className="flex flex-col w-fit gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 mt-4">
+            <h3 className="font-montserrat font-semibold text-lg text-gray-700 mb-2">
+              Teamlid Permissies
+            </h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">Rollen-Mappen</span>
+                <Toggle
+                  checked={roleFolderPermission}
+                  onChange={setRoleFolderPermission}
+                  activeColor="#23BD92"
+                  disabled={!canWrite}
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {roleFolderPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">Gebruikers</span>
+                <Toggle
+                  checked={userPermission}
+                  onChange={setUserPermission}
+                  activeColor="#23BD92"
+                  disabled={!canWrite}
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {userPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">Documenten</span>
+                <Toggle
+                  checked={documentPermission}
+                  onChange={setDocumentPermission}
+                  activeColor="#23BD92"
+                  disabled={!canWrite}
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {documentPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">PublicChat</span>
+                <Toggle
+                  checked={publicchatPermission}
+                  onChange={setPublicchatPermission}
+                  activeColor="#23BD92"
+                  disabled={!canWrite}
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">WebChat</span>
+                <Toggle
+                  checked={webchatPermission}
+                  onChange={setWebchatPermission}
+                  activeColor="#23BD92"
+                  disabled={!canWrite}
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {webchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Alleen toegewezen permissies zijn zichtbaar in de sidebar voor deze teamlid.
+            </p>
           </div>
         )}
 

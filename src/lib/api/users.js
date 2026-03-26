@@ -49,11 +49,15 @@ export function useUsers() {
   );
 
   const addUser = useCallback(
-    (email, company_role, assigned_role) =>
+    (email, company_role, assigned_role, options = {}) =>
       withAuth((token) => {
-        console.log('Adding user with:', email, company_role, assigned_role);
+        const body = { email, company_role, assigned_role };
+        if (company_role === 'company_admin' && options?.modules?.length) {
+          body.modules = options.modules;
+          if (options.name) body.name = options.name;
+        }
         return apiClient
-          .post('/company-admin/users', { email, company_role, assigned_role }, createAuthHeaders(token))
+          .post('/company-admin/users', body, createAuthHeaders(token))
           .then((res) => res.data);
       }),
     [withAuth]
@@ -75,6 +79,20 @@ export function useUsers() {
       withAuth((token) =>
         apiClient
           .put(`/company-admin/users/${payload.id}`, payload, createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
+  const assignUserModules = useCallback(
+    (userId, modules) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            `/company-admin/users/${userId}/modules`,
+            { modules },
+            createAuthHeaders(token)
+          )
           .then((res) => res.data)
       ),
     [withAuth]
@@ -160,6 +178,7 @@ export function useUsers() {
     getGuestWorkspaces,
     addUser,
     assignTeamlidPermissions,
+    assignUserModules,
     updateUser,
     deleteUsers,
     deleteRoleFromUsers,

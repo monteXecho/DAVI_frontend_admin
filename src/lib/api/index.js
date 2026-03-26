@@ -26,4 +26,5 @@ export { useFolders } from './folders';
 export { useStats } from './stats';
 export { useDocumentChat } from './documentChat';
 export { useAuth } from './auth';
+export { useMaintenanceApi } from './maintenance';
 

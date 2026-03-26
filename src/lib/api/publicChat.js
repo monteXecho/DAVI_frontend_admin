@@ -151,6 +151,59 @@ export function usePublicChat() {
     [withAuth, apiClient, createAuthHeaders]
   );
 
+  const syncChatSources = useCallback(
+    (chatId) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            `/company-admin/public-chats/${chatId}/sources/sync`,
+            {},
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+          .catch((err) => {
+            console.error("[useApi] Sync chat sources failed:", err.response?.data || err);
+            throw err;
+          })
+      ),
+    [withAuth, apiClient, createAuthHeaders]
+  );
+
+  const getPublicChatUrlSyncSchedule = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get(
+            "/company-admin/public-chats/sources/sync-schedule",
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+          .catch((err) => {
+            console.error("[useApi] Get public chat sync schedule failed:", err.response?.data || err);
+            throw err;
+          })
+      ),
+    [withAuth, apiClient, createAuthHeaders]
+  );
+
+  const syncAllChatSources = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            "/company-admin/public-chats/sources/sync-all",
+            {},
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+          .catch((err) => {
+            console.error("[useApi] Sync all chat sources failed:", err.response?.data || err);
+            throw err;
+          })
+      ),
+    [withAuth, apiClient, createAuthHeaders]
+  );
+
   const deleteChatSource = useCallback(
     (chatId, sourceId) =>
       withAuth((token) =>
@@ -178,6 +231,9 @@ export function usePublicChat() {
     addHtmlSource,
     addFileSource,
     getChatSources,
+    syncChatSources,
+    syncAllChatSources,
+    getPublicChatUrlSyncSchedule,
     deleteChatSource,
   };
 }

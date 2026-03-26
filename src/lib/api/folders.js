@@ -105,6 +105,16 @@ export function useFolders() {
     [withAuth]
   );
 
+  const getNextcloudSyncSchedule = useCallback(
+    () =>
+      withAuth((token) =>
+        apiClient
+          .get('/company-admin/folders/nextcloud-sync-schedule', createAuthHeaders(token))
+          .then((res) => res.data)
+      ),
+    [withAuth]
+  );
+
   return {
     getFolders,
     addFolders,
@@ -112,6 +122,7 @@ export function useFolders() {
     listImportableFolders,
     importFolders,
     syncFoldersFromNextcloud,
+    getNextcloudSyncSchedule,
   };
 }
 

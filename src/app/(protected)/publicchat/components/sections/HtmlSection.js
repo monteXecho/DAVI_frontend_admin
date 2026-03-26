@@ -11,6 +11,7 @@ import DeleteSourceModal from "../modals/DeleteSourceModal"
 export default function HtmlSection({
   sources = [],
   loading,
+  canWrite = true,
   onAddHtml,
   onDeleteSource,
 }) {
@@ -153,11 +154,14 @@ export default function HtmlSection({
             disabled={uploading}
             className="hidden"
           />
-          <AddButton 
-            onClick={handleAddClick} 
-            text={uploading ? "Uploaden..." : "Toevoegen"}
-            disabled={uploading}
-          />
+          {canWrite && (
+            <AddButton 
+              onClick={handleAddClick} 
+              text={uploading ? "Uploaden..." : "Toevoegen"}
+              disabled={uploading}
+            />
+          )}
+          {!canWrite && <div className="text-gray-500 text-sm italic">Alleen-lezen</div>}
         </div>
       </div>
 
@@ -238,15 +242,19 @@ export default function HtmlSection({
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleDeleteClick(fullSource)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Verwijder"
-                        >
-                          <RedCancelIcon />
-                        </button>
-                      </div>
+                      {canWrite ? (
+                        <div className="flex items-center justify-center gap-4">
+                          <button
+                            onClick={() => handleDeleteClick(fullSource)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Verwijder"
+                          >
+                            <RedCancelIcon />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -257,7 +265,7 @@ export default function HtmlSection({
       )}
 
       {/* Bulk Delete Button */}
-      {selectedSources.size > 0 && (
+      {selectedSources.size > 0 && canWrite && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleBulkDelete}

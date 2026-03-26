@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useApi } from "@/lib/useApi"
 import { canWriteUsers } from "@/lib/permissions"
 
@@ -16,7 +17,9 @@ const tabsConfig = [
 ]
 
 export default function Gebruikers() {
-  const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword, getUser } = useApi()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, assignUserModules, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword, getUser } = useApi()
 
   const [documents, setDocuments] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -46,6 +49,9 @@ export default function Gebruikers() {
       Email: u.email || "—",
       Rol: roles,
       is_teamlid: u.is_teamlid || false,
+      modules: u.modules,
+      teamlid_permissions: u.teamlid_permissions,
+      type: u.type,
     }
   }
 
@@ -134,8 +140,8 @@ export default function Gebruikers() {
     setActiveIndex(3)
   }
 
-  const handleAddUser = async (email, role, assigend_role,) => {
-    await addUser(email, role, assigend_role,)
+  const handleAddUser = async (email, role, assigned_role, options = {}) => {
+    await addUser(email, role, assigned_role, options)
     await refreshUsers()
   }
 
@@ -146,6 +152,11 @@ export default function Gebruikers() {
 
   const handleUpdateUser = async (data) => {
     await updateUser(data)
+    await refreshUsers()
+  }
+
+  const handleAssignUserModules = async (userId, modules) => {
+    await assignUserModules(userId, modules)
     await refreshUsers()
   }
 
@@ -204,15 +215,32 @@ export default function Gebruikers() {
     }
   }
 
-  const refreshUsers = async () => {
+  // Open "Wijzigen" tab when linked from company dashboard (?edit=userId)
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (!editId || users.length === 0) return
+    const u = users.find((x) => String(x.id) === String(editId))
+    if (u) {
+      setSelectedUser(u)
+      setActiveIndex(2)
+      router.replace('/gebruikers', { scroll: false })
+    }
+  }, [searchParams, users, router])
+
+  const refreshUsers = useCallback(async () => {
     try {
       const res = await getUsers()
       const formatted = res.members?.map(formatUser) || []
       setUsers(formatted)
+      setSelectedUser((prev) => {
+        if (!prev?.id) return prev
+        const updated = formatted.find((u) => u.id === prev.id)
+        return updated ?? prev
+      })
     } catch (err) {
       console.error("Failed to refresh users:", err)
     }
-  }
+  }, [getUsers])
 
   const handleEditUser = (user) => {
     setSelectedUser(user)
@@ -314,6 +342,7 @@ export default function Gebruikers() {
               onDocumentenForUser={handleDocumentenForUser}
               onAddUser={handleAddUser}
               onAssignTeamlidPermissions={handleAssignTeamlidPermissions}
+              onAssignUserModules={handleAssignUserModules}
               onGetUsers={getUsers}
               onUpdateUser={handleUpdateUser}
               onDeleteUsers={handleDeleteUsers}
@@ -328,6 +357,7 @@ export default function Gebruikers() {
               onResetPass={handleResetPass}
               userDocumentFilters={userDocumentFilters}
               canWrite={canWrite}
+              companyModules={currentUser?.company_modules || []}
             />
           )}
         </div>
