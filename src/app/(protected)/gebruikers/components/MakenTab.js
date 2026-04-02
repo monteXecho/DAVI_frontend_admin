@@ -22,7 +22,16 @@ function getModuleLabel(name) {
   return MODULE_LABELS[name] || name
 }
 
-export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermissions, onAddRoleToUsers, onGetUsers, canWrite = true, companyModules = [] }) {
+export default function MakenTab({
+  roles = [],
+  onAddUser,
+  onAssignTeamlidPermissions,
+  onAddRoleToUsers,
+  onGetUsers,
+  canWrite = true,
+  companyModules = [],
+  assignerEnabledModuleNames = [],
+}) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
     [roles]
@@ -59,14 +68,25 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
     [companyModulesObj]
   )
 
+  const assignerSet = useMemo(() => new Set(assignerEnabledModuleNames || []), [assignerEnabledModuleNames])
+  const assignableAdminModuleNames = useMemo(
+    () => companyModuleNames.filter((n) => assignerSet.has(n)),
+    [companyModuleNames, assignerSet]
+  )
+
+  /** Rollen-Mappen + Documenten only. Gebruikers is not tied to Documenten chat. */
+  const showTeamlidDocumentenChat = assignerSet.has("Documenten chat")
+  const showTeamlidPublicChat = assignerSet.has("PublicChat")
+  const showTeamlidWebChat = assignerSet.has("WebChat")
+
   // Module selection for new Beheerder (which modules the new admin can use)
   const [selectedAdminModules, setSelectedAdminModules] = useState({})
 
   useEffect(() => {
     const next = {}
-    companyModuleNames.forEach((name) => { next[name] = false })
+    assignableAdminModuleNames.forEach((name) => { next[name] = false })
     setSelectedAdminModules((prev) => ({ ...next, ...prev }))
-  }, [companyModuleNames.join(',')])
+  }, [assignableAdminModuleNames.join(",")])
 
   // Check if user has selected special roles (Beheerder or Teamlid)
   const hasBeheerder = useMemo(() => selectedRoles.includes("Beheerder"), [selectedRoles])
@@ -148,7 +168,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
 
       // Handle Beheerder role (creates company_admin)
       if (hasBeheerder) {
-        const modulesToSave = companyModuleNames
+        const modulesToSave = assignableAdminModuleNames
           .filter((name) => selectedAdminModules[name] === true)
           .map((name) => ({ name, enabled: true }))
         await onAddUser(email.trim(), "company_admin", "", { modules: modulesToSave })
@@ -157,11 +177,11 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
       // Handle Teamlid role
       else if (hasTeamlid) {
         const team_permissions = {
-          role_folder_modify_permission: roleFolderPermission,
-          user_create_modify_permission: userPermission,
-          document_modify_permission: documentPermission,
-          publicchat_modify_permission: publicchatPermission,
-          webchat_modify_permission: webchatPermission
+          role_folder_modify_permission: !!(showTeamlidDocumentenChat && roleFolderPermission),
+          user_create_modify_permission: !!userPermission,
+          document_modify_permission: !!(showTeamlidDocumentenChat && documentPermission),
+          publicchat_modify_permission: !!(showTeamlidPublicChat && publicchatPermission),
+          webchat_modify_permission: !!(showTeamlidWebChat && webchatPermission)
         }
         await onAssignTeamlidPermissions(email.trim(), team_permissions)
         toast.success("Gebruiker toegevoegd als Teamlid")
@@ -308,7 +328,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
       </div>
 
       {/* Module assignment when adding a Beheerder (company-admin) */}
-      {hasBeheerder && companyModuleNames.length > 0 && (
+      {hasBeheerder && assignableAdminModuleNames.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Settings size={18} className="text-gray-600" />
@@ -318,7 +338,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
           </div>
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {companyModuleNames.map((moduleName) => {
+              {assignableAdminModuleNames.map((moduleName) => {
                 const isEnabled = companyModulesObj[moduleName]?.enabled === true
                 const isSelected = selectedAdminModules[moduleName] === true
                 return (
@@ -378,7 +398,7 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
             </div>
           </div>
           <p className="text-xs text-gray-500">
-            Selecteer de modules die deze beheerder mag gebruiken. Alleen modules die voor uw bedrijf zijn ingeschakeld, zijn beschikbaar.
+            Selecteer de modules die deze beheerder mag gebruiken. Alleen modules die u zelf heeft, kunt u toewijzen.
           </p>
         </div>
       )}
@@ -389,26 +409,36 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
           <h3 className="font-montserrat font-semibold text-lg text-gray-700 mb-2">
             Teamlid Permissies
           </h3>
-          
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <span className="w-1/3 font-montserrat font-medium text-gray-800">
-                Rollen-Mappen
-              </span>
-              <Toggle
-                checked={roleFolderPermission}
-                onChange={setRoleFolderPermission}
-                activeColor="#23BD92"
-              />
-              <span className="font-montserrat text-sm text-gray-600 w-1/3">
-                {roleFolderPermission ? "Maken en wijzigen" : "Alleen lezen"} 
-              </span>
-            </div>
 
+          <div className="flex flex-col gap-4">
+            {showTeamlidDocumentenChat && (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="w-1/3 font-montserrat font-medium text-gray-800">Rollen-Mappen</span>
+                  <Toggle
+                    checked={roleFolderPermission}
+                    onChange={setRoleFolderPermission}
+                    activeColor="#23BD92"
+                  />
+                  <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                    {roleFolderPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-1/3 font-montserrat font-medium text-gray-800">Documenten</span>
+                  <Toggle
+                    checked={documentPermission}
+                    onChange={setDocumentPermission}
+                    activeColor="#23BD92"
+                  />
+                  <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                    {documentPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                  </span>
+                </div>
+              </>
+            )}
             <div className="flex items-center gap-3">
-              <span className="w-1/3 font-montserrat font-medium text-gray-800">
-                Gebruikers
-              </span>
+              <span className="w-1/3 font-montserrat font-medium text-gray-800">Gebruikers</span>
               <Toggle
                 checked={userPermission}
                 onChange={setUserPermission}
@@ -418,52 +448,41 @@ export default function MakenTab({ roles = [], onAddUser, onAssignTeamlidPermiss
                 {userPermission ? "Maken en wijzigen" : "Alleen lezen"}
               </span>
             </div>
-
-            <div className="flex items-center gap-3">
-              <span className="w-1/3 font-montserrat font-medium text-gray-800">
-                Documenten
-              </span>
-              <Toggle
-                checked={documentPermission}
-                onChange={setDocumentPermission}
-                activeColor="#23BD92"
-              />
-              <span className="font-montserrat text-sm text-gray-600 w-1/3">
-                {documentPermission ? "Maken en wijzigen" : "Alleen lezen"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="w-1/3 font-montserrat font-medium text-gray-800">
-                PublicChat
-              </span>
-              <Toggle
-                checked={publicchatPermission}
-                onChange={setPublicchatPermission}
-                activeColor="#23BD92"
-              />
-              <span className="font-montserrat text-sm text-gray-600 w-1/3">
-                {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="w-1/3 font-montserrat font-medium text-gray-800">
-                WebChat
-              </span>
-              <Toggle
-                checked={webchatPermission}
-                onChange={setWebchatPermission}
-                activeColor="#23BD92"
-              />
-              <span className="font-montserrat text-sm text-gray-600 w-1/3">
-                {webchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
-              </span>
-            </div>
+            {showTeamlidPublicChat && (
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">PublicChat</span>
+                <Toggle
+                  checked={publicchatPermission}
+                  onChange={setPublicchatPermission}
+                  activeColor="#23BD92"
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+            )}
+            {showTeamlidWebChat && (
+              <div className="flex items-center gap-3">
+                <span className="w-1/3 font-montserrat font-medium text-gray-800">WebChat</span>
+                <Toggle
+                  checked={webchatPermission}
+                  onChange={setWebchatPermission}
+                  activeColor="#23BD92"
+                />
+                <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                  {webchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                </span>
+              </div>
+            )}
+            {!showTeamlidDocumentenChat && !showTeamlidPublicChat && !showTeamlidWebChat && (
+              <p className="text-sm text-gray-500">
+                Geen extra modules (Documenten chat, PublicChat, WebChat) om te delegeren. Gebruikers staat los van Documenten chat.
+              </p>
+            )}
           </div>
-          
+
           <p className="text-sm text-gray-500 mt-2">
-            Alleen toegewezen permissies zijn zichtbaar in de sidebar voor deze teamlid.
+            Rollen-Mappen en Documenten volgen uw Documenten chat-module; Gebruikers, PublicChat en WebChat volgen dezelfde logica als in het beheerdersmenu.
           </p>
         </div>
       )}

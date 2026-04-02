@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useApi } from "@/lib/useApi"
 import { canWriteUsers } from "@/lib/permissions"
@@ -106,6 +106,16 @@ export default function Gebruikers() {
     }
     loadUsers()
   }, [getUsers, getRoles, getAdminDocuments, getUser])
+
+  /** Modules the logged-in company admin may delegate (company-enabled ∩ super-admin grant). */
+  const assignerEnabledModuleNames = useMemo(() => {
+    const cm = currentUser?.company_modules
+    const um = currentUser?.modules || {}
+    if (!Array.isArray(cm)) return []
+    return cm
+      .filter((m) => m && m.enabled === true && um[m.name]?.enabled === true)
+      .map((m) => m.name)
+  }, [currentUser])
 
   const dynamicTabs = tabsConfig.map(tab => {
     if (['Wijzigen', 'Documenten'].includes(tab.label)) {
@@ -358,6 +368,7 @@ export default function Gebruikers() {
               userDocumentFilters={userDocumentFilters}
               canWrite={canWrite}
               companyModules={currentUser?.company_modules || []}
+              assignerEnabledModuleNames={assignerEnabledModuleNames}
             />
           )}
         </div>

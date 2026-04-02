@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import { useKeycloak } from '@react-keycloak/web';
 import { apiClient, createAuthHeaders } from '@/lib/apiClient';
 
@@ -11,6 +18,28 @@ export function WorkspaceProvider({ children }) {
   const [workspaces, setWorkspaces] = useState(null);
   const [selectedOwnerId, setSelectedOwnerId] = useState(null);
   const [permissions, setPermissions] = useState(null);
+
+  /** Workspace owner’s enabled modules (guest workspaces only). Teamlid menu must intersect with this. */
+  const ownerModules = useMemo(() => {
+    if (!workspaces || !selectedOwnerId) return null;
+    let isGuestMode = false;
+    if (typeof window !== 'undefined') {
+      try {
+        isGuestMode = window.localStorage.getItem('daviActingOwnerIsGuest') === 'true';
+      } catch (_) {
+        isGuestMode = false;
+      }
+    }
+    if (workspaces.self && workspaces.self.ownerId === selectedOwnerId) {
+      if (isGuestMode) {
+        const g = (workspaces.guestOf || []).find((ws) => ws.ownerId === selectedOwnerId);
+        return g?.owner_modules ?? null;
+      }
+      return null;
+    }
+    const guest = (workspaces.guestOf || []).find((ws) => ws.ownerId === selectedOwnerId);
+    return guest?.owner_modules ?? null;
+  }, [workspaces, selectedOwnerId]);
 
   useEffect(() => {
     const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
@@ -138,6 +167,7 @@ export function WorkspaceProvider({ children }) {
     workspaces,
     selectedOwnerId,
     permissions,
+    ownerModules,
     setSelectedOwnerId,
   };
 

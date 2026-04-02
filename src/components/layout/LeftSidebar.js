@@ -123,6 +123,30 @@ const MENU_CONFIG = {
   ]
 };
 
+/**
+ * Teamlid (guest workspace): only show BEHEER items for modules the *workspace owner*
+ * is allowed to use — same rule as normal company admin, using owner_modules from API.
+ */
+function isModuleEnabledForWorkspaceOwner(
+  moduleKey,
+  companyModules,
+  ownerModulesList,
+  userModulesObj,
+  guestMode
+) {
+  if (!moduleKey) return false;
+  const companyModule = (companyModules || []).find((m) => m && m.name === moduleKey);
+  if (!companyModule || companyModule.enabled !== true) return false;
+  if (ownerModulesList != null && Array.isArray(ownerModulesList)) {
+    const om = ownerModulesList.find((m) => m && m.name === moduleKey);
+    return om?.enabled === true;
+  }
+  // Guest/teamlid workspace: never fall back to the teamlid user's own modules (would show "all").
+  if (guestMode) return false;
+  const u = userModulesObj && userModulesObj[moduleKey];
+  return u?.enabled === true;
+}
+
 const useStableCallbacks = () => {
   const map = useRef(new Map());
   const getStable = useCallback((key, fn) => {
@@ -138,7 +162,12 @@ export default function LeftSidebar() {
   const pathname = usePathname();
   const { keycloak, initialized } = useKeycloak();
   const { getUser } = useApi();
-  const { workspaces, selectedOwnerId, permissions: workspacePermissions } = useWorkspace();
+  const {
+    workspaces,
+    selectedOwnerId,
+    permissions: workspacePermissions,
+    ownerModules,
+  } = useWorkspace();
 
   const [user, setUser] = useState(null);
   const userRef = useRef(null);          
@@ -326,9 +355,22 @@ export default function LeftSidebar() {
         if (module.requiredRole === "super_admin")
           return false; // Company admins can't access super_admin only modules
 
-        // When company admin is acting as teamlid: show only teamlid-assigned modules (ignore admin's own module list)
+        // When company admin is acting as teamlid: show only modules the *workspace owner*
+        // may use (company + owner admin modules), and only BEHEER slices with teamlidPermission.
         if (currentUser?.is_teamlid && workspacePermissions) {
-          return !!module.teamlidPermission;
+          if (!module.teamlidPermission) return false;
+          // Gebruikers: no moduleKey — not tied to Documenten chat (same as company admin menu).
+          if (module.teamlidPermission === 'users' && !module.moduleKey) {
+            return true;
+          }
+          if (!module.moduleKey) return false;
+          return isModuleEnabledForWorkspaceOwner(
+            module.moduleKey,
+            currentUser?.company_modules || [],
+            ownerModules,
+            currentUser?.modules || {},
+            true
+          );
         }
         
         // Second: Check module permission for modules that require it (like WebChat)
@@ -399,11 +441,22 @@ export default function LeftSidebar() {
       // Company users with teamlid access can see BEHEER items (teamlid-assigned only when in teamlid mode)
       if (hasTeamlidAccess) {
         // When Teamlid role is selected: show only teamlid-assigned modules (ignore user's own module list)
-        adminModules = MENU_CONFIG.adminModules.filter(module => {
+        adminModules = MENU_CONFIG.adminModules.filter((module) => {
           if (module.requiredRole === "super_admin") return false;
           if (!module.teamlidPermission) return false;
           if (!workspacePermissions) return false;
-          return true;
+          if (!currentUser) return false;
+          if (module.teamlidPermission === 'users' && !module.moduleKey) {
+            return true;
+          }
+          if (!module.moduleKey) return false;
+          return isModuleEnabledForWorkspaceOwner(
+            module.moduleKey,
+            currentUser?.company_modules || [],
+            ownerModules,
+            currentUser?.modules || {},
+            true
+          );
         });
       } else {
         adminModules = []; // Company users without teamlid access don't see BEHEER items
@@ -411,7 +464,7 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions]);
+  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions, ownerModules]);
 
   const routeToTab = useMemo(() => {
     const map = {
