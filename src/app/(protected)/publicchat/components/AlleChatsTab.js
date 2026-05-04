@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from "react"
+import { Link2, MessageSquareText, QrCode } from "lucide-react"
 import AddButton from "@/components/buttons/AddButton"
 import CheckBox from "@/components/buttons/CheckBox"
 import SearchBox from "@/components/input/SearchBox"
@@ -7,8 +8,11 @@ import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import EditIcon from "@/components/icons/EditIcon"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
+import { buildPublicChatPageUrl } from "@/lib/publicChatUrl"
 import CreateEditChatModal from "./modals/CreateEditChatModal"
 import DeleteChatModal from "./modals/DeleteChatModal"
+import PublicChatQueryHistoryModal from "./modals/PublicChatQueryHistoryModal"
+import PublicChatQrModal from "./modals/PublicChatQrModal"
 
 export default function AlleChatsTab({
   chats = [],
@@ -21,6 +25,7 @@ export default function AlleChatsTab({
   onRefresh,
   onSyncAll,
   adminUserId,
+  getPublicChatQueryHistory,
 }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedChats, setSelectedChats] = useState(new Set())
@@ -29,6 +34,8 @@ export default function AlleChatsTab({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [editingChat, setEditingChat] = useState(null)
   const [syncing, setSyncing] = useState(false)
+  const [historyModalChat, setHistoryModalChat] = useState(null)
+  const [qrModal, setQrModal] = useState(null)
 
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats
@@ -135,6 +142,37 @@ export default function AlleChatsTab({
       .filter(Boolean)
   }
 
+  const handleCopyPublicChatLink = (chat) => {
+    const name = chat?.chat_name
+    if (!adminUserId || !name) {
+      alert("Kan de link niet maken: admin-ID of chatnaam ontbreekt.")
+      return
+    }
+    const url = buildPublicChatPageUrl(adminUserId, name)
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        alert("Publieke chatlink gekopieerd naar het klembord!")
+      })
+      .catch(() => {
+        alert(`Kopiëren mislukt. Link:\n${url}`)
+      })
+  }
+
+  const handleOpenQrModal = (chat) => {
+    const name = chat?.chat_name
+    if (!adminUserId || !name) {
+      alert("Kan geen QR-code maken: admin-ID of chatnaam ontbreekt.")
+      return
+    }
+    const url = buildPublicChatPageUrl(adminUserId, name)
+    if (!url) {
+      alert("Kan de URL niet maken.")
+      return
+    }
+    setQrModal({ url, chatName: name })
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
@@ -146,32 +184,6 @@ export default function AlleChatsTab({
           </span>
         )}
       </div>
-
-      {/* Admin User ID Display */}
-      {adminUserId && (
-        <div className="mb-4 p-4 bg-[#F9FBFA] rounded-lg border border-[#C5BEBE]">
-          <div className="font-montserrat text-sm text-gray-600 mb-2">
-            Uw Admin User ID voor publieke chat URL:
-          </div>
-          <div className="flex items-center gap-3">
-            <code className="font-mono text-[16px] font-bold text-[#23BD92] bg-white px-3 py-2 rounded border border-[#C5BEBE]">
-              {adminUserId}
-            </code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(adminUserId)
-                alert("User ID gekopieerd naar klembord!")
-              }}
-              className="px-4 py-2 bg-[#23BD92] hover:bg-[#1ea87c] text-white font-montserrat text-sm rounded-lg transition-colors"
-            >
-              Kopieer
-            </button>
-          </div>
-          <div className="mt-2 font-montserrat text-xs text-gray-500">
-            Gebruik dit ID in de URL: <span className="font-mono">/publicChat/{`{user_id}`}/{`{chat_name}`}</span>
-          </div>
-        </div>
-      )}
 
       {/* Action Bar */}
       <div className="flex w-full h-fit bg-[#F9FBFA] items-center justify-between px-2 py-1.5 gap-4">
@@ -256,7 +268,7 @@ export default function AlleChatsTab({
                   Privé
                 </SortableHeader>
 
-                <th className="w-20 px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
+                <th className="min-w-[176px] px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
                   Acties
                 </th>
               </tr>
@@ -300,32 +312,102 @@ export default function AlleChatsTab({
                     </td>
                     <td className="px-4 py-3 text-center">
                       {canWrite ? (
-                        <div className="flex items-center justify-center gap-4">
+                        <div className="flex items-center justify-center gap-3">
                           <button
+                            type="button"
+                            onClick={() => handleCopyPublicChatLink(fullChat)}
+                            disabled={!adminUserId}
+                            className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Publieke chatlink kopiëren"
+                            aria-label="Publieke chatlink kopiëren"
+                          >
+                            <Link2 className="w-[20px] h-[20px] text-sky-600" strokeWidth={2.25} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenQrModal(fullChat)}
+                            disabled={!adminUserId}
+                            className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="QR-code voor publieke link"
+                            aria-label="QR-code genereren"
+                          >
+                            <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
+                          </button>
+                          {getPublicChatQueryHistory && (
+                            <button
+                              type="button"
+                              onClick={() => setHistoryModalChat(fullChat)}
+                              className="cursor-pointer transition-opacity hover:opacity-80"
+                              title="Vragen (met en zonder antwoord)"
+                              aria-label="Vraaggeschiedenis"
+                            >
+                              <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
+                            </button>
+                          )}
+                          <button
+                            type="button"
                             onClick={() => {
                               onSelectChat(fullChat.id)
                             }}
                             className="cursor-pointer transition-opacity hover:opacity-80"
                             title="Bewerken bronnen"
+                            aria-label="Bewerken bronnen"
                           >
                             <EditIcon />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteClick(fullChat)}
                             className="cursor-pointer transition-opacity hover:opacity-80"
                             title="Verwijder"
+                            aria-label="Verwijder"
                           >
                             <RedCancelIcon />
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => onSelectChat(fullChat.id)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                          title="Bekijken"
-                        >
-                          <EditIcon />
-                        </button>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPublicChatLink(fullChat)}
+                            disabled={!adminUserId}
+                            className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Publieke chatlink kopiëren"
+                            aria-label="Publieke chatlink kopiëren"
+                          >
+                            <Link2 className="w-[20px] h-[20px] text-sky-600" strokeWidth={2.25} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenQrModal(fullChat)}
+                            disabled={!adminUserId}
+                            className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="QR-code voor publieke link"
+                            aria-label="QR-code genereren"
+                          >
+                            <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
+                          </button>
+                          {getPublicChatQueryHistory && (
+                            <button
+                              type="button"
+                              onClick={() => setHistoryModalChat(fullChat)}
+                              className="cursor-pointer transition-opacity hover:opacity-80"
+                              title="Vragen (met en zonder antwoord)"
+                              aria-label="Vraaggeschiedenis"
+                            >
+                              <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => onSelectChat(fullChat.id)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Bekijken"
+                            aria-label="Bekijken"
+                          >
+                            <EditIcon />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -381,6 +463,23 @@ export default function AlleChatsTab({
             isMultiple={selectedChats.size > 1}
           />
         </div>
+      )}
+
+      {historyModalChat && getPublicChatQueryHistory && (
+        <PublicChatQueryHistoryModal
+          chatId={historyModalChat.id}
+          chatName={historyModalChat.chat_name}
+          loadHistory={getPublicChatQueryHistory}
+          onClose={() => setHistoryModalChat(null)}
+        />
+      )}
+
+      {qrModal && (
+        <PublicChatQrModal
+          url={qrModal.url}
+          chatName={qrModal.chatName}
+          onClose={() => setQrModal(null)}
+        />
       )}
     </div>
   )

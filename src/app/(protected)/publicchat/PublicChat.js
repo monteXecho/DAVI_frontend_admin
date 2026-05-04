@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 import { usePublicChat } from "@/lib/api/publicChat"
 import { useApi } from "@/lib/useApi"
 import { canWritePublicChat } from "@/lib/permissions"
@@ -13,7 +15,7 @@ const tabsConfig = [
 
 export default function PublicChat() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources, getPublicChatUrlSyncSchedule } = usePublicChat()
+  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources, getPublicChatUrlSyncSchedule, getPublicChatQueryHistory } = usePublicChat()
   const { getUser } = useApi()
   const [chats, setChats] = useState([])
   const [loading, setLoading] = useState(true)
@@ -198,8 +200,11 @@ export default function PublicChat() {
           onRefresh={fetchChats}
           onSyncAll={handleSyncAll}
           adminUserId={adminUserId}
+          getPublicChatQueryHistory={getPublicChatQueryHistory}
         />
       </div>
+
+      <ToastContainer position="top-right" autoClose={3200} />
     </div>
   )
 }

@@ -221,6 +221,23 @@ export function usePublicChat() {
     [withAuth, apiClient, createAuthHeaders]
   );
 
+  const getPublicChatQueryHistory = useCallback(
+    (chatId) =>
+      withAuth((token) =>
+        apiClient
+          .get(
+            `/company-admin/public-chats/${chatId}/query-history`,
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+          .catch((err) => {
+            console.error("[useApi] Get public chat query history failed:", err.response?.data || err);
+            throw err;
+          })
+      ),
+    [withAuth, apiClient, createAuthHeaders]
+  );
+
   return {
     getPublicChats,
     createPublicChat,
@@ -235,6 +252,7 @@ export function usePublicChat() {
     syncAllChatSources,
     getPublicChatUrlSyncSchedule,
     deleteChatSource,
+    getPublicChatQueryHistory,
   };
 }
 
