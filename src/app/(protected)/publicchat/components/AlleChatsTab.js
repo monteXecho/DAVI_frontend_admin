@@ -9,6 +9,7 @@ import EditIcon from "@/components/icons/EditIcon"
 import SortableHeader from "@/components/SortableHeader"
 import { useSortableData } from "@/lib/useSortableData"
 import { buildPublicChatPageUrl } from "@/lib/publicChatUrl"
+import { usePublicChat } from "@/lib/api/publicChat"
 import CreateEditChatModal from "./modals/CreateEditChatModal"
 import DeleteChatModal from "./modals/DeleteChatModal"
 import PublicChatQueryHistoryModal from "./modals/PublicChatQueryHistoryModal"
@@ -25,8 +26,8 @@ export default function AlleChatsTab({
   onRefresh,
   onSyncAll,
   adminUserId,
-  getPublicChatQueryHistory,
 }) {
+  const { getPublicChatQueryHistory: loadPublicChatHistory } = usePublicChat()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedChats, setSelectedChats] = useState(new Set())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -268,7 +269,7 @@ export default function AlleChatsTab({
                   Privé
                 </SortableHeader>
 
-                <th className="min-w-[176px] px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
+                <th className="min-w-[260px] px-4 py-2 font-montserrat font-bold text-[16px] text-black text-center">
                   Acties
                 </th>
               </tr>
@@ -333,17 +334,15 @@ export default function AlleChatsTab({
                           >
                             <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
                           </button>
-                          {getPublicChatQueryHistory && (
-                            <button
-                              type="button"
-                              onClick={() => setHistoryModalChat(fullChat)}
-                              className="cursor-pointer transition-opacity hover:opacity-80"
-                              title="Vragen (met en zonder antwoord)"
-                              aria-label="Vraaggeschiedenis"
-                            >
-                              <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setHistoryModalChat(fullChat)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Vragen (met en zonder antwoord)"
+                            aria-label="Vraaggeschiedenis"
+                          >
+                            <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -387,17 +386,15 @@ export default function AlleChatsTab({
                           >
                             <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
                           </button>
-                          {getPublicChatQueryHistory && (
-                            <button
-                              type="button"
-                              onClick={() => setHistoryModalChat(fullChat)}
-                              className="cursor-pointer transition-opacity hover:opacity-80"
-                              title="Vragen (met en zonder antwoord)"
-                              aria-label="Vraaggeschiedenis"
-                            >
-                              <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setHistoryModalChat(fullChat)}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            title="Vragen (met en zonder antwoord)"
+                            aria-label="Vraaggeschiedenis"
+                          >
+                            <MessageSquareText className="w-[20px] h-[20px] text-[#0f766e]" strokeWidth={2} aria-hidden />
+                          </button>
                           <button
                             type="button"
                             onClick={() => onSelectChat(fullChat.id)}
@@ -465,11 +462,11 @@ export default function AlleChatsTab({
         </div>
       )}
 
-      {historyModalChat && getPublicChatQueryHistory && (
+      {historyModalChat && (
         <PublicChatQueryHistoryModal
           chatId={historyModalChat.id}
           chatName={historyModalChat.chat_name}
-          loadHistory={getPublicChatQueryHistory}
+          loadHistory={loadPublicChatHistory}
           onClose={() => setHistoryModalChat(null)}
         />
       )}

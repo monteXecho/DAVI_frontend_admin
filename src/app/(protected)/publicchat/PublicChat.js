@@ -15,7 +15,7 @@ const tabsConfig = [
 
 export default function PublicChat() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources, getPublicChatUrlSyncSchedule, getPublicChatQueryHistory } = usePublicChat()
+  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources, getPublicChatUrlSyncSchedule } = usePublicChat()
   const { getUser } = useApi()
   const [chats, setChats] = useState([])
   const [loading, setLoading] = useState(true)
@@ -200,7 +200,6 @@ export default function PublicChat() {
           onRefresh={fetchChats}
           onSyncAll={handleSyncAll}
           adminUserId={adminUserId}
-          getPublicChatQueryHistory={getPublicChatQueryHistory}
         />
       </div>
 
@@ -208,4 +207,3 @@ export default function PublicChat() {
     </div>
   )
 }
-
