@@ -71,10 +71,13 @@ export default function PublicChatPage({ params }) {
     const onVis = () => {
       if (document.visibilityState === 'visible') persist()
     }
+    const onInstalled = () => persist()
     window.addEventListener('pageshow', persist)
+    window.addEventListener('appinstalled', onInstalled)
     document.addEventListener('visibilitychange', onVis)
     return () => {
       window.removeEventListener('pageshow', persist)
+      window.removeEventListener('appinstalled', onInstalled)
       document.removeEventListener('visibilitychange', onVis)
     }
   }, [companyAdmin, chatName])

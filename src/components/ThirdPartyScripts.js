@@ -3,12 +3,32 @@
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 
-export default function ThirdPartyScripts() {
+export default function ThirdPartyScripts({ disableProgressier = false }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const isProduction = process.env.NODE_ENV === 'production';
 
   useEffect(() => {
     setIsHydrated(true);
+
+    // Public chat host: remove all service workers — vendor SWs keep start_url at /?launchedfrom=homescreen.
+    if (
+      isProduction &&
+      disableProgressier &&
+      typeof window !== 'undefined' &&
+      'serviceWorker' in navigator
+    ) {
+      navigator.serviceWorker.register = function () {
+        return Promise.reject(
+          new Error('ServiceWorker disabled on public chat host'),
+        )
+      }
+
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.unregister().catch(() => {})
+        }
+      })
+    }
 
     // In development, unregister any existing service workers to prevent issues
     if (!isProduction && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -62,7 +82,7 @@ export default function ThirdPartyScripts() {
         console.warn('Service worker promise rejection caught (non-critical):', event.reason);
       }
     });
-  }, [isProduction]);
+  }, [isProduction, disableProgressier]);
 
   useEffect(() => {
     // Only load third-party scripts in production
@@ -209,12 +229,16 @@ export default function ThirdPartyScripts() {
     };
   }, [isHydrated, isProduction]);
 
-  // Progressier bootstrap: sets window.progressierAppRuntimeSettings on /publicChat/... URLs, then loads script.js
+  // Progressier bootstrap: omit on public chat hostname — it forces start_url /?launchedfrom=homescreen and overrides per-chat installs.
   const progressierBootstrapUrl =
     process.env.NEXT_PUBLIC_PROGRESSIER_CUSTOM_INIT_URL ||
     'https://kbstt.github.io/progressier-custom/dvinl.js';
 
   if (!isProduction) {
+    return null;
+  }
+
+  if (disableProgressier) {
     return null;
   }
 

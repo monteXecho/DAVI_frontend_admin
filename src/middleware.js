@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import {
+  CHAT_PUBLIC_HOST_COOKIE,
+  CHAT_PUBLIC_HOST_COOKIE_VALUE,
   CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
   CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE,
   hostnameIsChatPublicHost,
@@ -15,6 +17,21 @@ import {
  * only /publicChat and Next/static assets stay reachable — all admin and
  * other app routes get 404. Main site (e.g. daviapp.nl) is unchanged.
  */
+function stampChatPublicHostCookie(request, response) {
+  const protocol = request.nextUrl.protocol
+  response.cookies.set(
+    CHAT_PUBLIC_HOST_COOKIE,
+    CHAT_PUBLIC_HOST_COOKIE_VALUE,
+    {
+      path: '/',
+      sameSite: 'lax',
+      secure: protocol === 'https:',
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 400,
+    },
+  )
+}
+
 function nextOnChatPublicHost(request) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.delete(CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER)
@@ -22,7 +39,9 @@ function nextOnChatPublicHost(request) {
     CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
     CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE,
   )
-  return NextResponse.next({ request: { headers: requestHeaders } })
+  const res = NextResponse.next({ request: { headers: requestHeaders } })
+  stampChatPublicHostCookie(request, res)
+  return res
 }
 
 function resumePathFromCookie(request) {
@@ -52,11 +71,15 @@ export function middleware(request) {
   /** PWA cold start often hits `/` or `/publicChat` — redirect to saved deep link before React (no Keycloak flash). */
   const resume = resumePathFromCookie(request)
   if (resume && (p === '/' || p === '' || p === '/publicChat')) {
-    return NextResponse.redirect(new URL(resume, request.url))
+    const res = NextResponse.redirect(new URL(resume, request.url))
+    stampChatPublicHostCookie(request, res)
+    return res
   }
 
   if (p === '/' || p === '') {
-    return NextResponse.redirect(new URL('/publicChat', request.url))
+    const res = NextResponse.redirect(new URL('/publicChat', request.url))
+    stampChatPublicHostCookie(request, res)
+    return res
   }
 
   if (
@@ -75,7 +98,9 @@ export function middleware(request) {
     return nextOnChatPublicHost(request)
   }
 
-  return new NextResponse(null, { status: 404 })
+  const notFound = new NextResponse(null, { status: 404 })
+  stampChatPublicHostCookie(request, notFound)
+  return notFound
 }
 
 export const config = {

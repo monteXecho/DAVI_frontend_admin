@@ -1,9 +1,11 @@
 import "@/app/globals.css";
+import ChatColdOpenInlineScript from "@/components/ChatColdOpenInlineScript";
+import ChatPublicStartupRedirect from "@/components/ChatPublicStartupRedirect";
 import KeycloakProviderWrapper from "@/components/KeycloakProviderWrapper";
 import ThirdPartyScripts from "@/components/ThirdPartyScripts";
 import { requestIsChatPublicHost } from "@/lib/chatPublicHost";
 import { Montserrat } from "next/font/google";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -14,7 +16,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 export default async function RootLayout({ children }) {
   const headersList = await headers();
-  const isChatHost = requestIsChatPublicHost(headersList);
+  const cookieStore = await cookies();
+  const isChatHost = requestIsChatPublicHost(headersList, cookieStore);
 
   const adminProgressierManifest =
     process.env.NEXT_PUBLIC_ADMIN_PROGRESSIER_MANIFEST_URL ||
@@ -42,7 +45,9 @@ export default async function RootLayout({ children }) {
         className={`${montserrat.className} lg:h-screen`}
         suppressHydrationWarning
       >
-        <ThirdPartyScripts />
+        <ChatColdOpenInlineScript />
+        <ThirdPartyScripts disableProgressier={isChatHost} />
+        <ChatPublicStartupRedirect enabled={isChatHost} />
         <KeycloakProviderWrapper suppressKeycloak={isChatHost}>
           {children}
         </KeycloakProviderWrapper>

@@ -1,6 +1,7 @@
 /**
  * Web App Manifest JSON for chat.daviapp.nl installs.
  * `start_url` is what standalone/PWA launches use — deep chat pages get their own manifest route.
+ * Use absolute `start_url` / `scope` / `id` for reliable Chromium behaviour.
  */
 
 function absoluteAsset(origin, src) {
@@ -17,24 +18,44 @@ function absoluteAsset(origin, src) {
  */
 export function buildPublicChatManifestJson(origin, opts) {
   const { startPath, name = 'DAVI', shortName = 'DAVI' } = opts
-  const start_url = startPath.startsWith('/') ? startPath : `/${startPath}`
-  const scope = '/publicChat/'
+  const relStart = startPath.startsWith('/') ? startPath : `/${startPath}`
+  const start_url = `${origin}${relStart}`
+  const scope = `${origin}/publicChat/`
 
-  const i256 = absoluteAsset(origin, process.env.NEXT_PUBLIC_CHAT_PWA_ICON_256)
-  const i512 = absoluteAsset(origin, process.env.NEXT_PUBLIC_CHAT_PWA_ICON_512)
+  const icon192 = absoluteAsset(
+    origin,
+    process.env.NEXT_PUBLIC_CHAT_PWA_ICON_192,
+  )
+  const icon256 = absoluteAsset(
+    origin,
+    process.env.NEXT_PUBLIC_CHAT_PWA_ICON_256,
+  )
+  const icon512 = absoluteAsset(
+    origin,
+    process.env.NEXT_PUBLIC_CHAT_PWA_ICON_512,
+  )
+
   /** @type {{ src: string; sizes: string; type: string; purpose: string }[]} */
   const icons = []
-  if (i256) {
+  if (icon192) {
     icons.push({
-      src: i256,
+      src: icon192,
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'any',
+    })
+  }
+  if (icon256) {
+    icons.push({
+      src: icon256,
       sizes: '256x256',
       type: 'image/png',
       purpose: 'any',
     })
   }
-  if (i512) {
+  if (icon512) {
     icons.push({
-      src: i512,
+      src: icon512,
       sizes: '512x512',
       type: 'image/png',
       purpose: 'any',
@@ -51,10 +72,15 @@ export function buildPublicChatManifestJson(origin, opts) {
     start_url,
     scope,
     display: 'standalone',
+    display_override: ['standalone', 'browser'],
     orientation: 'portrait',
     background_color: bg,
     theme_color: theme,
     ...(icons.length ? { icons } : {}),
-    id: `${origin}${start_url}`,
+    id: start_url,
+    prefer_related_applications: false,
+    launch_handler: {
+      client_mode: 'navigate-existing',
+    },
   }
 }
