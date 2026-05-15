@@ -209,17 +209,21 @@ export default function ThirdPartyScripts() {
     };
   }, [isHydrated, isProduction]);
 
-  // Only load Progressier in production
+  // Progressier bootstrap: sets window.progressierAppRuntimeSettings on /publicChat/... URLs, then loads script.js
+  const progressierBootstrapUrl =
+    process.env.NEXT_PUBLIC_PROGRESSIER_CUSTOM_INIT_URL ||
+    'https://kbstt.github.io/progressier-custom/dvinl.js';
+
   if (!isProduction) {
     return null;
   }
 
   return (
     <Script
-      src="https://progressier.app/GeBtvVp5TAAGbHE3O2GE/script.js"
+      src={progressierBootstrapUrl.trim()}
       strategy="afterInteractive"
       onError={(e) => {
-        console.warn('Progressier script failed to load:', e);
+        console.warn('Progressier bootstrap failed to load:', e);
       }}
     />
   );

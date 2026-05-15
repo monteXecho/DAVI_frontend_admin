@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
 import { usePublicChat } from "@/lib/api/publicChat"
+import { buildPublicChatPageUrl } from "@/lib/publicChatUrl"
 import { Lock, Key, X, Check, Eye, EyeOff } from "lucide-react"
 import UrlSection from "./sections/UrlSection"
 import HtmlSection from "./sections/HtmlSection"
@@ -8,6 +9,7 @@ import FilesSection from "./sections/FilesSection"
 
 export default function WijzigenTab({
   selectedChat,
+  adminUserId,
   canWrite = true,
   onRefresh,
   onUpdateChat,
@@ -201,11 +203,19 @@ export default function WijzigenTab({
         <p className="text-gray-600 font-montserrat">
           Beheer bronnen voor deze publieke chat.
         </p>
+        {adminUserId && selectedChat?.chat_name ? (
+          <p className="mt-2 text-xs text-gray-600 break-all font-montserrat">
+            <span className="font-semibold text-gray-700">Publieke chat-URL:</span>{' '}
+            <span className="font-mono text-[11px] sm:text-xs">
+              {buildPublicChatPageUrl(adminUserId, selectedChat.chat_name)}
+            </span>
+          </p>
+        ) : null}
       </div>
 
       {/* Password Management Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-[#F9FBFA] to-[#F0F7F4] px-6 py-4 border-b border-gray-200">
+        <div className="bg-linear-to-r from-[#F9FBFA] to-[#F0F7F4] px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#23BD92]/10 flex items-center justify-center">

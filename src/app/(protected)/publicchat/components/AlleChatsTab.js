@@ -432,6 +432,7 @@ export default function AlleChatsTab({
         <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50">
           <CreateEditChatModal
             chat={null}
+            adminUserId={adminUserId}
             onConfirm={handleAddConfirm}
             onClose={() => setIsAddModalOpen(false)}
           />
@@ -442,6 +443,7 @@ export default function AlleChatsTab({
         <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50">
           <CreateEditChatModal
             chat={editingChat}
+            adminUserId={adminUserId}
             onConfirm={handleEditConfirm}
             onClose={() => {
               setIsEditModalOpen(false)

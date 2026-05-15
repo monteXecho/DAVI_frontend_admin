@@ -5,6 +5,7 @@ import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
 import PdfSnippetList from '@/components/PdfSnippetList'
 import ReactMarkdown from 'react-markdown'
 import { filterDocumentsByCitations } from '@/lib/utils/citations'
+import { rememberPublicChatPath } from '@/lib/publicChatResume'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://demo.daviapp.nl/api"
 const CHAT_HISTORY_KEY = 'publicchat_history'
@@ -56,6 +57,12 @@ export default function PublicChatPage({ params }) {
 
   useEffect(() => {
     loadChatInfo()
+  }, [companyAdmin, chatName])
+
+  /** Remember concrete URL so PWA start_url (/publicChat) can resume this chat */
+  useEffect(() => {
+    if (typeof window === 'undefined' || companyAdmin == null || chatName == null) return
+    rememberPublicChatPath(window.location.pathname)
   }, [companyAdmin, chatName])
 
   const loadChatInfo = async () => {

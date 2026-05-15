@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
+import { buildPublicChatPageUrl } from "@/lib/publicChatUrl"
 
 export default function CreateEditChatModal({
   chat = null, // null for create, chat object for edit
+  adminUserId = null,
   onConfirm,
   onClose,
 }) {
@@ -83,6 +85,14 @@ export default function CreateEditChatModal({
             placeholder="Bijv. Algemene vragen"
             className="w-full h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent"
           />
+          {adminUserId && chatName.trim() ? (
+            <p className="mt-2 text-xs text-gray-600 break-all">
+              <span className="font-medium text-gray-700">Publieke chat-URL:</span>{' '}
+              <span className="font-mono text-[11px] sm:text-xs">
+                {buildPublicChatPageUrl(adminUserId, chatName.trim())}
+              </span>
+            </p>
+          ) : null}
         </div>
 
         {/* Private Checkbox */}

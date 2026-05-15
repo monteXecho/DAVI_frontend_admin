@@ -169,7 +169,7 @@ export default function PublicChat() {
         {tabsConfig.map((tab, index) => (
           <button
             key={index}
-            onClick={() => {
+            onClick={() =>  {
               setActiveIndex(index)
               if (index === 0) {
                 setSelectedChat(null)
