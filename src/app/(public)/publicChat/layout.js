@@ -1,8 +1,9 @@
-'use client'
+/** Default install target for /publicChat — resume cookie still deep-links on cold open. */
+
+export const metadata = {
+  manifest: '/publicChat/launcher-manifest',
+};
 
 export default function PublicChatLayout({ children }) {
-  // This layout allows unauthenticated access - no ProtectedRoute wrapper
-  // Public chat pages should be accessible without login
-  return <>{children}</>
+  return children;
 }
-

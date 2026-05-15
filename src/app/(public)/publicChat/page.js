@@ -1,21 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { readRememberedPublicChatPath } from '@/lib/publicChatResume'
+import { readRememberedPublicChatPath, rememberPublicChatPath } from '@/lib/publicChatResume'
 
 /**
- * PWA "start" landing: manifest start_url should point here (e.g. /publicChat).
- * On first visit users open their org-specific link once; we remember path and
- * restore it when the installed app launches.
+ * PWA launcher when middleware had no resume cookie yet (first visit / cleared cookies).
  */
 export default function PublicChatStartPage() {
   const router = useRouter()
   const [showHelp, setShowHelp] = useState(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const path = readRememberedPublicChatPath()
     if (path) {
+      rememberPublicChatPath(path)
       router.replace(path)
       return undefined
     }

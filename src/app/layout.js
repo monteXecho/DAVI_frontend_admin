@@ -1,6 +1,7 @@
 import "@/app/globals.css";
 import KeycloakProviderWrapper from "@/components/KeycloakProviderWrapper";
 import ThirdPartyScripts from "@/components/ThirdPartyScripts";
+import { requestIsChatPublicHost } from "@/lib/chatPublicHost";
 import { Montserrat } from "next/font/google";
 import { headers } from "next/headers";
 
@@ -9,32 +10,21 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-function chatOnlyHostnameNormalized() {
-  const raw =
-    process.env.CHAT_PUBLIC_HOSTNAME || "https://chat.daviapp.nl";
-  return raw.replace(/^https?:\/\//, "").trim().split("/")[0].split(":")[0].toLowerCase();
-}
-
 const isProduction = process.env.NODE_ENV === "production";
 
 export default async function RootLayout({ children }) {
   const headersList = await headers();
-  const hostHeader =
-    headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "";
-  const hostname = hostHeader.split(":")[0].toLowerCase();
-  const isChatHost = !!hostname && hostname === chatOnlyHostnameNormalized();
+  const isChatHost = requestIsChatPublicHost(headersList);
 
   const adminProgressierManifest =
     process.env.NEXT_PUBLIC_ADMIN_PROGRESSIER_MANIFEST_URL ||
     "https://progressier.app/GeBtvVp5TAAGbHE3O2GE/progressier.json";
 
-  const chatProgressierManifest =
-    process.env.NEXT_PUBLIC_CHAT_PROGRESSIER_MANIFEST_URL || null;
-
   let manifestHref = null;
   if (isProduction) {
     if (isChatHost) {
-      manifestHref = chatProgressierManifest || null;
+      /* Nested publicChat layouts set metadata.manifest (see launcher + install-manifest routes). */
+      manifestHref = null;
     } else {
       manifestHref = adminProgressierManifest;
     }
@@ -53,7 +43,9 @@ export default async function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <ThirdPartyScripts />
-        <KeycloakProviderWrapper>{children}</KeycloakProviderWrapper>
+        <KeycloakProviderWrapper suppressKeycloak={isChatHost}>
+          {children}
+        </KeycloakProviderWrapper>
       </body>
     </html>
   );

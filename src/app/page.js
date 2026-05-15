@@ -1,17 +1,12 @@
-"use client";
-import MainLayout from "@/components/layout/mainLayout"
-import DocumentClient from "./(protected)/documentchat/DocumentClient";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import { WorkspaceProvider } from "@/context/WorkspaceContext";
+import HomeClient from "@/app/HomeClient";
+import { requestIsChatPublicHost } from "@/lib/chatPublicHost";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <ProtectedRoute>
-      <WorkspaceProvider>
-        <MainLayout>
-          <DocumentClient />
-        </MainLayout>
-      </WorkspaceProvider>
-    </ProtectedRoute>
-  );
+/** Default app home; on the public chat hostname this must never mount Keycloak (`ProtectedRoute`). */
+export default async function Home() {
+  if (requestIsChatPublicHost(await headers())) {
+    redirect("/publicChat");
+  }
+  return <HomeClient />;
 }

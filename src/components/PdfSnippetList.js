@@ -41,8 +41,8 @@ const groupByFileAndPage = (docs = []) => {
   return grouped;
 };
 
-const PdfSnippetList = ({ documents, publicChatContext = null }) => {
-  const { keycloak } = useKeycloak();
+/** Core list; `keycloak` is null on anonymous public chat (no ReactKeycloakProvider). */
+function PdfSnippetListInner({ documents, publicChatContext = null, keycloak }) {
   const [openFile, setOpenFile] = useState(null);
   const [viewerDoc, setViewerDoc] = useState(null);
   const grouped = groupByFileAndPage(documents);
@@ -405,6 +405,21 @@ const PdfSnippetList = ({ documents, publicChatContext = null }) => {
       `}</style>
     </div>
   );
-};
+}
 
-export default PdfSnippetList;
+function PdfSnippetListWithKeycloak(props) {
+  const { keycloak } = useKeycloak();
+  return <PdfSnippetListInner {...props} keycloak={keycloak} />;
+}
+
+/**
+ * Anonymous `/publicChat` pages mount outside ReactKeycloakProvider — avoid useKeycloak when
+ * `publicChatContext` has admin + chat name (same shape PublicChatPage passes).
+ */
+export default function PdfSnippetList(props) {
+  const pc = props.publicChatContext;
+  if (pc?.companyAdmin && pc?.chatName) {
+    return <PdfSnippetListInner {...props} keycloak={null} />;
+  }
+  return <PdfSnippetListWithKeycloak {...props} />;
+}

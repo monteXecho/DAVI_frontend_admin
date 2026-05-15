@@ -1,6 +1,9 @@
 /** localStorage key: last concrete public chat path (e.g. /publicChat/{admin}/{name}) */
 export const PUBLIC_CHAT_RESUME_PATH_KEY = 'davi_public_chat_resume_path'
 
+/** Readable by middleware on chat host — mirrors resume path for cold PWA opens (localStorage is not sent). */
+export const PUBLIC_CHAT_RESUME_COOKIE = 'davi_public_chat_resume'
+
 /**
  * True if pathname is exactly /publicChat/{segment}/{segment} (no open redirects).
  */
@@ -18,6 +21,17 @@ export function rememberPublicChatPath(pathname) {
   try {
     const normalized = pathname.split('?')[0].replace(/\/$/, '') || pathname
     localStorage.setItem(PUBLIC_CHAT_RESUME_PATH_KEY, normalized)
+
+    const secure =
+      typeof window !== 'undefined' && window.location.protocol === 'https:'
+    const segments = [
+      `${PUBLIC_CHAT_RESUME_COOKIE}=${encodeURIComponent(normalized)}`,
+      'Path=/',
+      `Max-Age=${365 * 24 * 60 * 60}`,
+      'SameSite=Lax',
+    ]
+    if (secure) segments.push('Secure')
+    document.cookie = segments.join('; ')
   } catch {
     /* private mode / quota */
   }

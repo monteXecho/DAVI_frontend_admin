@@ -1,23 +1,47 @@
 import { NextResponse } from 'next/server'
 
+import {
+  CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
+  CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE,
+  hostnameIsChatPublicHost,
+} from '@/lib/chatPublicHost'
+import {
+  isAllowedPublicChatPath,
+  PUBLIC_CHAT_RESUME_COOKIE,
+} from '@/lib/publicChatResume'
+
 /**
  * When the app is served on CHAT_PUBLIC_HOSTNAME (e.g. chat.daviapp.nl),
  * only /publicChat and Next/static assets stay reachable — all admin and
  * other app routes get 404. Main site (e.g. daviapp.nl) is unchanged.
  */
-const chatOnlyHostname =
-  process.env.CHAT_PUBLIC_HOSTNAME || 'https://chat.daviapp.nl'
+function nextOnChatPublicHost(request) {
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.delete(CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER)
+  requestHeaders.set(
+    CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
+    CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE,
+  )
+  return NextResponse.next({ request: { headers: requestHeaders } })
+}
 
-function normalizeHost(hostname) {
-  const h = (hostname || '').split(':')[0].toLowerCase()
-  const cfg = chatOnlyHostname.replace(/^https?:\/\//, '').trim().split('/')[0].toLowerCase()
-  return { requestHost: h, restrictedHost: cfg }
+function resumePathFromCookie(request) {
+  const raw = request.cookies.get(PUBLIC_CHAT_RESUME_COOKIE)?.value
+  if (!raw) return null
+  try {
+    const decoded = decodeURIComponent(raw)
+    if (!isAllowedPublicChatPath(decoded)) return null
+    return decoded.replace(/\/$/, '') || decoded
+  } catch {
+    return null
+  }
 }
 
 export function middleware(request) {
-  const { requestHost, restrictedHost } = normalizeHost(request.nextUrl.hostname)
-  const isChatOnlyHost =
-    restrictedHost && requestHost === restrictedHost
+  const requestHostname = (request.nextUrl.hostname || '')
+    .split(':')[0]
+    .toLowerCase()
+  const isChatOnlyHost = hostnameIsChatPublicHost(requestHostname)
 
   if (!isChatOnlyHost) {
     return NextResponse.next()
@@ -25,20 +49,30 @@ export function middleware(request) {
 
   const p = request.nextUrl.pathname
 
+  /** PWA cold start often hits `/` or `/publicChat` — redirect to saved deep link before React (no Keycloak flash). */
+  const resume = resumePathFromCookie(request)
+  if (resume && (p === '/' || p === '' || p === '/publicChat')) {
+    return NextResponse.redirect(new URL(resume, request.url))
+  }
+
+  if (p === '/' || p === '') {
+    return NextResponse.redirect(new URL('/publicChat', request.url))
+  }
+
   if (
     p === '/publicChat' ||
     p.startsWith('/publicChat/') ||
     p.startsWith('/_next/')
   ) {
-    return NextResponse.next()
+    return nextOnChatPublicHost(request)
   }
 
   if (p === '/favicon.ico' || p === '/robots.txt' || p === '/progressier.js') {
-    return NextResponse.next()
+    return nextOnChatPublicHost(request)
   }
 
   if (/\.(?:ico|png|jpg|jpeg|webp|gif|svg|woff2?)$/i.test(p)) {
-    return NextResponse.next()
+    return nextOnChatPublicHost(request)
   }
 
   return new NextResponse(null, { status: 404 })

@@ -59,10 +59,24 @@ export default function PublicChatPage({ params }) {
     loadChatInfo()
   }, [companyAdmin, chatName])
 
-  /** Remember concrete URL so PWA start_url (/publicChat) can resume this chat */
+  /** Remember concrete URL so PWA launcher (/publicChat) can resume after cold start */
   useEffect(() => {
     if (typeof window === 'undefined' || companyAdmin == null || chatName == null) return
     rememberPublicChatPath(window.location.pathname)
+  }, [companyAdmin, chatName])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || companyAdmin == null || chatName == null) return
+    const persist = () => rememberPublicChatPath(window.location.pathname)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') persist()
+    }
+    window.addEventListener('pageshow', persist)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pageshow', persist)
+      document.removeEventListener('visibilitychange', onVis)
+    }
   }, [companyAdmin, chatName])
 
   const loadChatInfo = async () => {

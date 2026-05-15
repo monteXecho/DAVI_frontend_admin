@@ -106,7 +106,7 @@ const MENU_CONFIG = {
       id: 'publicchat',
       label: 'PublicChat',
       icon: ChatItem,
-      path: '/publicchat',
+      path: '/public-chat-admin',
       requiredRoles: ['super_admin', 'company_admin'],
       moduleKey: 'PublicChat',
       teamlidPermission: 'publicchat'
@@ -486,7 +486,7 @@ export default function LeftSidebar() {
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
       "/documenten": "Documenten",
-      "/publicchat": "PublicChat",
+      "/public-chat-admin": "PublicChat",
       "/mappen": "Mappen"
     };
 
