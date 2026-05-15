@@ -1,4 +1,4 @@
-const API_BASE_URL ="/ggd";
+const API_BASE_URL = process.env.NEXT_PUBLIC_GGD_BACKEND_URL || "/ggd";
 
 export const FileKind = {
   STAFF_PLANNING: "staff-planning",
