@@ -3,12 +3,14 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-export function GET(request) {
-  const origin = new URL(request.url).origin
-  const body = buildPublicChatManifestJson(origin, {
-    startPath: '/publicChat',
-    name: 'DAVI — Publieke chat',
-    shortName: 'DAVI chat',
+export function GET() {
+  const body = buildPublicChatManifestJson({
+    startPath: '/publicChat/',
+    name:
+      process.env.NEXT_PUBLIC_CHAT_LAUNCHER_PWA_NAME || 'DAVI - Publieke chat',
+    shortName:
+      process.env.NEXT_PUBLIC_CHAT_LAUNCHER_PWA_SHORT_NAME ||
+      'DAVI - Publieke chat',
   })
   return NextResponse.json(body, {
     headers: {

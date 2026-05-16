@@ -5,6 +5,7 @@ import {
   CHAT_PUBLIC_HOST_COOKIE_VALUE,
   CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
   CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE,
+  DAVI_PATHNAME_HEADER,
   hostnameIsChatPublicHost,
 } from '@/lib/chatPublicHost'
 import {
@@ -12,11 +13,7 @@ import {
   PUBLIC_CHAT_RESUME_COOKIE,
 } from '@/lib/publicChatResume'
 
-/**
- * When the app is served on CHAT_PUBLIC_HOSTNAME (e.g. chat.daviapp.nl),
- * only /publicChat and Next/static assets stay reachable — all admin and
- * other app routes get 404. Main site (e.g. daviapp.nl) is unchanged.
- */
+
 function stampChatPublicHostCookie(request, response) {
   const protocol = request.nextUrl.protocol
   response.cookies.set(
@@ -32,8 +29,7 @@ function stampChatPublicHostCookie(request, response) {
   )
 }
 
-function nextOnChatPublicHost(request) {
-  const requestHeaders = new Headers(request.headers)
+function nextOnChatPublicHost(request, requestHeaders) {
   requestHeaders.delete(CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER)
   requestHeaders.set(
     CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER,
@@ -57,18 +53,20 @@ function resumePathFromCookie(request) {
 }
 
 export function middleware(request) {
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set(DAVI_PATHNAME_HEADER, request.nextUrl.pathname)
+
   const requestHostname = (request.nextUrl.hostname || '')
     .split(':')[0]
     .toLowerCase()
   const isChatOnlyHost = hostnameIsChatPublicHost(requestHostname)
 
   if (!isChatOnlyHost) {
-    return NextResponse.next()
+    return NextResponse.next({ request: { headers: requestHeaders } })
   }
 
   const p = request.nextUrl.pathname
 
-  /** PWA cold start often hits `/` or `/publicChat` — redirect to saved deep link before React (no Keycloak flash). */
   const resume = resumePathFromCookie(request)
   if (resume && (p === '/' || p === '' || p === '/publicChat')) {
     const res = NextResponse.redirect(new URL(resume, request.url))
@@ -87,15 +85,15 @@ export function middleware(request) {
     p.startsWith('/publicChat/') ||
     p.startsWith('/_next/')
   ) {
-    return nextOnChatPublicHost(request)
+    return nextOnChatPublicHost(request, requestHeaders)
   }
 
   if (p === '/favicon.ico' || p === '/robots.txt' || p === '/progressier.js') {
-    return nextOnChatPublicHost(request)
+    return nextOnChatPublicHost(request, requestHeaders)
   }
 
   if (/\.(?:ico|png|jpg|jpeg|webp|gif|svg|woff2?)$/i.test(p)) {
-    return nextOnChatPublicHost(request)
+    return nextOnChatPublicHost(request, requestHeaders)
   }
 
   const notFound = new NextResponse(null, { status: 404 })

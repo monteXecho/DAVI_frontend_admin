@@ -8,6 +8,9 @@
 export const CHAT_PUBLIC_HOST_MIDDLEWARE_HEADER = 'x-davi-chat-public-host'
 export const CHAT_PUBLIC_HOST_MIDDLEWARE_VALUE = '1'
 
+/** Set in middleware from `request.nextUrl.pathname` so the root layout can avoid Progressier on `/publicChat` even if host headers behind the proxy are wrong. */
+export const DAVI_PATHNAME_HEADER = 'x-davi-pathname'
+
 /** Set on every middleware response when the browser host is the public chat hostname (HttpOnly; SSR reads Cookie header). */
 export const CHAT_PUBLIC_HOST_COOKIE = 'davi_chat_public_host'
 export const CHAT_PUBLIC_HOST_COOKIE_VALUE = '1'

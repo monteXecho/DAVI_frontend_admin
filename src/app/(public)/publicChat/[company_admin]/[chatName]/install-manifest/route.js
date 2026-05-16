@@ -22,14 +22,17 @@ export async function GET(request, context) {
     return new NextResponse(null, { status: 404 })
   }
 
-  const origin = new URL(request.url).origin
-  const label =
-    decodeURIComponent(chatName).slice(0, 40) || 'Chat'
+  const labelRaw = decodeURIComponent(chatName).slice(0, 50) || 'Chat'
+  const prefix =
+    process.env.NEXT_PUBLIC_CHAT_PWA_NAME_PREFIX ?? 'DAVI - '
+  const fullName =
+    `${prefix}${labelRaw}`.slice(0, 120)
 
-  const body = buildPublicChatManifestJson(origin, {
+  const body = buildPublicChatManifestJson({
     startPath,
-    name: `DAVI — ${label}`,
-    shortName: label.slice(0, 12),
+    name: fullName,
+    /** Under-icon text: same pattern so it matches OS “app name” where space allows */
+    shortName: fullName,
   })
 
   return NextResponse.json(body, {
