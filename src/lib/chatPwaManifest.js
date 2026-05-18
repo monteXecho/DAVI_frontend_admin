@@ -6,6 +6,9 @@
  * see https://web.dev/articles/building-multiple-pwas-on-the-same-domain
  */
 
+/** Same visual as empty-state center badge on `PublicChatPage` (gradient tile + chat bubble). */
+export const DEFAULT_PUBLIC_CHAT_PWA_ICON_SVG = '/icons/public-chat-pwa-icon.svg'
+
 function manifestIconSrc(envVal) {
   if (!envVal || typeof envVal !== 'string') return null
   const t = envVal.trim()
@@ -85,6 +88,20 @@ export function buildPublicChatManifestJson(opts) {
       purpose: 'any',
     })
   }
+
+  /** Default: match in-page empty-state icon (some stores still prefer env PNGs above). */
+  icons.push({
+    src: DEFAULT_PUBLIC_CHAT_PWA_ICON_SVG,
+    sizes: 'any',
+    type: 'image/svg+xml',
+    purpose: 'any',
+  })
+  icons.push({
+    src: DEFAULT_PUBLIC_CHAT_PWA_ICON_SVG,
+    sizes: 'any',
+    type: 'image/svg+xml',
+    purpose: 'maskable',
+  })
 
   const bg = process.env.NEXT_PUBLIC_CHAT_PWA_BACKGROUND || '#ffffff'
   const theme = process.env.NEXT_PUBLIC_CHAT_PWA_THEME || '#ffffff'
