@@ -466,8 +466,8 @@ export default function PublicChatPage({ params }) {
           <div ref={messagesEndRef} />
         </section>
 
-        {/* Enhanced Input Section - Fixed at bottom */}
-        <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-2xl -mx-6 lg:-mx-12 px-6 lg:px-12 py-6 mt-auto">
+        {/* Composer — lifted above viewport-bottom credits strip */}
+        <div className="sticky bottom-14 sm:bottom-16 z-10 mt-auto bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-2xl -mx-6 lg:-mx-12 px-6 lg:px-12 py-5 sm:py-6">
           <div className="max-w-4xl mx-auto">
             <AutoGrowingTextarea 
               onSubmit={handleQuestionSubmit} 
@@ -476,6 +476,21 @@ export default function PublicChatPage({ params }) {
             />
           </div>
         </div>
+
+        {/* Page-level credits — not part of composer / textarea */}
+        <footer className="pointer-events-none fixed bottom-0 left-0 right-0 z-[9] pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-1">
+          <p className="pointer-events-auto text-center font-montserrat text-[11px] leading-snug tracking-wide text-gray-400 bg-white/95 backdrop-blur-sm border-t border-gray-100/90 py-2.5 sm:py-3">
+            Powered by{' '}
+            <a
+              href="https://mijndavi.nl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-gray-500 underline decoration-gray-300/80 underline-offset-2 transition-colors hover:text-[#23BD92] hover:decoration-[#23BD92]/70"
+            >
+              mijndavi.nl
+            </a>
+          </p>
+        </footer>
       </div>
       </div>
 
