@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
+import PublicChatInstallButton from '@/components/PublicChatInstallButton'
 import PdfSnippetList from '@/components/PdfSnippetList'
 import ReactMarkdown from 'react-markdown'
 import { filterDocumentsByCitations } from '@/lib/utils/citations'
@@ -85,7 +86,7 @@ export default function PublicChatPage({ params }) {
   const loadChatInfo = async () => {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/public-chat/${companyAdmin}/${chatName}`
+        `${API_BASE_URL}/public-chat/${encodeURIComponent(companyAdmin)}/${encodeURIComponent(chatName)}`
       )
       if (response.ok) {
         const data = await response.json()
@@ -116,7 +117,7 @@ export default function PublicChatPage({ params }) {
     try {
       // Verify password using dedicated verification endpoint (doesn't query RAG)
       const response = await fetch(
-        `${API_BASE_URL}/public-chat/${companyAdmin}/${chatName}/verify-password`,
+        `${API_BASE_URL}/public-chat/${encodeURIComponent(companyAdmin)}/${encodeURIComponent(chatName)}/verify-password`,
         {
           method: "POST",
           headers: {
@@ -161,7 +162,7 @@ export default function PublicChatPage({ params }) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/public-chat/${companyAdmin}/${chatName}/query`,
+        `${API_BASE_URL}/public-chat/${encodeURIComponent(companyAdmin)}/${encodeURIComponent(chatName)}/query`,
         {
           method: "POST",
           headers: {
@@ -286,9 +287,9 @@ export default function PublicChatPage({ params }) {
       {/* Elegant Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#23BD92] to-[#1ea87c] flex items-center justify-center shadow-lg">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#23BD92] to-[#1ea87c] flex items-center justify-center shadow-lg shrink-0">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
@@ -298,14 +299,17 @@ export default function PublicChatPage({ params }) {
                 <p className="text-sm text-gray-500 font-montserrat mt-1">Publieke chat - {chatName || "Public Chat"}</p>
               </div>
             </div>
-            {chatHistory.length > 0 && (
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+              <PublicChatInstallButton />
+              {chatHistory.length > 0 && (
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
                 <svg className="w-4 h-4 text-[#23BD92]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span className="text-sm font-medium text-gray-600 font-montserrat">{chatHistory.length} {chatHistory.length === 1 ? 'vraag' : 'vragen'}</span>
               </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

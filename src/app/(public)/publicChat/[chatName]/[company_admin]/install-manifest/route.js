@@ -1,4 +1,7 @@
-import { buildPublicChatManifestJson } from '@/lib/chatPwaManifest'
+import {
+  buildPublicChatManifestJson,
+  publicChatManifestIdentityPath,
+} from '@/lib/chatPwaManifest'
 import { isAllowedPublicChatPath } from '@/lib/publicChatResume'
 import { NextResponse } from 'next/server'
 
@@ -17,7 +20,7 @@ export async function GET(request, context) {
     return new NextResponse(null, { status: 404 })
   }
 
-  const startPath = `/publicChat/${admin}/${chatName}`
+  const startPath = `/publicChat/${chatName}/${admin}`
   if (!isAllowedPublicChatPath(startPath)) {
     return new NextResponse(null, { status: 404 })
   }
@@ -30,6 +33,7 @@ export async function GET(request, context) {
 
   const body = buildPublicChatManifestJson({
     startPath,
+    manifestIdentityPath: publicChatManifestIdentityPath(admin, chatName),
     name: fullName,
     /** Under-icon text: same pattern so it matches OS “app name” where space allows */
     shortName: fullName,

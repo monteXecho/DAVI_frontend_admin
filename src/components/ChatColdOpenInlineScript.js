@@ -8,6 +8,9 @@ import {
  * Executes before React when the document still shows `/`. Progressier and
  * similar PWAs use `/?launchedfrom=homescreen` — service workers bypass Next
  * middleware; this redirects using the resume cookie or `/publicChat`.
+ *
+ * Mirrors `migrateLegacyPublicChatPath`: cookie may still contain
+ * `/publicChat/{uuid}/{chat}`; normalize to canonical `/publicChat/{chat}/{uuid}`.
  */
 export default function ChatColdOpenInlineScript() {
   const hosts = normalizedChatPublicHostnames()
@@ -27,6 +30,18 @@ var H=${names};
 var hn=(location.hostname||"").split(":")[0].toLowerCase();
 if(H.indexOf(hn)<0)return;
 typeof navigator!="undefined"&&navigator.serviceWorker&&(navigator.serviceWorker.register=function(){return Promise.reject(new Error("SW disabled"));},navigator.serviceWorker.getRegistrations&&navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){try{x.unregister();}catch(e){}});}));
+function migPath(pathOnly){
+  try{
+    var uuidRx=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    var m=/^\\/publicChat\\/([^/]+)\\/([^/]+)$/.exec(pathOnly);
+    if(!m)return pathOnly;
+    var a=decodeURIComponent(m[1]);var b=decodeURIComponent(m[2]);
+    if(uuidRx.test(a)&&!uuidRx.test(b)){
+      return "/publicChat/"+encodeURIComponent(b)+"/"+encodeURIComponent(a);
+    }
+  }catch(e){}
+  return pathOnly;
+}
 var p=location.pathname||"";
 if(p!=="/")return;
 
@@ -39,7 +54,7 @@ for(var i=0;i<ch.length;i++){
   if(kv.indexOf(want)!==0)continue;
   try{
     var v=decodeURIComponent(kv.substring(want.length));
-    var pathOnly=(v.split("?")[0]||"").replace(/\\/$/,"");
+    var pathOnly=migPath((v.split("?")[0]||"").replace(/\\/$/,""));
     if(/^\\/publicChat\\/[^/]+\\/[^/]+$/.test(pathOnly))tgt=pathOnly;
   }catch(e){}
   break;
@@ -48,7 +63,7 @@ if(tgt==="/publicChat"){
   try{
     var ls=localStorage.getItem("${pathKey}");
     if(ls){
-      var lp=(ls.split("?")[0]||"").replace(/\\/$/,"");
+      var lp=migPath((ls.split("?")[0]||"").replace(/\\/$/,""));
       if(/^\\/publicChat\\/[^/]+\\/[^/]+$/.test(lp))tgt=lp;
     }
   }catch(e){}

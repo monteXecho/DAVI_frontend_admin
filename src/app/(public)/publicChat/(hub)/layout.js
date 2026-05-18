@@ -1,12 +1,8 @@
 /**
- * Manifest only for the exact route `/publicChat` (hub). Deep chat URLs use
- * `[company_admin]/[chatName]/layout.js` → per-chat install-manifest.
- * (A parent manifest on `publicChat/layout.js` was overriding all children.)
+ * Hub route `/publicChat` intentionally has no linked manifest: any scope covering `/publicChat`
+ * would overlap every deep chat URL and collapse installs into one “catch‑all” PWA.
+ * Install each chat from its canonical URL (`…/publicChat/{chat}/{adminUuid}`). Legacy `{admin}/{chat}` redirects.
  */
-
-export const metadata = {
-  manifest: "/publicChat/launcher-manifest",
-};
 
 export default function PublicChatHubLayout({ children }) {
   return children;

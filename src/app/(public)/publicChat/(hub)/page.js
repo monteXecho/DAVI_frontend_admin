@@ -33,8 +33,8 @@ export default function PublicChatStartPage() {
               Die ziet er ongeveer zo uit:
             </p>
             <p className="font-mono text-xs text-slate-800 break-all bg-slate-100 rounded-lg px-3 py-2 text-left">
-              …/publicChat/<span className="text-slate-500">admin-id</span>/
-              <span className="text-slate-500">chatnaam</span>
+              …/publicChat/<span className="text-slate-500">chatnaam</span>/
+              <span className="text-slate-500">admin-id</span>
             </p>
             <p className="text-slate-500 text-xs leading-relaxed">
               <strong className="text-slate-600">App geïnstalleerd?</strong> Bezoek uw chatlink

@@ -14,12 +14,13 @@ export function getPublicChatSiteOrigin() {
 
 /**
  * Build the absolute URL for the unauthenticated public chat page.
- * Matches Next route: /publicChat/[company_admin]/[chatName] and API /public-chat/{company_admin}/{chat_name}
- * where company_admin is the company admin's user_id (or email) and chat_name is the stored chat name.
+ * Matches Next route: /publicChat/[chatName]/[company_admin] (canonical) and API
+ * `/public-chat/{company_admin}/{chat_name}`. Canonical browser URLs put chat slug first so sibling
+ * chats under one admin do not share `/publicChat/{sameUuid}/…` (install / link capturing quirk).
  */
 export function buildPublicChatPageUrl(adminUserId, chatName) {
   const origin = getPublicChatSiteOrigin()
   const admin = encodeURIComponent(adminUserId || '')
   const chat = encodeURIComponent(chatName || '')
-  return `${origin}/publicChat/${admin}/${chat}`
+  return `${origin}/publicChat/${chat}/${admin}`
 }

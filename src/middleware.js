@@ -9,7 +9,9 @@ import {
   hostnameIsChatPublicHost,
 } from '@/lib/chatPublicHost'
 import {
+  canonicalPathIfLegacyPublicChat,
   isAllowedPublicChatPath,
+  migrateLegacyPublicChatPath,
   PUBLIC_CHAT_RESUME_COOKIE,
 } from '@/lib/publicChatResume'
 
@@ -45,8 +47,12 @@ function resumePathFromCookie(request) {
   if (!raw) return null
   try {
     const decoded = decodeURIComponent(raw)
-    if (!isAllowedPublicChatPath(decoded)) return null
-    return decoded.replace(/\/$/, '') || decoded
+    const migrated =
+      migrateLegacyPublicChatPath(
+        decoded.replace(/\/+$/, '') || decoded,
+      ) || decoded
+    if (!isAllowedPublicChatPath(migrated)) return null
+    return migrated.replace(/\/+$/, '') || migrated
   } catch {
     return null
   }
@@ -66,6 +72,15 @@ export function middleware(request) {
   }
 
   const p = request.nextUrl.pathname
+
+  const legacyCanonical = canonicalPathIfLegacyPublicChat(p)
+  if (legacyCanonical) {
+    const dest = request.nextUrl.clone()
+    dest.pathname = legacyCanonical
+    const res = NextResponse.redirect(dest, 308)
+    stampChatPublicHostCookie(request, res)
+    return res
+  }
 
   const resume = resumePathFromCookie(request)
   if (resume && (p === '/' || p === '' || p === '/publicChat')) {

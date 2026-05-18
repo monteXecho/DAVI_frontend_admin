@@ -2,7 +2,7 @@
 
 export async function generateMetadata({ params }) {
   const { company_admin: companyAdmin, chatName } = await params
-  const base = `/publicChat/${companyAdmin}/${chatName}`
+  const base = `/publicChat/${chatName}/${companyAdmin}`
   const labelRaw = decodeURIComponent(chatName).slice(0, 50) || 'Chat'
   const prefix = process.env.NEXT_PUBLIC_CHAT_PWA_NAME_PREFIX ?? 'DAVI - '
   const displayName = `${prefix}${labelRaw}`.slice(0, 120)
