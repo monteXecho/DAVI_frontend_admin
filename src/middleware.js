@@ -15,7 +15,6 @@ import {
   PUBLIC_CHAT_RESUME_COOKIE,
 } from '@/lib/publicChatResume'
 
-
 function stampChatPublicHostCookie(request, response) {
   const protocol = request.nextUrl.protocol
   response.cookies.set(
@@ -48,9 +47,8 @@ function resumePathFromCookie(request) {
   try {
     const decoded = decodeURIComponent(raw)
     const migrated =
-      migrateLegacyPublicChatPath(
-        decoded.replace(/\/+$/, '') || decoded,
-      ) || decoded
+      migrateLegacyPublicChatPath(decoded.replace(/\/+$/, '') || decoded) ||
+      decoded
     if (!isAllowedPublicChatPath(migrated)) return null
     return migrated.replace(/\/+$/, '') || migrated
   } catch {
@@ -59,8 +57,26 @@ function resumePathFromCookie(request) {
 }
 
 export function middleware(request) {
+  const pathname = request.nextUrl.pathname
+
   const requestHeaders = new Headers(request.headers)
-  requestHeaders.set(DAVI_PATHNAME_HEADER, request.nextUrl.pathname)
+  requestHeaders.set(DAVI_PATHNAME_HEADER, pathname)
+
+  /**
+   * Legacy `/publicChat/{uuid}/{chat}` must become `/publicChat/{chat}/{uuid}` on **every** host.
+   * Otherwise `[chatName]` wrongly captures the UUID (bad PWA names, broken sibling installs).
+   */
+  const legacyCanonical = canonicalPathIfLegacyPublicChat(pathname)
+  if (legacyCanonical) {
+    const dest = request.nextUrl.clone()
+    dest.pathname = legacyCanonical
+    const res = NextResponse.redirect(dest, 308)
+    const hn = (request.nextUrl.hostname || '').split(':')[0].toLowerCase()
+    if (hostnameIsChatPublicHost(hn)) {
+      stampChatPublicHostCookie(request, res)
+    }
+    return res
+  }
 
   const requestHostname = (request.nextUrl.hostname || '')
     .split(':')[0]
@@ -71,16 +87,7 @@ export function middleware(request) {
     return NextResponse.next({ request: { headers: requestHeaders } })
   }
 
-  const p = request.nextUrl.pathname
-
-  const legacyCanonical = canonicalPathIfLegacyPublicChat(p)
-  if (legacyCanonical) {
-    const dest = request.nextUrl.clone()
-    dest.pathname = legacyCanonical
-    const res = NextResponse.redirect(dest, 308)
-    stampChatPublicHostCookie(request, res)
-    return res
-  }
+  const p = pathname
 
   const resume = resumePathFromCookie(request)
   if (resume && (p === '/' || p === '' || p === '/publicChat')) {

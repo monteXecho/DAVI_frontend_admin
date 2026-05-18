@@ -58,15 +58,43 @@ export function isAllowedPublicChatPath(pathname) {
   const [maybeChat, maybeAdmin] = parts.map((seg) =>
     decodeURIComponent(seg || ''),
   )
-  if (
-    !maybeChat ||
+  if (!maybeChat ||
     !maybeAdmin ||
     !PUBLIC_CHAT_ADMIN_UUID_RE.test(maybeAdmin)
   ) {
     return false
   }
+  /** Must not look like UUID in chat slug position (ambiguous rare case). */
   if (PUBLIC_CHAT_ADMIN_UUID_RE.test(maybeChat)) return false
   return true
+}
+
+const safeDecodePathSeg = (s) => {
+  if (s == null || s === '') return ''
+  try {
+    return decodeURIComponent(String(s))
+  } catch {
+    return String(s)
+  }
+}
+
+/**
+ * Next `[chatName]` is URL segment 1, `[company_admin]` segment 2.
+ * Legacy links `/publicChat/{uuid}/{slug}` wrongly bind uuid → chatName unless middleware ran.
+ */
+export function normalizePublicChatRouteParams(adminParam, chatNameParam) {
+  const rawA = String(adminParam ?? '').trim()
+  const rawC = String(chatNameParam ?? '').trim()
+  const decA = safeDecodePathSeg(rawA)
+  const decC = safeDecodePathSeg(rawC)
+
+  if (
+    PUBLIC_CHAT_ADMIN_UUID_RE.test(decC) &&
+    !PUBLIC_CHAT_ADMIN_UUID_RE.test(decA)
+  ) {
+    return { adminId: decC, chatSlug: decA }
+  }
+  return { adminId: decA, chatSlug: decC }
 }
 
 export function rememberPublicChatPath(pathname) {

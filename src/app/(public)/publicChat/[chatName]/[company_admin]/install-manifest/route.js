@@ -2,30 +2,37 @@ import {
   buildPublicChatManifestJson,
   publicChatManifestIdentityPath,
 } from '@/lib/chatPwaManifest'
-import { isAllowedPublicChatPath } from '@/lib/publicChatResume'
+import {
+  isAllowedPublicChatPath,
+  normalizePublicChatRouteParams,
+} from '@/lib/publicChatResume'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request, context) {
   const params = await context.params
-  const admin = params?.company_admin
-  const chatName = params?.chatName
+  const adminRaw = params?.company_admin
+  const chatRaw = params?.chatName
   if (
-    typeof admin !== 'string' ||
-    typeof chatName !== 'string' ||
-    !admin.trim() ||
-    !chatName.trim()
+    typeof adminRaw !== 'string' ||
+    typeof chatRaw !== 'string' ||
+    !adminRaw.trim() ||
+    !chatRaw.trim()
   ) {
     return new NextResponse(null, { status: 404 })
   }
 
-  const startPath = `/publicChat/${chatName}/${admin}`
+  const { adminId, chatSlug } = normalizePublicChatRouteParams(
+    adminRaw,
+    chatRaw,
+  )
+  const startPath = `/publicChat/${encodeURIComponent(chatSlug)}/${encodeURIComponent(adminId)}`
   if (!isAllowedPublicChatPath(startPath)) {
     return new NextResponse(null, { status: 404 })
   }
 
-  const labelRaw = decodeURIComponent(chatName).slice(0, 50) || 'Chat'
+  const labelRaw = chatSlug.slice(0, 50) || 'Chat'
   const prefix =
     process.env.NEXT_PUBLIC_CHAT_PWA_NAME_PREFIX ?? 'DAVI - '
   const fullName =
@@ -33,7 +40,7 @@ export async function GET(request, context) {
 
   const body = buildPublicChatManifestJson({
     startPath,
-    manifestIdentityPath: publicChatManifestIdentityPath(admin, chatName),
+    manifestIdentityPath: publicChatManifestIdentityPath(adminId, chatSlug),
     name: fullName,
     /** Under-icon text: same pattern so it matches OS “app name” where space allows */
     shortName: fullName,

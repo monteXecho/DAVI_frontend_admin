@@ -9,14 +9,6 @@
 /** Same visual as empty-state center badge on `PublicChatPage` (gradient tile + chat bubble). */
 export const DEFAULT_PUBLIC_CHAT_PWA_ICON_SVG = '/icons/public-chat-pwa-icon.svg'
 
-function manifestIconSrc(envVal) {
-  if (!envVal || typeof envVal !== 'string') return null
-  const t = envVal.trim()
-  if (t.startsWith('http://') || t.startsWith('https://')) return t
-  if (t.startsWith('/')) return t
-  return `/${t}`
-}
-
 /**
  * Stable path-only manifest `id` (same origin).
  * Not derived only from shallow `/publicChat/…`; combined with `{chatSlug}/{uuid}` canonical URLs so
@@ -58,38 +50,9 @@ export function buildPublicChatManifestJson(opts) {
       ? manifestIdentityPath
       : `/${manifestIdentityPath}`
 
-  const icon192 = manifestIconSrc(process.env.NEXT_PUBLIC_CHAT_PWA_ICON_192)
-  const icon256 = manifestIconSrc(process.env.NEXT_PUBLIC_CHAT_PWA_ICON_256)
-  const icon512 = manifestIconSrc(process.env.NEXT_PUBLIC_CHAT_PWA_ICON_512)
-
+  /** Public chat PWAs always use the in-page branded SVG (PNG env overrides were masking it). */
   /** @type {{ src: string; sizes: string; type: string; purpose: string }[]} */
   const icons = []
-  if (icon192) {
-    icons.push({
-      src: icon192,
-      sizes: '192x192',
-      type: 'image/png',
-      purpose: 'any',
-    })
-  }
-  if (icon256) {
-    icons.push({
-      src: icon256,
-      sizes: '256x256',
-      type: 'image/png',
-      purpose: 'any',
-    })
-  }
-  if (icon512) {
-    icons.push({
-      src: icon512,
-      sizes: '512x512',
-      type: 'image/png',
-      purpose: 'any',
-    })
-  }
-
-  /** Default: match in-page empty-state icon (some stores still prefer env PNGs above). */
   icons.push({
     src: DEFAULT_PUBLIC_CHAT_PWA_ICON_SVG,
     sizes: 'any',

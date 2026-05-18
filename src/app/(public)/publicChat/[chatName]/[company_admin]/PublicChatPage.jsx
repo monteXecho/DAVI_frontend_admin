@@ -1,21 +1,32 @@
 'use client'
-import { useState, useEffect, useRef } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import AutoGrowingTextarea from '@/components/AutoGrowingTextarea'
 import PublicChatInstallButton from '@/components/PublicChatInstallButton'
 import PdfSnippetList from '@/components/PdfSnippetList'
 import ReactMarkdown from 'react-markdown'
 import { filterDocumentsByCitations } from '@/lib/utils/citations'
-import { rememberPublicChatPath } from '@/lib/publicChatResume'
+import { rememberPublicChatPath, normalizePublicChatRouteParams } from '@/lib/publicChatResume'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://demo.daviapp.nl/api"
 const CHAT_HISTORY_KEY = 'publicchat_history'
 
 export default function PublicChatPage({ params }) {
   const routerParams = useParams()
-  const companyAdmin = routerParams?.company_admin || params?.company_admin
-  const chatName = routerParams?.chatName || params?.chatName
-  
+  const { companyAdmin, chatName } = useMemo(() => {
+    const pa = routerParams?.company_admin ?? params?.company_admin
+    const pc = routerParams?.chatName ?? params?.chatName
+    const { adminId, chatSlug } = normalizePublicChatRouteParams(
+      typeof pa === 'string' ? pa : '',
+      typeof pc === 'string' ? pc : '',
+    )
+    return { companyAdmin: adminId, chatName: chatSlug }
+  }, [
+    routerParams?.company_admin,
+    routerParams?.chatName,
+    params?.company_admin,
+    params?.chatName,
+  ])
   const [chatHistory, setChatHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState('')
