@@ -307,13 +307,8 @@ export default function PublicChatPage({ params }) {
               </div>
               <div className="min-w-0">
                 <h1 className="text-3xl font-bold leading-none tracking-normal font-montserrat text-[#23BD92]">DAVI</h1>
-                <p className="text-sm font-montserrat mt-1 min-w-0 leading-snug text-gray-500">
-                  <span className="flex flex-wrap items-baseline gap-x-1">
-                    <span className="shrink-0 whitespace-nowrap">Publieke chat -</span>
-                    <span className="min-w-0 break-words font-medium text-gray-600">
-                      {chatName || 'Public Chat'}
-                    </span>
-                  </span>
+                <p className="mt-1 min-w-0 text-sm font-medium leading-snug break-words text-gray-600 font-montserrat">
+                  {chatName || 'Public Chat'}
                 </p>
               </div>
             </div>
