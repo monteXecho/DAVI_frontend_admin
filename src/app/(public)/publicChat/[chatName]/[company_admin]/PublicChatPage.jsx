@@ -305,9 +305,16 @@ export default function PublicChatPage({ params }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-3xl font-bold leading-none tracking-normal font-montserrat text-[#23BD92]">DAVI</h1>
-                <p className="text-sm text-gray-500 font-montserrat mt-1">Publieke chat - {chatName || "Public Chat"}</p>
+                <p className="text-sm font-montserrat mt-1 min-w-0 leading-snug text-gray-500">
+                  <span className="flex flex-wrap items-baseline gap-x-1">
+                    <span className="shrink-0 whitespace-nowrap">Publieke chat -</span>
+                    <span className="min-w-0 break-words font-medium text-gray-600">
+                      {chatName || 'Public Chat'}
+                    </span>
+                  </span>
+                </p>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
@@ -336,7 +343,12 @@ export default function PublicChatPage({ params }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-bold font-montserrat text-gray-800 mb-3">Welkom bij {chatName || "Public Chat"}</h2>
+              <h2 className="mx-auto mb-3 flex min-w-0 max-w-full flex-wrap items-baseline justify-center gap-x-1.5 px-2 text-center text-3xl font-bold leading-tight font-montserrat text-gray-800">
+                <span className="shrink-0 whitespace-nowrap">Welkom bij</span>
+                <span className="min-w-0 max-w-full text-balance break-words">
+                  {chatName || 'Public Chat'}
+                </span>
+              </h2>
               <p className="text-lg text-gray-600 font-montserrat text-center max-w-md">
                 Stel hieronder een vraag om te beginnen. Ik help je graag verder!
               </p>
