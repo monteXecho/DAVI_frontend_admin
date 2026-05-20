@@ -80,6 +80,9 @@ export default function PublicChat() {
     try {
       await updatePublicChat(chatId, data)
       await fetchChats()
+      setSelectedChat((prev) =>
+        prev && prev.id === chatId ? { ...prev, ...data } : prev
+      )
     } catch (err) {
       throw err
     }

@@ -85,13 +85,21 @@ export default function CreateEditChatModal({
             placeholder="Bijv. Algemene vragen"
             className="w-full h-12 rounded-lg border border-[#D9D9D9] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent"
           />
-          {adminUserId && chatName.trim() ? (
+          {chat && adminUserId && chatName.trim() ? (
             <p className="mt-2 text-xs text-gray-600 break-all">
               <span className="font-medium text-gray-700">Publieke chat-URL:</span>{' '}
               <span className="font-mono text-[11px] sm:text-xs">
                 {buildPublicChatPageUrl(adminUserId, chatName.trim())}
               </span>
             </p>
+          ) : null}
+          {chat &&
+          (chat.chat_name || '').trim() !== chatName.trim() &&
+          chatName.trim() ? (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-950 leading-relaxed">
+              <strong className="font-semibold">Let op!</strong> Als je de titel wijzigt, wijzigen de QR-code en de link ook.
+              Bestaande links en gedrukte QR-codes werken hierna niet meer.
+            </div>
           ) : null}
         </div>
 

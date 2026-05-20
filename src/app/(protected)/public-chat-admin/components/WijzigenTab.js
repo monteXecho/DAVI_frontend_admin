@@ -1,8 +1,10 @@
 'use client'
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "react-toastify"
 import { usePublicChat } from "@/lib/api/publicChat"
 import { buildPublicChatPageUrl } from "@/lib/publicChatUrl"
 import { Lock, Key, X, Check, Eye, EyeOff } from "lucide-react"
+import EditIcon from "@/components/icons/EditIcon"
 import UrlSection from "./sections/UrlSection"
 import HtmlSection from "./sections/HtmlSection"
 import FilesSection from "./sections/FilesSection"
@@ -26,6 +28,55 @@ export default function WijzigenTab({
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState("")
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+
+  const [renameModalOpen, setRenameModalOpen] = useState(false)
+  const [renameDraft, setRenameDraft] = useState("")
+  const [renameSaving, setRenameSaving] = useState(false)
+
+  const openRenameModal = useCallback(() => {
+    setRenameDraft((selectedChat?.chat_name ?? "").trim() || "")
+    setRenameModalOpen(true)
+  }, [selectedChat?.chat_name])
+
+  const closeRenameModal = useCallback(() => {
+    setRenameModalOpen(false)
+    setRenameDraft("")
+  }, [])
+
+  const handleSaveRename = useCallback(async () => {
+    const next = renameDraft.trim()
+    if (!next) {
+      toast.error("Voer een chatnaam in.")
+      return
+    }
+    const current = (selectedChat?.chat_name ?? "").trim()
+    if (next === current) {
+      closeRenameModal()
+      return
+    }
+    try {
+      setRenameSaving(true)
+      await onUpdateChat(selectedChat.id, { chat_name: next })
+      await onRefresh()
+      toast.success("Chatnaam bijgewerkt. De nieuwe link en QR-code zijn nu van kracht.")
+      closeRenameModal()
+    } catch (err) {
+      const msg =
+        err.response?.data?.detail ||
+        err.message ||
+        "Chatnaam kon niet worden opgeslagen."
+      toast.error(typeof msg === "string" ? msg : "Chatnaam kon niet worden opgeslagen.")
+    } finally {
+      setRenameSaving(false)
+    }
+  }, [
+    renameDraft,
+    selectedChat?.id,
+    selectedChat?.chat_name,
+    onUpdateChat,
+    onRefresh,
+    closeRenameModal,
+  ])
 
   const loadSources = useCallback(async () => {
     if (!selectedChat?.id) return
@@ -197,9 +248,23 @@ export default function WijzigenTab({
   return (
     <div className="flex flex-col w-full space-y-8">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold font-montserrat mb-2">
-          Chat: {selectedChat.chat_name}
-        </h2>
+        <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h2 className="text-2xl font-bold font-montserrat min-w-0 m-0">
+            Chat:&nbsp;
+            <span className="wrap-break-word">{selectedChat.chat_name}</span>
+          </h2>
+          {canWrite ? (
+            <button
+              type="button"
+              onClick={openRenameModal}
+              className="shrink-0 cursor-pointer transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23BD92] focus-visible:ring-offset-2 rounded-sm self-center"
+              aria-label="Chatnaam wijzigen"
+              title="Chatnaam wijzigen"
+            >
+              <EditIcon />
+            </button>
+          ) : null}
+        </div>
         <p className="text-gray-600 font-montserrat">
           Beheer bronnen voor deze publieke chat.
         </p>
@@ -212,6 +277,73 @@ export default function WijzigenTab({
           </p>
         ) : null}
       </div>
+
+      {renameModalOpen ? (
+        <div
+          className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={renameSaving ? undefined : closeRenameModal}
+          role="presentation"
+        >
+          <div
+            className="relative max-w-lg w-full rounded-2xl bg-white shadow-2xl border border-gray-200 p-6 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-chat-title"
+          >
+            <button
+              type="button"
+              onClick={closeRenameModal}
+              disabled={renameSaving}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 disabled:opacity-40"
+              aria-label="Sluiten"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <h3 id="rename-chat-title" className="text-xl font-bold font-montserrat text-gray-900 pr-10 mb-4">
+              Chatnaam wijzigen
+            </h3>
+            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 font-montserrat leading-relaxed">
+              <strong className="font-semibold">Let op!</strong> Als je de titel wijzigt, wijzigen de QR-code en de link ook.
+              Bestaande links en gedrukte QR-codes werken hierna niet meer.
+            </div>
+            <label className="block text-sm font-semibold text-gray-700 font-montserrat mb-2">
+              Nieuwe chatnaam
+            </label>
+            <input
+              type="text"
+              autoFocus
+              value={renameDraft}
+              disabled={renameSaving}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              className="w-full h-12 rounded-xl border-2 border-gray-200 px-4 font-montserrat focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent disabled:bg-gray-100"
+              placeholder="Bijv. Wet & Regel"
+            />
+            <div className="mt-6 flex flex-wrap gap-3 justify-end">
+              <button
+                type="button"
+                disabled={renameSaving}
+                onClick={closeRenameModal}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 font-montserrat font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Annuleren
+              </button>
+              <button
+                type="button"
+                disabled={
+                  renameSaving ||
+                  !renameDraft.trim() ||
+                  renameDraft.trim() === (selectedChat.chat_name || "").trim()
+                }
+                onClick={handleSaveRename}
+                className="px-5 py-2.5 rounded-xl bg-[#23BD92] hover:bg-[#1ea87c] text-white font-montserrat font-semibold disabled:opacity-45 disabled:pointer-events-none"
+              >
+                {renameSaving ? "Opslaan…" : "Opslaan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Password Management Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
