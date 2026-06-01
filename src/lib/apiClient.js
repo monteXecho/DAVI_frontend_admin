@@ -1,14 +1,28 @@
 import axios from 'axios';
 
-export const createAuthHeaders = (token, extraHeaders = {}) => {
+/**
+ * Build auth headers for company-admin APIs.
+ *
+ * `omitWorkspaceHeaders` — Set on /userswitch (or similar) so a stale organisation / acting-owner
+ * in localStorage does not break probing calls (avoid 403 "geen account in gekozen organisatie").
+ */
+export const createAuthHeaders = (
+  token,
+  extraHeaders = {},
+  options = {}
+) => {
+  const omitWorkspaceHeaders = Boolean(options.omitWorkspaceHeaders);
+
   let actingOwnerId = null;
   let isGuest = false;
+  let selectedCompanyId = null;
 
-  if (typeof window !== 'undefined') {
+  if (!omitWorkspaceHeaders && typeof window !== 'undefined') {
     try {
       actingOwnerId = window.localStorage.getItem('daviActingOwnerId');
       const isGuestStr = window.localStorage.getItem('daviActingOwnerIsGuest');
       isGuest = isGuestStr === 'true';
+      selectedCompanyId = window.localStorage.getItem('daviSelectedCompanyId');
     } catch (e) {
       // ignore
     }
@@ -19,11 +33,15 @@ export const createAuthHeaders = (token, extraHeaders = {}) => {
     ...extraHeaders,
   };
 
-  if (actingOwnerId) {
+  if (!omitWorkspaceHeaders && selectedCompanyId && String(selectedCompanyId).trim()) {
+    headers['X-Selected-Company-Id'] = String(selectedCompanyId).trim();
+  }
+
+  if (!omitWorkspaceHeaders && actingOwnerId) {
     headers['X-Acting-Owner-Id'] = actingOwnerId;
   }
-  
-  if (isGuest) {
+
+  if (!omitWorkspaceHeaders && isGuest) {
     headers['X-Acting-Owner-Is-Guest'] = 'true';
   }
 

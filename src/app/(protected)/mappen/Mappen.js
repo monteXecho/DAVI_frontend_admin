@@ -8,6 +8,7 @@ import MakenTab from "./components/MakenTab"
 import NextcloudTab from "./components/NextcloudTab"
 import { useApi } from "@/lib/useApi"
 import { canWriteFolders, hasNextcloudPermission } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 
 const tabsConfig = [
   { label: 'Alle Mappen', component: MappenTab, selectable: true },
@@ -31,6 +32,7 @@ export default function Mappen() {
   const [hasNextcloud, setHasNextcloud] = useState(false)
 
   const { getRoles, getAdminDocuments, addFolders, deleteFolders, getUser, getFolders, addOrUpdateRole } = useApi()
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
 
   const router = useRouter()
 
@@ -97,7 +99,7 @@ export default function Mappen() {
       }
     }
     init()
-  }, [refreshData, getUser])  
+  }, [refreshData, getUser, workspaceBootstrapped, selectedCompanyId])  
 
   const handleShowUsers = (users, docName, folderName, roleName) => {
     setSelectedUsers(users)

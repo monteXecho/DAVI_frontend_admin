@@ -1,9 +1,10 @@
 'use client';
 
 import { useKeycloak } from '@react-keycloak/web';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApi } from '@/lib/useApi';
+import { WorkspaceContext } from '@/context/WorkspaceContext';
 
 // Define which paths are admin-only (BEHEER) vs module paths (MODULES)
 const ADMIN_PATHS = ['/rollen', '/rol-pz', '/gebruikers', '/documenten', '/mappen', '/compagnies', '/company-dashboard'];
@@ -14,6 +15,7 @@ export default function ProtectedRoute({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { getUser } = useApi();
+  const { workspaceBootstrapped } = useContext(WorkspaceContext) ?? {};
   const [user, setUser] = useState(null);
   const [userLoaded, setUserLoaded] = useState(false);
 
@@ -26,7 +28,6 @@ export default function ProtectedRoute({ children }) {
       return;
     }
 
-    // Token expiry guard
     const tokenParsed = keycloak.tokenParsed;
     const currentTime = Math.floor(Date.now() / 1000);
     if (tokenParsed && tokenParsed.exp && tokenParsed.exp < currentTime) {
@@ -40,7 +41,18 @@ export default function ProtectedRoute({ children }) {
     const isCompanyAdmin = roles.includes('company_admin');
     const isCompanyUser = roles.includes('company_user');
 
-    // Check URL access based on user role
+    /**
+     * Default to ``false`` when context is not yet available. Defaulting to ``true`` here let
+     * the effect race ahead of WorkspaceContext and fire ``getUser`` without
+     * ``X-Selected-Company-Id`` for multi-org accounts → 400 on first login.
+     */
+    const bootstrapped =
+      typeof workspaceBootstrapped === 'boolean' ? workspaceBootstrapped : false;
+
+    if (!isSuperAdmin && !bootstrapped && (isCompanyAdmin || isCompanyUser)) {
+      return;
+    }
+
     if (!isSuperAdmin) {
       const isAdminPath = ADMIN_PATHS.some(path => pathname.startsWith(path));
       const isModulePath = MODULE_PATHS.some(path => pathname.startsWith(path));
@@ -159,7 +171,7 @@ export default function ProtectedRoute({ children }) {
         router.replace('/userswitch');
       }
     }
-  }, [initialized, keycloak, pathname, router, user, userLoaded, getUser]);
+  }, [initialized, keycloak, pathname, router, user, userLoaded, getUser, workspaceBootstrapped]);
 
   if (!initialized) return null;
   if (!keycloak.authenticated) return null;

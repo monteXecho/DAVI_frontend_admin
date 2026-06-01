@@ -8,12 +8,12 @@ import DocumentClient from "./(protected)/documentchat/DocumentClient";
 
 export default function HomeClient() {
   return (
-    <ProtectedRoute>
-      <WorkspaceProvider>
+    <WorkspaceProvider>
+      <ProtectedRoute>
         <MainLayout>
           <DocumentClient />
         </MainLayout>
-      </WorkspaceProvider>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </WorkspaceProvider>
   );
 }

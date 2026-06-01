@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { usePathname } from 'next/navigation' 
 import { useKeycloak } from "@react-keycloak/web"
 import { useApi } from "@/lib/useApi"
+import { useWorkspace } from "@/context/WorkspaceContext"
 import Image from "next/image"
 
 import ChatItem from '@/assets/chat_item.png'
@@ -61,6 +62,7 @@ export default function Footer () {
   const pathname = usePathname()
   const { keycloak, initialized } = useKeycloak()
   const { getUser } = useApi()
+  const { workspaceBootstrapped } = useWorkspace()
   const [user, setUser] = useState(null)
   const [userRoles, setUserRoles] = useState({
     isSuperAdmin: false,
@@ -79,6 +81,9 @@ export default function Footer () {
       isCompanyUser: roles.includes('company_user')
     })
 
+    const isSuperAdmin = roles.includes('super_admin')
+    if (!isSuperAdmin && !workspaceBootstrapped) return
+
     const loadUser = async () => {
       try {
         const userData = await getUser()
@@ -88,7 +93,7 @@ export default function Footer () {
       }
     }
     loadUser()
-  }, [initialized, keycloak?.authenticated, keycloak?.tokenParsed, getUser])
+  }, [initialized, keycloak?.authenticated, keycloak?.tokenParsed, getUser, workspaceBootstrapped])
 
   // Filter modules based on user permissions (same logic as LeftSidebar)
   const filteredModules = useMemo(() => {

@@ -2,7 +2,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useApi } from "@/lib/useApi"
+import { usePublicChat } from "@/lib/api/publicChat"
 import { canWriteUsers } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 
 import GebruikersTab from "./components/GebruikersTab"
 import MakenTab from "./components/MakenTab"
@@ -20,6 +22,8 @@ export default function Gebruikers() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { getUsers, addUser, addRoleToUsers, assignTeamlidPermissions, assignUserModules, updateUser, deleteUsers, deleteDocuments, deleteRoleFromUsers, assignRole, getRoles, getAdminDocuments, uploadUsersFile, sendResetPassword, getUser } = useApi()
+  const { getPublicChats } = usePublicChat()
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
 
   const [documents, setDocuments] = useState(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -37,6 +41,8 @@ export default function Gebruikers() {
     userName: ""
   })
 
+  const [ownerPublicChats, setOwnerPublicChats] = useState([])
+
   function formatUser(u) {
     const roles = Array.isArray(u.roles) ? u.roles : [u.role];
     // Add Teamlid to roles if user has teamlid permissions
@@ -51,6 +57,7 @@ export default function Gebruikers() {
       is_teamlid: u.is_teamlid || false,
       modules: u.modules,
       teamlid_permissions: u.teamlid_permissions,
+      teamlid_public_chat_ids: u.teamlid_public_chat_ids || null,
       type: u.type,
     }
   }
@@ -76,6 +83,8 @@ export default function Gebruikers() {
   }, [getRoles, getAdminDocuments])
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
+
     const loadUsers = async () => {
       try {
         // Fetch current user to check permissions
@@ -98,6 +107,13 @@ export default function Gebruikers() {
 
         const docsRes = await getAdminDocuments()
         if (docsRes?.data) setDocuments(docsRes.data)
+
+        try {
+          const pch = await getPublicChats()
+          setOwnerPublicChats(pch?.chats || [])
+        } catch {
+          setOwnerPublicChats([])
+        }
       } catch (err) {
         console.error("Failed to fetch users:", err)
       } finally {
@@ -105,7 +121,7 @@ export default function Gebruikers() {
       }
     }
     loadUsers()
-  }, [getUsers, getRoles, getAdminDocuments, getUser])
+  }, [getUsers, getRoles, getAdminDocuments, getUser, getPublicChats, workspaceBootstrapped, selectedCompanyId])
 
   /** Modules the logged-in company admin may delegate (company-enabled ∩ super-admin grant). */
   const assignerEnabledModuleNames = useMemo(() => {
@@ -155,8 +171,8 @@ export default function Gebruikers() {
     await refreshUsers()
   }
 
-  const handleAssignTeamlidPermissions = async (email, permissions) => {
-    await assignTeamlidPermissions(email, permissions)
+  const handleAssignTeamlidPermissions = async (email, permissions, assignedPublicChatIds) => {
+    await assignTeamlidPermissions(email, permissions, assignedPublicChatIds)
     await refreshUsers()
   }
 
@@ -247,10 +263,16 @@ export default function Gebruikers() {
         const updated = formatted.find((u) => u.id === prev.id)
         return updated ?? prev
       })
+      try {
+        const pch = await getPublicChats()
+        setOwnerPublicChats(pch?.chats || [])
+      } catch {
+        setOwnerPublicChats([])
+      }
     } catch (err) {
       console.error("Failed to refresh users:", err)
     }
-  }, [getUsers])
+  }, [getUsers, getPublicChats])
 
   const handleEditUser = (user) => {
     setSelectedUser(user)
@@ -369,6 +391,7 @@ export default function Gebruikers() {
               canWrite={canWrite}
               companyModules={currentUser?.company_modules || []}
               assignerEnabledModuleNames={assignerEnabledModuleNames}
+              ownerPublicChats={ownerPublicChats}
             />
           )}
         </div>

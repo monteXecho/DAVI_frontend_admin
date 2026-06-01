@@ -4,25 +4,22 @@ import MainLayout from "@/components/layout/mainLayout";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 import { MaintenanceProvider } from "@/context/MaintenanceContext";
 import NextcloudAutoSyncProvider from "@/components/NextcloudAutoSyncProvider";
-import PublicChatUrlAutoSyncProvider from "@/components/PublicChatUrlAutoSyncProvider";
 import MaintenanceGate from "@/components/MaintenanceGate";
 
 export default function ProtectedLayout({ children }) {
   return (
-    <ProtectedRoute>
+    <WorkspaceProvider>
       <MaintenanceProvider>
         <MaintenanceGate>
-          <WorkspaceProvider>
+          <ProtectedRoute>
             <NextcloudAutoSyncProvider>
-              <PublicChatUrlAutoSyncProvider>
-                <MainLayout>
-                  {children}
-                </MainLayout>
-              </PublicChatUrlAutoSyncProvider>
+              <MainLayout>
+                {children}
+              </MainLayout>
             </NextcloudAutoSyncProvider>
-          </WorkspaceProvider>
+          </ProtectedRoute>
         </MaintenanceGate>
       </MaintenanceProvider>
-    </ProtectedRoute>
+    </WorkspaceProvider>
   );
 }

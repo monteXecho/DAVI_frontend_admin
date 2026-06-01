@@ -14,11 +14,13 @@ import CreateEditChatModal from "./modals/CreateEditChatModal"
 import DeleteChatModal from "./modals/DeleteChatModal"
 import PublicChatQueryHistoryModal from "./modals/PublicChatQueryHistoryModal"
 import PublicChatQrModal from "./modals/PublicChatQrModal"
+import PublicChatLimitModal from "./modals/PublicChatLimitModal"
 
 export default function AlleChatsTab({
   chats = [],
   loading,
   canWrite = true,
+  maxPublicChats = 2,
   onCreateChat,
   onUpdateChat,
   onDeleteChat,
@@ -37,6 +39,21 @@ export default function AlleChatsTab({
   const [syncing, setSyncing] = useState(false)
   const [historyModalChat, setHistoryModalChat] = useState(null)
   const [qrModal, setQrModal] = useState(null)
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false)
+
+  const chatLimit = maxPublicChats ?? 2
+  const atChatLimit = chats.length >= chatLimit
+
+  const openLimitModal = () => setIsLimitModalOpen(true)
+
+  const isPublicChatLimitError = (err) => {
+    if (err?.response?.status !== 403) return false
+    const header = err?.response?.headers?.["x-public-chat-limit"]
+    if (header === "reached") return true
+    const detail = err?.response?.data?.detail
+    const text = typeof detail === "string" ? detail : ""
+    return text.includes("maximale aantal beschikbare QR-Chats")
+  }
 
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats
@@ -81,6 +98,10 @@ export default function AlleChatsTab({
   const someSelected = filteredChats.some(c => selectedChats.has(c.id)) && !allSelected
 
   const handleAddClick = () => {
+    if (atChatLimit) {
+      openLimitModal()
+      return
+    }
     setEditingChat(null)
     setIsAddModalOpen(true)
   }
@@ -96,7 +117,12 @@ export default function AlleChatsTab({
       setIsAddModalOpen(false)
       setSelectedChats(new Set())
     } catch (err) {
-      alert(err.message || "Failed to create chat")
+      if (isPublicChatLimitError(err)) {
+        setIsAddModalOpen(false)
+        openLimitModal()
+        return
+      }
+      alert(err.response?.data?.detail || err.message || "Failed to create chat")
     }
   }
 
@@ -479,6 +505,12 @@ export default function AlleChatsTab({
           chatName={qrModal.chatName}
           onClose={() => setQrModal(null)}
         />
+      )}
+
+      {isLimitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50 px-4">
+          <PublicChatLimitModal onClose={() => setIsLimitModalOpen(false)} />
+        </div>
       )}
     </div>
   )

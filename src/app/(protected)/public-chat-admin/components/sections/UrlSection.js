@@ -116,16 +116,11 @@ export default function UrlSection({
       </div>
 
       {/* Sync info */}
-      {onSync && (lastSync || nextSync) && (
+      {onSync && lastSync && (
         <div className="mb-4 text-sm text-gray-600 font-montserrat flex flex-col gap-1">
-          {lastSync && formatDateTime && (
+          {formatDateTime && (
             <div>
               <span className="font-bold">Laatste synchronisatie:</span> {formatDateTime(lastSync)}.
-            </div>
-          )}
-          {nextSync && formatNextSync && (
-            <div>
-              <span className="font-bold">Volgende synchronisatie:</span> {formatNextSync(nextSync)}.
             </div>
           )}
         </div>

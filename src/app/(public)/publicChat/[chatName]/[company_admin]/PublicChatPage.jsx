@@ -242,7 +242,7 @@ export default function PublicChatPage({ params }) {
   const isBlocked = passwordRequired && !passwordVerified
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-[#FAFFFE] via-white to-[#F0FDF4] relative">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-[#FAFFFE] via-white to-[#F0FDF4]">
       {/* Password Modal Overlay - Blocks all access */}
       {isBlocked && (
         <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -296,18 +296,18 @@ export default function PublicChatPage({ params }) {
       {/* Blur and disable content when password is required */}
       <div className={isBlocked ? "pointer-events-none opacity-30 blur-sm" : ""}>
       {/* Elegant Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6">
+      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-12">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#23BD92] to-[#1ea87c] flex items-center justify-center shadow-lg shrink-0">
+            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#23BD92] to-[#1ea87c] shadow-lg sm:h-12 sm:w-12">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <h1 className="text-3xl font-bold leading-none tracking-normal font-montserrat text-[#23BD92]">DAVI</h1>
-                <p className="mt-1 min-w-0 text-sm font-medium leading-snug break-words text-gray-600 font-montserrat">
+                <h1 className="font-montserrat text-2xl font-bold leading-none tracking-normal text-[#23BD92] sm:text-3xl">DAVI</h1>
+                <p className="mt-1 min-w-0 break-words font-montserrat text-xs font-medium leading-snug text-gray-600 sm:text-sm">
                   {chatName || 'Public Chat'}
                 </p>
               </div>
@@ -328,8 +328,8 @@ export default function PublicChatPage({ params }) {
       </div>
 
       {/* Main Content */}
-      <div className="w-full flex flex-col gap-[60px] lg:py-[80px] lg:px-[120px] px-[32px] py-[40px] max-w-7xl mx-auto">
-        <section className="flex flex-col gap-[60px]">
+      <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-8 px-4 py-6 sm:gap-12 sm:px-8 sm:py-10 lg:gap-[60px] lg:px-[120px] lg:py-[80px]">
+        <section className="flex min-w-0 flex-col gap-8 pb-36 sm:gap-12 sm:pb-40">
           {/* Empty State */}
           {chatHistory.length === 0 && !currentQuestion && (
             <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
@@ -352,43 +352,41 @@ export default function PublicChatPage({ params }) {
 
           {/* Display all chat history */}
           {chatHistory.map((message, index) => (
-            <div key={index} className="flex flex-col gap-6 animate-slide-up">
-              {/* Enhanced Question Card - Right Aligned */}
-              <div className="flex justify-end">
-                <div className="w-fit max-w-3xl bg-gradient-to-r from-[#23BD92] to-[#1ea87c] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-4 transform hover:-translate-y-1">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <p className="text-white text-[17px] leading-7 font-medium font-montserrat">
-                        {message.question}
-                      </p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 mt-0.5">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div key={index} className="animate-slide-up flex min-w-0 flex-col gap-4 sm:gap-6">
+              {/* Question — icon above text on mobile, beside on sm+ */}
+              <div className="flex justify-stretch sm:justify-end">
+                <div className="w-full max-w-full rounded-2xl bg-gradient-to-r from-[#23BD92] to-[#1ea87c] px-4 py-4 shadow-lg transition-all duration-300 sm:w-fit sm:max-w-3xl sm:px-6 sm:hover:-translate-y-0.5 sm:hover:shadow-xl">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm sm:order-2 sm:mt-0.5">
+                      <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
+                    <p className="min-w-0 flex-1 break-words font-montserrat text-base font-medium leading-7 text-white sm:order-1 sm:text-[17px]">
+                        {message.question}
+                      </p>
                   </div>
                 </div>
               </div>
 
-              {/* Enhanced Answer Card - Left Aligned */}
+              {/* Answer — icon above content on mobile */}
               {message.answer && (
-                <div className="flex justify-start">
-                  <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transform transition-all duration-300 hover:shadow-xl">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#23BD92] to-[#1ea87c] shadow-md flex items-center justify-center shrink-0">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex justify-stretch sm:justify-start">
+                  <div className="w-full min-w-0 max-w-full transform rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-300 sm:max-w-3xl sm:p-6 sm:hover:shadow-xl">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#23BD92] to-[#1ea87c] shadow-md">
+                        <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                       </div>
-                      <div className="flex-1">
-                        <div className="w-full font-montserrat font-normal text-[17px] leading-relaxed text-gray-800 prose prose-sm max-w-none">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="prose prose-sm max-w-none break-words font-montserrat text-base font-normal leading-relaxed text-gray-800 sm:text-[17px] [&_a]:break-all [&_code]:break-all [&_pre]:overflow-x-auto [&_pre]:text-xs">
                           <ReactMarkdown
                             components={{
                               a: ({ node, ...props }) => (
-                                <a {...props} className="text-[#23BD92] hover:text-[#1ea87c] underline font-medium" target="_blank" rel="noopener noreferrer" />
+                                <a {...props} className="font-medium text-[#23BD92] underline hover:text-[#1ea87c]" target="_blank" rel="noopener noreferrer" />
                               ),
-                              p: ({ node, ...props }) => <p {...props} className="mb-2" />,
+                              p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
                             }}
                           >
                             {message.answer}
@@ -400,11 +398,11 @@ export default function PublicChatPage({ params }) {
                 </div>
               )}
 
-              {/* Enhanced Sources Section - Left Aligned */}
+              {/* Sources */}
               {Array.isArray(message.documents) && message.documents.length > 0 && (
-                <div className="flex justify-start">
-                  <section className="w-full max-w-3xl">
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 transform transition-all duration-300 hover:shadow-xl">
+                <div className="flex justify-stretch sm:justify-start">
+                  <section className="w-full min-w-0 max-w-full sm:max-w-3xl">
+                    <div className="min-w-0 overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-lg transition-all duration-300 sm:p-6 sm:hover:shadow-xl">
                       <PdfSnippetList 
                         documents={message.documents} 
                         publicChatContext={{
@@ -421,17 +419,15 @@ export default function PublicChatPage({ params }) {
 
           {/* Enhanced Loading Question Card - Right Aligned */}
           {currentQuestion && (
-            <div className="flex justify-end animate-slide-up">
-              <div className="w-fit max-w-3xl bg-gradient-to-r from-[#23BD92] to-[#1ea87c] rounded-2xl shadow-lg px-6 py-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <p className="text-white text-[17px] leading-7 font-medium font-montserrat">
+            <div className="animate-slide-up flex justify-stretch sm:justify-end">
+              <div className="w-full max-w-full rounded-2xl bg-gradient-to-r from-[#23BD92] to-[#1ea87c] px-4 py-4 shadow-lg sm:w-fit sm:max-w-3xl sm:px-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <p className="min-w-0 flex-1 break-words font-montserrat text-base font-medium leading-7 text-white sm:text-[17px]">
                       {currentQuestion}
                     </p>
-                  </div>
                   {loadingCardVisible && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="flex shrink-0 items-center gap-2 self-start sm:mt-1">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     </div>
                   )}
                 </div>
@@ -439,22 +435,21 @@ export default function PublicChatPage({ params }) {
             </div>
           )}
 
-          {/* Loading Answer Indicator - Left Aligned */}
           {loadingCardVisible && currentQuestion && (
-            <div className="flex justify-start animate-slide-up">
-              <div className="w-fit max-w-3xl bg-white rounded-2xl shadow-md border border-gray-100 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#23BD92] to-[#1ea87c] shadow-sm flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="animate-slide-up flex justify-stretch sm:justify-start">
+              <div className="w-full max-w-full rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-md sm:w-fit sm:max-w-3xl sm:px-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#23BD92] to-[#1ea87c] shadow-sm">
+                    <svg className="h-5 w-5 animate-pulse text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 font-montserrat font-medium">Denken...</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="font-montserrat text-sm font-medium text-gray-600">Denken...</span>
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-[#23BD92] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-[#23BD92] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-[#23BD92] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-[#23BD92]" style={{ animationDelay: '0ms' }} />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-[#23BD92]" style={{ animationDelay: '150ms' }} />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-[#23BD92]" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -467,7 +462,7 @@ export default function PublicChatPage({ params }) {
         </section>
 
         {/* Composer — lifted above viewport-bottom credits strip */}
-        <div className="sticky bottom-14 sm:bottom-16 z-10 mt-auto bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-2xl -mx-6 lg:-mx-12 px-6 lg:px-12 py-5 sm:py-6">
+        <div className="sticky bottom-14 z-10 -mx-4 mt-auto border-t border-gray-100 bg-white/95 px-4 py-4 shadow-2xl backdrop-blur-md sm:bottom-16 sm:-mx-8 sm:px-8 sm:py-6 lg:-mx-12 lg:px-12">
           <div className="max-w-4xl mx-auto">
             <AutoGrowingTextarea 
               onSubmit={handleQuestionSubmit} 

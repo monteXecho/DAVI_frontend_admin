@@ -31,6 +31,7 @@ export default function MakenTab({
   canWrite = true,
   companyModules = [],
   assignerEnabledModuleNames = [],
+  ownerPublicChats = [],
 }) {
   const allRoles = useMemo(
     () => roles.map((r) => (r?.name ?? r?.role ?? String(r))).filter(Boolean),
@@ -53,6 +54,7 @@ export default function MakenTab({
   const [documentPermission, setDocumentPermission] = useState(false)
   const [publicchatPermission, setPublicchatPermission] = useState(false)
   const [webchatPermission, setWebchatPermission] = useState(false)
+  const [selectedPublicChatIds, setSelectedPublicChatIds] = useState([])
 
   // Company modules (enabled for this company) - for Beheerder module assignment
   const companyModulesObj = useMemo(() => {
@@ -79,6 +81,9 @@ export default function MakenTab({
   const showTeamlidPublicChat = assignerSet.has("PublicChat")
   const showTeamlidWebChat = assignerSet.has("WebChat")
 
+  const hasBeheerder = useMemo(() => selectedRoles.includes("Beheerder"), [selectedRoles])
+  const hasTeamlid = useMemo(() => selectedRoles.includes("Teamlid"), [selectedRoles])
+
   // Module selection for new Beheerder (which modules the new admin can use)
   const [selectedAdminModules, setSelectedAdminModules] = useState({})
 
@@ -88,9 +93,24 @@ export default function MakenTab({
     setSelectedAdminModules((prev) => ({ ...next, ...prev }))
   }, [assignableAdminModuleNames.join(",")])
 
-  // Check if user has selected special roles (Beheerder or Teamlid)
-  const hasBeheerder = useMemo(() => selectedRoles.includes("Beheerder"), [selectedRoles])
-  const hasTeamlid = useMemo(() => selectedRoles.includes("Teamlid"), [selectedRoles])
+  useEffect(() => {
+    if (!(showTeamlidPublicChat && publicchatPermission) || !ownerPublicChats?.length) return
+    setSelectedPublicChatIds((prev) => (prev.length ? prev : ownerPublicChats.map((c) => c.id)))
+  }, [publicchatPermission, showTeamlidPublicChat, ownerPublicChats])
+
+  const togglePublicChatSelection = (chatId) => {
+    setSelectedPublicChatIds((prev) => {
+      const s = new Set(prev)
+      if (s.has(chatId)) s.delete(chatId)
+      else s.add(chatId)
+      return Array.from(s)
+    })
+  }
+
+  const handleSelectAllPublicChats = () => {
+    if (!ownerPublicChats?.length) return
+    setSelectedPublicChatIds(ownerPublicChats.map((c) => c.id))
+  }
 
   // Available roles for selection (excluding already selected ones)
   // Allow selecting Beheerder/Teamlid if not already selected, but don't mix them with regular roles
@@ -183,7 +203,11 @@ export default function MakenTab({
           publicchat_modify_permission: !!(showTeamlidPublicChat && publicchatPermission),
           webchat_modify_permission: !!(showTeamlidWebChat && webchatPermission)
         }
-        await onAssignTeamlidPermissions(email.trim(), team_permissions)
+        await onAssignTeamlidPermissions(
+          email.trim(),
+          team_permissions,
+          showTeamlidPublicChat && publicchatPermission ? selectedPublicChatIds : undefined
+        )
         toast.success("Gebruiker toegevoegd als Teamlid")
       }
       // Handle regular roles
@@ -449,17 +473,56 @@ export default function MakenTab({
               </span>
             </div>
             {showTeamlidPublicChat && (
-              <div className="flex items-center gap-3">
-                <span className="w-1/3 font-montserrat font-medium text-gray-800">PublicChat</span>
-                <Toggle
-                  checked={publicchatPermission}
-                  onChange={setPublicchatPermission}
-                  activeColor="#23BD92"
-                />
-                <span className="font-montserrat text-sm text-gray-600 w-1/3">
-                  {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
-                </span>
-              </div>
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="w-1/3 font-montserrat font-medium text-gray-800">PublicChat</span>
+                  <Toggle
+                    checked={publicchatPermission}
+                    onChange={setPublicchatPermission}
+                    activeColor="#23BD92"
+                  />
+                  <span className="font-montserrat text-sm text-gray-600 w-1/3">
+                    {publicchatPermission ? "Maken en wijzigen" : "Alleen lezen"}
+                  </span>
+                </div>
+                {publicchatPermission && ownerPublicChats?.length > 0 && (
+                  <div className="flex flex-col gap-2 pl-2 border-l-2 border-[#23BD92]/40">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-montserrat text-sm font-medium text-gray-700">
+                        Toegewezen public chats
+                      </span>
+                      <button
+                        type="button"
+                        className="text-xs text-[#23BD92] font-semibold hover:underline"
+                        onClick={handleSelectAllPublicChats}
+                      >
+                        Alles selecteren
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Teamlid ziet alleen geselecteerde chats. U kunt later meer chats toevoegen in Wijzigen.
+                    </p>
+                    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                      {ownerPublicChats.map((c) => (
+                        <label key={c.id} className="flex items-center gap-2 cursor-pointer font-montserrat text-sm">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300"
+                            checked={selectedPublicChatIds.includes(c.id)}
+                            onChange={() => togglePublicChatSelection(c.id)}
+                          />
+                          <span>{c.chat_name || c.id}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {publicchatPermission && !(ownerPublicChats?.length > 0) && (
+                  <p className="text-xs text-amber-700">
+                    Nog geen public chats voor deze werkruimte. Maak eerst een chat aan onder Public Chat; daarna kunt u die hier toewijzen.
+                  </p>
+                )}
+              </>
             )}
             {showTeamlidWebChat && (
               <div className="flex items-center gap-3">

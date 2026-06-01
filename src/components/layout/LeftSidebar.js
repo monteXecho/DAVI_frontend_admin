@@ -165,8 +165,11 @@ export default function LeftSidebar() {
   const {
     workspaces,
     selectedOwnerId,
+    selectedCompanyId,
     permissions: workspacePermissions,
     ownerModules,
+    workspaceBootstrapped,
+    isGuestMode,
   } = useWorkspace();
 
   const [user, setUser] = useState(null);
@@ -197,6 +200,10 @@ export default function LeftSidebar() {
   }, [isAuthenticated, keycloak?.tokenParsed]);
 
   useEffect(() => {
+    userRef.current = null;
+  }, [selectedCompanyId, selectedOwnerId]);
+
+  useEffect(() => {
     if (!isAuthenticated) {
       setLoading(false);
       return;
@@ -205,6 +212,10 @@ export default function LeftSidebar() {
     // Super admins don't need profile data for workspace routing; skip fetch
     if (userRoles.isSuperAdmin) {
       setLoading(false);
+      return;
+    }
+
+    if (!workspaceBootstrapped) {
       return;
     }
 
@@ -230,7 +241,7 @@ export default function LeftSidebar() {
     };
 
     loadUserOnce();
-  }, [isAuthenticated, getUser, userRoles.isSuperAdmin]);
+  }, [isAuthenticated, getUser, userRoles.isSuperAdmin, workspaceBootstrapped]);
 
   useEffect(() => {
     if (!user) return;
@@ -258,8 +269,10 @@ export default function LeftSidebar() {
         if (typeof window !== "undefined") {
           try {
             window.localStorage.removeItem("daviActingOwnerId");
+            window.localStorage.removeItem("daviActingOwnerIsGuest");
             window.localStorage.removeItem("daviActingOwnerLabel");
             window.localStorage.removeItem("daviActingOwnerUserId");
+            window.localStorage.removeItem("daviSelectedCompanyId");
             window.sessionStorage.removeItem("daviActingOwnerSelectedForSession");
           } catch (e) {
             // ignore storage issues
@@ -355,9 +368,9 @@ export default function LeftSidebar() {
         if (module.requiredRole === "super_admin")
           return false; // Company admins can't access super_admin only modules
 
-        // When company admin is acting as teamlid: show only modules the *workspace owner*
-        // may use (company + owner admin modules), and only BEHEER slices with teamlidPermission.
-        if (currentUser?.is_teamlid && workspacePermissions) {
+        // When company admin is acting as teamlid on a *guest* workspace: show only BEHEER slices
+        // the workspace owner may use. On their own workspace (``!isGuestMode``) use normal admin rules.
+        if (currentUser?.is_teamlid && isGuestMode && workspacePermissions) {
           if (!module.teamlidPermission) return false;
           // Gebruikers: no moduleKey — not tied to Documenten chat (same as company admin menu).
           if (module.teamlidPermission === 'users' && !module.moduleKey) {
@@ -410,8 +423,9 @@ export default function LeftSidebar() {
           }
         }
         
-        // Fourth: When company admin is acting as teamlid but no workspace permissions yet, hide teamlid modules
-        if (currentUser?.is_teamlid && module.teamlidPermission && !workspacePermissions) {
+        // Guest teamlid mode only: hide BEHEER items until guest permissions are resolved.
+        // Must NOT run on own workspace — ``self.permissions`` is always null for company admins.
+        if (currentUser?.is_teamlid && isGuestMode && module.teamlidPermission && !workspacePermissions) {
           return false;
         }
 
@@ -421,22 +435,22 @@ export default function LeftSidebar() {
       // Use user state (which triggers re-renders) instead of stableUser ref
       const currentUser = user || stableUser;
 
-      if (hasTeamlidAccess) {
-        // When Teamlid role is selected: show only teamlid-assigned modules (BEHEER), hide user's own modules (MODULES)
-        publicModules = [];
-      } else {
-        // Normal mode: Show user's MODULES items
-        publicModules = MENU_CONFIG.publicModules.filter(module => {
-          if (!currentUser) return false;
-          const companyModules = currentUser?.company_modules || [];
-          const companyModule = companyModules.find(m => m.name === module.moduleKey);
-          const userModules = currentUser?.modules || {};
-          const userModule = userModules[module.moduleKey];
-          const companyHasModule = companyModule?.enabled === true;
-          const userHasModule = userModule?.enabled === true;
-          return companyHasModule && userHasModule;
-        });
-      }
+      /**
+       * MODULES (publicModules) are derived from the user's *own* role-based modules and stay
+       * visible in both normal and teamlid mode. Hiding them in teamlid mode used to confuse
+       * users into thinking "adding Teamlid wiped my standard role" — it didn't; only BEHEER
+       * changes between modes.
+       */
+      publicModules = MENU_CONFIG.publicModules.filter(module => {
+        if (!currentUser) return false;
+        const companyModules = currentUser?.company_modules || [];
+        const companyModule = companyModules.find(m => m.name === module.moduleKey);
+        const userModules = currentUser?.modules || {};
+        const userModule = userModules[module.moduleKey];
+        const companyHasModule = companyModule?.enabled === true;
+        const userHasModule = userModule?.enabled === true;
+        return companyHasModule && userHasModule;
+      });
 
       // Company users with teamlid access can see BEHEER items (teamlid-assigned only when in teamlid mode)
       if (hasTeamlidAccess) {
@@ -464,7 +478,7 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions, ownerModules]);
+  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions, ownerModules, isGuestMode]);
 
   const routeToTab = useMemo(() => {
     const map = {

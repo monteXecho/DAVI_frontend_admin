@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useApi } from "@/lib/useApi"
 import { canWriteRoles } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 
 import AlleRollenTab from "./components/AlleRollenTab"
 import MakenTab from "./components/MakenTab"
@@ -15,6 +16,7 @@ const tabsConfig = [
 
 export default function Rollen() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
   const { getUser, getRoles, getFolders, addOrUpdateRole, deleteRoles, getUsers } = useApi()
   const [roles, setRoles] = useState([])
   const [folders, setFolders] = useState([])
@@ -80,11 +82,12 @@ export default function Rollen() {
   }, [getUsers])
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
     fetchRoles()
     fetchUser()
     fetchFolders()
     fetchUsers()
-  }, [fetchRoles, fetchUser, fetchFolders, fetchUsers])
+  }, [workspaceBootstrapped, selectedCompanyId, fetchRoles, fetchUser, fetchFolders, fetchUsers])
 
   const handleDeleteRoles = async (role_names) => {
     try {

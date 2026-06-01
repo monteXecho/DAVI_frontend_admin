@@ -5,6 +5,7 @@ import { useKeycloak } from "@react-keycloak/web";
 import { useApi } from "@/lib/useApi";
 import Image from "next/image";
 import LogoImage from "@/assets/login-side.png";
+import { normalizeWorkspaceCompanies } from "@/context/WorkspaceContext";
 
 export default function UserSwitchPage() {
   const router = useRouter();
@@ -39,61 +40,101 @@ export default function UserSwitchPage() {
       setLoading(true);
       setError(null);
       try {
-        const [user, workspaces] = await Promise.all([
-          getUser(),
-          getGuestWorkspaces(),
-        ]);
+        let user = null;
+        const workspaces = await getGuestWorkspaces();
+        try {
+          /* Omit workspace LS headers — stale organisation after switching causes 403; multi-org yields 400 without header (expected). ``silent`` suppresses the useApiCore log. */
+          user = await getUser({ omitWorkspaceHeaders: true, silent: true });
+        } catch (fetchUserErr) {
+          const status = fetchUserErr?.response?.status;
+          const detailRaw = fetchUserErr?.response?.data?.detail;
+          const detail =
+            typeof detailRaw === 'string'
+              ? detailRaw
+              : detailRaw != null
+                ? String(detailRaw)
+                : '';
+          const benignNoCompanyHint =
+            (status === 400 && detail.includes('meerdere organisaties')) ||
+            (status === 403 && detail.includes('gekozen organisatie'));
+          if (!benignNoCompanyHint) {
+            throw fetchUserErr;
+          }
+        }
 
         setUserMeta(user);
 
+        const blocks = normalizeWorkspaceCompanies(workspaces);
         const normalized = [];
-        const seenOwnerIds = new Set();
-        
-        if (workspaces?.self) {
-          const selfOption = {
-            ownerId: workspaces.self.ownerId,
-            label: workspaces.self.label || "Mijn werkruimte",
-            permissions: null,
-            badge: user?.is_teamlid ? "Eigen" : "Standaard",
-            uniqueKey: `self-${workspaces.self.ownerId}`,
-            isSelf: true,
-          };
-          normalized.push(selfOption);
-          // Don't add to seenOwnerIds yet - allow guest workspaces with same ownerId for company users
-        }
 
-        (workspaces?.guestOf || []).forEach((ws, index) => {
-          // Determine user type
-          const isCompanyUser = user && user.user_type === "company_user";
-          const isCompanyAdmin = user && user.user_type === "admin";
-          
-          // For company admins: skip if guest workspace matches self (same ownerId = same workspace)
-          if (isCompanyAdmin && workspaces?.self?.ownerId === ws.ownerId) {
-            return; // Skip duplicate for company admins
+        blocks.forEach((block) => {
+          const cid = block.companyId || "";
+          const cname = block.companyName || "";
+          const orgHint = blocks.length > 1 ? (cname || cid) : "";
+          const showOrgSuffix = Boolean(orgHint);
+          const seenOwnerIds = new Set();
+
+          const isCompanyAdminBlock =
+            (user && user.user_type === "admin") ||
+            block.membershipKind === "company_admin";
+          const isCompanyUserBlock =
+            (user && user.user_type === "company_user") ||
+            block.membershipKind === "company_user";
+
+          if (block.self?.ownerId) {
+            let label = block.self.label || "Mijn werkruimte";
+            if (showOrgSuffix && orgHint) {
+              label = `${label} (${orgHint})`;
+            }
+            const isTeamlidForBadge =
+              Boolean(user?.is_teamlid) || Boolean(block.memberIsTeamlid);
+
+            normalized.push({
+              ownerId: block.self.ownerId,
+              label,
+              permissions: null,
+              badge: isTeamlidForBadge ? "Eigen" : "Standaard",
+              uniqueKey: `self-${cid}-${block.self.ownerId}`,
+              isSelf: true,
+              companyId: cid,
+              companyName: cname,
+              memberUserId: block.memberUserId || "",
+            });
           }
-          
-          // For company users: always show ALL guest workspaces
-          // - If same ownerId as self: shows teamlid permissions vs default permissions
-          // - If different ownerId: shows teamlid role for other admin
-          // For company admins: skip if already seen (different admin's workspace)
-          if (isCompanyAdmin && seenOwnerIds.has(ws.ownerId)) {
-            return; // Skip duplicate for company admins
-          }
-          
-          // Only track seen ownerIds for company admins (to avoid duplicates)
-          // Company users can have multiple workspaces with same ownerId (self + guest)
-          if (isCompanyAdmin) {
-            seenOwnerIds.add(ws.ownerId);
-          }
-          
-          normalized.push({
-            ownerId: ws.ownerId,
-            label: ws.label,
-            permissions: ws.permissions,
-            owner: ws.owner,
-            badge: "TEAMLID",
-            uniqueKey: `guest-${ws.ownerId}-${index}`,
-            isGuest: true,
+
+          (block.guestOf || []).forEach((ws, index) => {
+            const isCompanyUser = Boolean(isCompanyUserBlock);
+            const isCompanyAdmin = Boolean(isCompanyAdminBlock);
+
+            if (isCompanyAdmin && block.self?.ownerId === ws.ownerId) {
+              return;
+            }
+
+            if (isCompanyAdmin && seenOwnerIds.has(ws.ownerId)) {
+              return;
+            }
+
+            if (isCompanyAdmin) {
+              seenOwnerIds.add(ws.ownerId);
+            }
+
+            let guestLabel = ws.label;
+            if (showOrgSuffix && orgHint) {
+              guestLabel = `${guestLabel} (${orgHint})`;
+            }
+
+            normalized.push({
+              ownerId: ws.ownerId,
+              label: guestLabel,
+              permissions: ws.permissions,
+              owner: ws.owner,
+              badge: "TEAMLID",
+              uniqueKey: `guest-${cid}-${ws.ownerId}-${index}`,
+              isGuest: true,
+              companyId: cid,
+              companyName: cname,
+              memberUserId: block.memberUserId || "",
+            });
           });
         });
 
@@ -111,17 +152,24 @@ export default function UserSwitchPage() {
 
   const handleRoleSelect = (option) => {
     try {
+      if (option.companyId) {
+        window.localStorage.setItem("daviSelectedCompanyId", String(option.companyId));
+      }
       window.localStorage.setItem("daviActingOwnerId", option.ownerId);
       // Store isGuest flag to distinguish between self and guest workspaces with same ownerId
       window.localStorage.setItem("daviActingOwnerIsGuest", String(option.isGuest || false));
       window.localStorage.setItem("daviActingOwnerLabel", option.label || "");
-      if (userMeta?.user_id) {
-        window.localStorage.setItem("daviActingOwnerUserId", String(userMeta.user_id));
+      const uid =
+        option.memberUserId ||
+        userMeta?.user_id;
+      if (uid) {
+        window.localStorage.setItem("daviActingOwnerUserId", String(uid));
       }
       window.sessionStorage.setItem("daviActingOwnerSelectedForSession", "true");
       
       // Dispatch custom event to notify WorkspaceContext of the change
       if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('daviCompanyChange'));
         window.dispatchEvent(new Event('daviWorkspaceChange'));
       }
     } catch (e) {

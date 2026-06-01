@@ -1,7 +1,6 @@
 'use client';
 
-import { useWorkspace } from '@/context/WorkspaceContext';
-import { useRouter } from 'next/navigation';
+import { useWorkspace, workspacesFromCompanyBlock } from '@/context/WorkspaceContext';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useKeycloak } from '@react-keycloak/web';
 import { useApi } from '@/lib/useApi';
@@ -43,9 +42,70 @@ const UserAvatar = ({ name, email, isActive, size = 32 }) => {
   );
 };
 
+function buildOptionsForBlock(blockSlice, meta) {
+  const { companyId, companyName, multiOrg } = meta;
+  if (!blockSlice) return [];
+
+  const selfOwnerId = blockSlice.self?.ownerId;
+  const allOptions = [blockSlice.self, ...(blockSlice.guestOf || [])].filter(Boolean);
+
+  const seen = new Set();
+  const uniqueOptions = [];
+
+  allOptions.forEach((ws, index) => {
+    if (!ws.ownerId) return;
+
+    if (ws.ownerId === selfOwnerId && blockSlice.self === ws) {
+      seen.add(ws.ownerId);
+      uniqueOptions.push({
+        ...ws,
+        companyId,
+        companyName,
+        multiOrg,
+        uniqueKey: `c-${companyId}-self-${ws.ownerId}`,
+        isSelf: true,
+      });
+      return;
+    }
+
+    const isGuestWithSameOwner = ws.ownerId === selfOwnerId && blockSlice.self !== ws;
+    if (isGuestWithSameOwner) {
+      uniqueOptions.push({
+        ...ws,
+        companyId,
+        companyName,
+        multiOrg,
+        uniqueKey: `c-${companyId}-guest-${ws.ownerId}-${index}`,
+        isGuest: true,
+      });
+      return;
+    }
+
+    if (!seen.has(ws.ownerId)) {
+      seen.add(ws.ownerId);
+      uniqueOptions.push({
+        ...ws,
+        companyId,
+        companyName,
+        multiOrg,
+        uniqueKey: `c-${companyId}-guest-${ws.ownerId}-${index}`,
+        isGuest: true,
+      });
+    }
+  });
+
+  return uniqueOptions;
+}
+
 export default function WorkspaceSwitcher() {
-  const { workspaces, selectedOwnerId, setSelectedOwnerId } = useWorkspace();
-  const router = useRouter();
+  const {
+    workspaces,
+    workspaceCompanies,
+    selectedCompanyId,
+    selectedOwnerId,
+    setSelectedOwnerId,
+    workspaceBootstrapped,
+  } = useWorkspace();
   const { keycloak } = useKeycloak();
   const { getUser } = useApi();
   const [currentUser, setCurrentUser] = useState(null);
@@ -61,70 +121,46 @@ export default function WorkspaceSwitcher() {
   const [transitionInfo, setTransitionInfo] = useState(null); 
 
   // Calculate options with useMemo - MUST be defined before useCallback that uses it
+  const multiCompany = (workspaceCompanies || []).length > 1;
+
   const options = useMemo(() => {
+    const blocks =
+      workspaceCompanies && workspaceCompanies.length > 0
+        ? workspaceCompanies
+        : null;
+
+    if (blocks?.length) {
+      const flattened = [];
+      blocks.forEach((b) => {
+        const slice = workspacesFromCompanyBlock(b);
+        const cid = b.companyId || '';
+        flattened.push(
+          ...buildOptionsForBlock(slice, {
+            companyId: cid,
+            companyName: b.companyName || '',
+            multiOrg: multiCompany,
+          })
+        );
+      });
+      return flattened;
+    }
+
     if (!workspaces) return [];
-    
-    const selfOwnerId = workspaces.self?.ownerId;
-    const allOptions = [
-      workspaces.self,
-      ...(workspaces.guestOf || []),
-    ].filter(Boolean);
-    
-    // Remove duplicates based on ownerId - but allow same ownerId for company users
-    // (self workspace = default access, guest workspace = teamlid permissions)
-    const seen = new Set();
-    const uniqueOptions = [];
-    
-    allOptions.forEach((ws, index) => {
-      if (!ws.ownerId) return; // Skip if no ownerId
-      
-      // If this is the self workspace, always add it
-      if (ws.ownerId === selfOwnerId && workspaces.self === ws) {
-        seen.add(ws.ownerId);
-        uniqueOptions.push({
-          ...ws,
-          uniqueKey: `self-${ws.ownerId}`,
-          isSelf: true,
-        });
-        return;
-      }
-      
-      // For guest workspaces with same ownerId as self:
-      // - For company users: allow both (self = default, guest = teamlid permissions)
-      // - For company admins: skip (they're the same workspace)
-      // We can't easily detect user type here, so we'll allow both if they have different permissions
-      // The key difference: self has permissions: null, guest has permissions object
-      const isGuestWithSameOwner = ws.ownerId === selfOwnerId && workspaces.self !== ws;
-      if (isGuestWithSameOwner) {
-        // Allow it - represents teamlid permissions vs default permissions
-        uniqueOptions.push({
-          ...ws,
-          uniqueKey: `guest-${ws.ownerId}-${index}`,
-          isGuest: true,
-        });
-        return;
-      }
-      
-      // Add guest workspace if not seen before
-      if (!seen.has(ws.ownerId)) {
-        seen.add(ws.ownerId);
-        uniqueOptions.push({
-          ...ws,
-          uniqueKey: ws.ownerId || `workspace-${index}`,
-          isGuest: true,
-        });
-      }
+
+    const cidFallback = selectedCompanyId || '';
+    return buildOptionsForBlock(workspaces, {
+      companyId: cidFallback,
+      companyName: '',
+      multiOrg: false,
     });
-    
-    return uniqueOptions;
-  }, [workspaces]);
+  }, [workspaceCompanies, workspaces, selectedCompanyId, multiCompany]);
 
   // Get display info for workspace - MUST be useCallback and defined before any conditional logic
-  const getWorkspaceInfo = useCallback((ws, workspaces, isCurrentlySelected = false) => {
-    // Check if this is the "self" workspace (not a guest workspace)
-    // For company users: self workspace has permissions: null, guest workspace has permissions object
-    const isSelf = ws.isSelf || (workspaces?.self?.ownerId === ws.ownerId && !ws.permissions);
-    const isGuest = ws.isGuest || (ws.permissions !== null && ws.permissions !== undefined);
+  const getWorkspaceInfo = useCallback((ws, isCurrentlySelected = false) => {
+    const isSelf = ws.isSelf === true;
+    const isGuest =
+      ws.isGuest === true ||
+      (ws.permissions !== null && ws.permissions !== undefined);
     
     // For the currently selected workspace, check localStorage to determine if in guest mode
     let finalIsDefault;
@@ -139,16 +175,20 @@ export default function WorkspaceSwitcher() {
       finalIsDefault = isSelf || (ws.ownerId === currentUser?.user_id && !isGuest);
     }
     
+    const orgHint = ws.multiOrg && (ws.companyName || ws.companyId);
+    const tail = finalIsDefault
+      ? 'Eigen werkruimte'
+      : ws.owner
+        ? `voor ${ws.owner.name || ws.owner.email || 'beheerder'}`
+        : ws.label || 'Onbekende rol';
+    const subtitle = orgHint ? `${orgHint} — ${tail}` : tail;
+
     return {
       title: finalIsDefault ? 'Standaard rol' : 'Teamlid rol',
-      subtitle: finalIsDefault 
-        ? 'Eigen werkruimte' 
-        : ws.owner 
-          ? `voor ${ws.owner.name || ws.owner.email || 'beheerder'}`
-          : ws.label || 'Onbekende rol',
+      subtitle,
       name: finalIsDefault 
         ? (currentUser?.name || currentUser?.email || 'Jij')
-        : (ws.owner?.name || ws.owner?.email || 'Beheerder'),
+        : (ws.owner?.name || ws.owner?.email || ws.companyName || 'Beheerder'),
       email: finalIsDefault 
         ? currentUser?.email 
         : ws.owner?.email,
@@ -160,56 +200,56 @@ export default function WorkspaceSwitcher() {
   }, [currentUser]);
 
   // Handle workspace change - must be defined before useEffect hooks
-  const handleWorkspaceChange = useCallback(async (newOwnerId, isGuest = false) => {
-    // For company users with same ownerId: distinguish by isGuest flag
-    const newWorkspace = options.find(ws => {
-      if (ws.ownerId === newOwnerId) {
-        // If both self and guest exist with same ownerId, match by isGuest flag
-        const hasBoth = options.some(w => w.ownerId === newOwnerId && w.isSelf) && 
-                       options.some(w => w.ownerId === newOwnerId && w.isGuest);
-        if (hasBoth) {
-          return (ws.isGuest && isGuest) || (ws.isSelf && !isGuest);
-        }
-        return true;
-      }
-      return false;
-    });
-    
+  const companyMatches = (a, b) => String(a || '') === String(b || '');
+
+  const handleWorkspaceChange = useCallback(async (newWorkspace) => {
     if (!newWorkspace) return;
-    
-    // Check if already selected (considering isGuest for same ownerId)
-    const currentWorkspace = options.find(ws => {
-      if (ws.ownerId === selectedOwnerId) {
-        const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
-                       options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
-        if (hasBoth) {
-          // Need to check which one is currently selected
-          const storedIsGuest = typeof window !== 'undefined' 
+
+    const activeCompanyId =
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('daviSelectedCompanyId') || selectedCompanyId || ''
+        : selectedCompanyId || '';
+
+    const currentWorkspace = options.find((ws) => {
+      const companyOk = multiCompany
+        ? companyMatches(ws.companyId, activeCompanyId)
+        : true;
+      if (!companyOk || ws.ownerId !== selectedOwnerId) return false;
+
+      const hasBoth =
+        options.some((w) => w.ownerId === selectedOwnerId && w.isSelf) &&
+        options.some((w) => w.ownerId === selectedOwnerId && w.isGuest);
+      if (hasBoth) {
+        const storedIsGuest =
+          typeof window !== 'undefined'
             ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
             : false;
-          return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
-        }
-        return true;
+        return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
       }
-      return false;
+      return true;
     });
-    
-    if (currentWorkspace && currentWorkspace.ownerId === newWorkspace.ownerId && 
-        currentWorkspace.isSelf === newWorkspace.isSelf && 
-        currentWorkspace.isGuest === newWorkspace.isGuest) {
+
+    if (
+      currentWorkspace &&
+      currentWorkspace.ownerId === newWorkspace.ownerId &&
+      currentWorkspace.isSelf === newWorkspace.isSelf &&
+      currentWorkspace.isGuest === newWorkspace.isGuest &&
+      companyMatches(currentWorkspace.companyId, newWorkspace.companyId)
+    ) {
       setIsOpen(false);
       return;
     }
     
     const getRoleDisplayName = (ws) => {
       if (!ws) return 'Onbekende rol';
+      const org = ws.multiOrg && (ws.companyName || ws.companyId) ? `${ws.companyName || ws.companyId}: ` : '';
       if (ws.isSelf || (ws.ownerId === currentUser?.user_id && !ws.isGuest)) {
-        return 'Standaard rol';
+        return `${org}Standaard rol`;
       }
       if (ws.owner) {
-        return `Teamlid rol voor ${ws.owner.name || ws.owner.email || 'beheerder'}`;
+        return `${org}Teamlid rol voor ${ws.owner.name || ws.owner.email || 'beheerder'}`;
       }
-      return ws.label || 'Onbekende rol';
+      return `${org}${ws.label || 'Onbekende rol'}`;
     };
     
     const fromRole = getRoleDisplayName(currentWorkspace);
@@ -223,7 +263,12 @@ export default function WorkspaceSwitcher() {
     try {
       // Update localStorage
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('daviActingOwnerId', newOwnerId);
+        if (newWorkspace.companyId) {
+          window.localStorage.setItem('daviSelectedCompanyId', String(newWorkspace.companyId));
+        } else {
+          window.localStorage.removeItem('daviSelectedCompanyId');
+        }
+        window.localStorage.setItem('daviActingOwnerId', newWorkspace.ownerId);
         window.localStorage.setItem('daviActingOwnerIsGuest', String(newWorkspace.isGuest || false));
         if (newWorkspace?.label) {
           window.localStorage.setItem('daviActingOwnerLabel', newWorkspace.label);
@@ -235,7 +280,8 @@ export default function WorkspaceSwitcher() {
       }
       
       // Update context
-      setSelectedOwnerId(newOwnerId);
+      setSelectedOwnerId(newWorkspace.ownerId);
+      window.dispatchEvent(new Event('daviCompanyChange'));
       
       // Show transition for 1.5 seconds, then reload
       setTimeout(() => {
@@ -246,7 +292,14 @@ export default function WorkspaceSwitcher() {
       setIsSwitching(false);
       setTransitionInfo(null);
     }
-  }, [selectedOwnerId, setSelectedOwnerId, options, currentUser]);
+  }, [
+    selectedOwnerId,
+    selectedCompanyId,
+    multiCompany,
+    setSelectedOwnerId,
+    options,
+    currentUser,
+  ]);
 
   // Fetch current user to determine if it's their own workspace
   // Skip for super admins as they don't need workspace switching
@@ -262,7 +315,11 @@ export default function WorkspaceSwitcher() {
       // Super admins don't need user data for workspace switching
       return;
     }
-    
+
+    if (!workspaceBootstrapped) {
+      return;
+    }
+
     const fetchUser = async () => {
       try {
         const user = await getUser();
@@ -276,7 +333,7 @@ export default function WorkspaceSwitcher() {
       }
     };
     fetchUser();
-  }, [getUser, keycloak?.authenticated, keycloak?.tokenParsed]);
+  }, [getUser, keycloak?.authenticated, keycloak?.tokenParsed, workspaceBootstrapped]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -293,25 +350,37 @@ export default function WorkspaceSwitcher() {
   }, [isOpen]);
 
   // Conditional returns AFTER all hooks
-  if (!workspaces) return null;
+  if (!workspaces && !(workspaceCompanies && workspaceCompanies.length > 1)) return null;
   if (!options.length || options.length < 2) return null;
 
-  const selectedWorkspace = options.find(ws => {
-    if (ws.ownerId === selectedOwnerId) {
-      // For company users with same ownerId, check if both self and guest exist
-      const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
-                     options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
-      if (hasBoth) {
-        const storedIsGuest = typeof window !== 'undefined' 
+  const lsCompany =
+    typeof window !== 'undefined'
+      ? window.localStorage.getItem('daviSelectedCompanyId')
+      : null;
+  const highlightCompany =
+    lsCompany ?? selectedCompanyId ?? '';
+
+  const selectedWorkspace = options.find((ws) => {
+    if (multiCompany && !companyMatches(ws.companyId, highlightCompany)) {
+      return false;
+    }
+    if (ws.ownerId !== selectedOwnerId) {
+      return false;
+    }
+
+    const hasBoth =
+      options.some((w) => w.ownerId === selectedOwnerId && w.isSelf) &&
+      options.some((w) => w.ownerId === selectedOwnerId && w.isGuest);
+    if (hasBoth) {
+      const storedIsGuest =
+        typeof window !== 'undefined'
           ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
           : false;
-        return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
-      }
-      return true;
+      return (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
     }
-    return false;
+    return true;
   });
-  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace, workspaces, true) : null;
+  const selectedInfo = selectedWorkspace ? getWorkspaceInfo(selectedWorkspace, true) : null;
 
   return (
     <>
@@ -468,26 +537,39 @@ export default function WorkspaceSwitcher() {
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
           <div className="py-1">
             {options.map((ws) => {
-              // Check if this is the currently selected workspace
+              const sameRow = (w) =>
+                w.ownerId === selectedOwnerId &&
+                (!multiCompany || companyMatches(w.companyId, highlightCompany));
+
               let isSelected = false;
-              if (ws.ownerId === selectedOwnerId) {
-                const hasBoth = options.some(w => w.ownerId === selectedOwnerId && w.isSelf) && 
-                               options.some(w => w.ownerId === selectedOwnerId && w.isGuest);
+
+              const companyOk =
+                !multiCompany || companyMatches(ws.companyId, highlightCompany);
+
+              if (companyOk && ws.ownerId === selectedOwnerId) {
+                const hasBoth =
+                  options.some((w) => sameRow(w) && w.isSelf) &&
+                  options.some((w) => sameRow(w) && w.isGuest);
+
                 if (hasBoth) {
-                  const storedIsGuest = typeof window !== 'undefined' 
-                    ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
-                    : false;
-                  isSelected = (ws.isGuest && storedIsGuest) || (ws.isSelf && !storedIsGuest);
+                  const storedIsGuest =
+                    typeof window !== 'undefined'
+                      ? window.localStorage.getItem('daviActingOwnerIsGuest') === 'true'
+                      : false;
+                  isSelected =
+                    (ws.isGuest && storedIsGuest) ||
+                    (ws.isSelf && !storedIsGuest);
                 } else {
                   isSelected = true;
                 }
               }
-              const info = getWorkspaceInfo(ws, workspaces, isSelected);
-              
+
+              const info = getWorkspaceInfo(ws, isSelected);
+
               return (
                 <button
                   key={ws.uniqueKey || ws.ownerId || `workspace-${ws.label}`}
-                  onClick={() => handleWorkspaceChange(ws.ownerId, ws.isGuest)}
+                  onClick={() => handleWorkspaceChange(ws)}
                   className={`
                     w-full flex items-center gap-3 px-3 py-2.5
                     transition-colors duration-150

@@ -8,6 +8,7 @@ import GekoppeldDocumentTab from "./components/AppearInFolderTab"
 import ToevoegenTab from "./components/ToevoegenTab"
 import { useApi } from "@/lib/useApi"
 import { canWriteDocuments } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 
 const tabsConfig = [
   { label: 'Alle documenten', component: AlleDocumentenTab, selectable: true },
@@ -31,6 +32,7 @@ export default function Documents() {
   const [ canWrite, setCanWrite ] = useState(true)
 
   const { getRoles, uploadDocumentForRole, getAdminDocuments, getFolders, deleteDocuments, getUser, addFolders } = useApi()
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
 
   const isDocSelected = !!selectedDocName
 
@@ -74,6 +76,8 @@ export default function Documents() {
   }, []);
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
+
     const init = async () => {
       try {
         // Fetch current user to check permissions
@@ -89,7 +93,7 @@ export default function Documents() {
       }
     }
     init()
-  }, [refreshData, getUser])  
+  }, [refreshData, getUser, workspaceBootstrapped, selectedCompanyId])  
 
   const handleUploadDocument = async (selectedFolder, formData) => {
     try {

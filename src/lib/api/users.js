@@ -36,13 +36,23 @@ export function useUsers() {
   );
 
   const getUser = useCallback(
-    () =>
+    (fetchOptions = {}) =>
       withAuth((token) =>
         apiClient
-          .get('/company-admin/user', createAuthHeaders(token))
+          .get(
+            '/company-admin/user',
+            createAuthHeaders(token, {}, fetchOptions)
+          )
           .then((res) => {
             console.log(' --- USER --- :', res.data);
             return res.data;
+          })
+          .catch((err) => {
+            /** Callers like /userswitch deliberately omit workspace headers and expect a 400; let them mute the log. */
+            if (fetchOptions?.silent) {
+              err.silent = true;
+            }
+            throw err;
           })
       ),
     [withAuth]
@@ -64,11 +74,14 @@ export function useUsers() {
   );
 
   const assignTeamlidPermissions = useCallback(
-    (email, team_permissions) =>
+    (email, team_permissions, assigned_public_chat_ids) =>
       withAuth((token) => {
-        console.log('Assigning team member permissions:', email, team_permissions);
+        console.log('Assigning team member permissions:', email, team_permissions, assigned_public_chat_ids);
+        const body = { email, team_permissions };
+        if (assigned_public_chat_ids !== undefined)
+          body.assigned_public_chat_ids = assigned_public_chat_ids;
         return apiClient
-          .post('/company-admin/users/teamlid', { email, team_permissions }, createAuthHeaders(token))
+          .post('/company-admin/users/teamlid', body, createAuthHeaders(token))
           .then((res) => res.data);
       }),
     [withAuth]

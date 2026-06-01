@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useKeycloak } from '@react-keycloak/web';
 import { useApi } from '@/lib/useApi';
 import { hasNextcloudPermission } from '@/lib/permissions';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
@@ -19,6 +20,7 @@ const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
  */
 export default function NextcloudAutoSyncProvider({ children }) {
   const { keycloak } = useKeycloak();
+  const { workspaceBootstrapped } = useWorkspace();
   const { getUser, syncFoldersFromNextcloud } = useApi();
   const intervalRef = useRef(null);
   const hasSyncedOnLoginRef = useRef(false);
@@ -46,6 +48,10 @@ export default function NextcloudAutoSyncProvider({ children }) {
 
     const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
     if (roles.includes('super_admin')) {
+      return;
+    }
+
+    if (!workspaceBootstrapped) {
       return;
     }
 
@@ -79,7 +85,7 @@ export default function NextcloudAutoSyncProvider({ children }) {
       }
       hasSyncedOnLoginRef.current = false;
     };
-  }, [keycloak?.authenticated, keycloak?.tokenParsed, getUser, runSync]);
+  }, [keycloak?.authenticated, keycloak?.tokenParsed, getUser, runSync, workspaceBootstrapped]);
 
   return children;
 }

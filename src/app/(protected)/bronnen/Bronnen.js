@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useSources } from "@/lib/api/sources"
 import { useApi } from "@/lib/useApi"
 import { canWriteWebchat } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 import UrlTab from "./components/UrlTab"
 import HtmlTab from "./components/HtmlTab"
 
@@ -13,6 +14,7 @@ const tabsConfig = [
 
 export default function Bronnen() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
   const { getSources, addUrlSource, uploadHtmlSource, deleteSource, updateSource, syncSources, downloadSource } = useSources()
   const { getUser } = useApi()
   const [sources, setSources] = useState([])
@@ -45,11 +47,12 @@ export default function Bronnen() {
   }, [getSources])
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
     fetchSources()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run once on mount
+  }, [workspaceBootstrapped, selectedCompanyId, fetchSources])
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
     const loadUser = async () => {
       try {
         const userData = await getUser()
@@ -59,7 +62,7 @@ export default function Bronnen() {
       }
     }
     loadUser()
-  }, [getUser])
+  }, [getUser, workspaceBootstrapped, selectedCompanyId])
 
   const handleAddUrl = async (data) => {
     if (data.sourceId) {

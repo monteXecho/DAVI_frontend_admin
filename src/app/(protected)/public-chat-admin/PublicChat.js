@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css"
 import { usePublicChat } from "@/lib/api/publicChat"
 import { useApi } from "@/lib/useApi"
 import { canWritePublicChat } from "@/lib/permissions"
+import { useWorkspace } from "@/context/WorkspaceContext"
 import AlleChatsTab from "./components/AlleChatsTab"
 import WijzigenTab from "./components/WijzigenTab"
 
@@ -15,25 +16,17 @@ const tabsConfig = [
 
 export default function PublicChat() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources, getPublicChatUrlSyncSchedule } = usePublicChat()
+  const { getPublicChats, createPublicChat, updatePublicChat, deletePublicChat, getPublicChat, syncAllChatSources } = usePublicChat()
   const { getUser } = useApi()
+  const { workspaceBootstrapped, selectedCompanyId } = useWorkspace()
   const [chats, setChats] = useState([])
+  const [maxPublicChats, setMaxPublicChats] = useState(2)
   const [loading, setLoading] = useState(true)
   const [selectedChat, setSelectedChat] = useState(null)
   const [adminUserId, setAdminUserId] = useState(null)
-  const [syncSchedule, setSyncSchedule] = useState({ next_sync_at: null, interval_minutes: 60 })
   const [canWrite, setCanWrite] = useState(true)
 
   const ActiveComponent = tabsConfig[activeIndex].component
-
-  const fetchSyncSchedule = useCallback(async () => {
-    try {
-      const data = await getPublicChatUrlSyncSchedule()
-      if (data) setSyncSchedule({ next_sync_at: data.next_sync_at, interval_minutes: data.interval_minutes ?? 60 })
-    } catch (err) {
-      console.error("Failed to fetch public chat sync schedule:", err)
-    }
-  }, [getPublicChatUrlSyncSchedule])
 
   const fetchChats = useCallback(async () => {
     try {
@@ -41,6 +34,9 @@ export default function PublicChat() {
       const res = await getPublicChats()
       if (res?.chats) {
         setChats(res.chats)
+      }
+      if (res?.max_public_chats != null) {
+        setMaxPublicChats(res.max_public_chats)
       }
     } catch (err) {
       console.error("Failed to fetch public chats:", err)
@@ -50,8 +46,9 @@ export default function PublicChat() {
   }, [getPublicChats])
 
   useEffect(() => {
+    if (!workspaceBootstrapped) return
+
     fetchChats()
-    fetchSyncSchedule()
     // Fetch current admin's user_id
     const fetchAdminInfo = async () => {
       try {
@@ -65,7 +62,7 @@ export default function PublicChat() {
       }
     }
     fetchAdminInfo()
-  }, [fetchChats, fetchSyncSchedule, getUser])
+  }, [fetchChats, getUser, workspaceBootstrapped, selectedCompanyId])
 
   const handleCreateChat = async (data) => {
     try {
@@ -101,29 +98,10 @@ export default function PublicChat() {
   const handleSyncAll = async () => {
     try {
       await syncAllChatSources()
-      await fetchSyncSchedule()
       await fetchChats()
     } catch (err) {
       alert(err.response?.data?.detail || err.message || "Synchroniseren mislukt")
     }
-  }
-
-  const formatNextSync = (nextSyncAt) => {
-    if (!nextSyncAt) return null
-    try {
-      const d = new Date(nextSyncAt)
-      return d.toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" })
-    } catch {
-      return null
-    }
-  }
-
-  const formatInterval = (minutes) => {
-    if (minutes >= 60) {
-      const h = Math.floor(minutes / 60)
-      return h === 1 ? "1 uur" : `${h} uur`
-    }
-    return `${minutes} min`
   }
 
   const handleSelectChat = async (chatId) => {
@@ -145,25 +123,19 @@ export default function PublicChat() {
         <p className="text-gray-600 font-montserrat">
           Beheer publieke chats die toegankelijk zijn zonder inloggen.
         </p>
-        {/* Auto-sync schedule info */}
         <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium text-slate-700">Automatische synchronisatie URL&apos;s</span>
-            </div>
-            <div className="text-sm text-slate-600">
-              <span className="font-medium">Interval:</span> {formatInterval(syncSchedule.interval_minutes)}
-            </div>
-            <div className="text-sm text-slate-600">
-              <span className="font-medium">Volgende sync:</span> {formatNextSync(syncSchedule.next_sync_at) || "—"}
-            </div>
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <p className="text-sm text-slate-700 font-montserrat leading-relaxed">
+              <span className="font-semibold text-slate-800">URL-bronnen</span>{' '}
+              worden niet op de achtergrond bijgewerkt. Kies{' '}
+              <span className="font-semibold">URL&apos;s synchroniseren</span> onder Alle chats voor al je chats, of{' '}
+              <span className="font-semibold">Nu synchroniseren</span> bij één chat (tab Wijzigen) om de inhoud van
+              gekoppelde webpagina&apos;s opnieuw op te halen en naar RAG te sturen.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            Synchroniseert automatisch bij inloggen en elk uur zolang u ingelogd bent.
-          </p>
         </div>
       </div>
 
@@ -196,6 +168,7 @@ export default function PublicChat() {
           loading={loading}
           selectedChat={selectedChat}
           canWrite={canWrite}
+          maxPublicChats={maxPublicChats}
           onCreateChat={handleCreateChat}
           onUpdateChat={handleUpdateChat}
           onDeleteChat={handleDeleteChat}
