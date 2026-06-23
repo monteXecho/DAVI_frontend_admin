@@ -81,7 +81,9 @@ export default function UserSwitchPage() {
             (user && user.user_type === "company_user") ||
             block.membershipKind === "company_user";
 
-          if (block.self?.ownerId) {
+          const isTeamlidOnlyBlock = Boolean(block.memberTeamlidOnly);
+
+          if (block.self?.ownerId && !isTeamlidOnlyBlock) {
             let label = block.self.label || "Mijn werkruimte";
             if (showOrgSuffix && orgHint) {
               label = `${label} (${orgHint})`;
@@ -139,6 +141,31 @@ export default function UserSwitchPage() {
         });
 
         setOptions(normalized);
+
+        // Teamlid-only accounts: auto-enter the sole guest workspace (no own workspace to pick).
+        const guestOnly = normalized.filter((o) => o.isGuest);
+        const isTeamlidOnlyAccount =
+          blocks.some((b) => b.memberTeamlidOnly) &&
+          guestOnly.length > 0 &&
+          normalized.every((o) => o.isGuest);
+        if (isTeamlidOnlyAccount && guestOnly.length === 1) {
+          const only = guestOnly[0];
+          if (only.companyId) {
+            window.localStorage.setItem('daviSelectedCompanyId', String(only.companyId));
+          }
+          window.localStorage.setItem('daviActingOwnerId', only.ownerId);
+          window.localStorage.setItem('daviActingOwnerIsGuest', 'true');
+          window.localStorage.setItem('daviActingOwnerLabel', only.label || '');
+          const uid = only.memberUserId || user?.user_id;
+          if (uid) {
+            window.localStorage.setItem('daviActingOwnerUserId', String(uid));
+          }
+          window.sessionStorage.setItem('daviActingOwnerSelectedForSession', 'true');
+          window.dispatchEvent(new Event('daviCompanyChange'));
+          window.dispatchEvent(new Event('daviWorkspaceChange'));
+          router.replace(redirectTo);
+          return;
+        }
       } catch (err) {
         console.error("[userswitch] failed to load data:", err);
         setError("Kan rollen niet ophalen. Probeer opnieuw.");
@@ -187,7 +214,9 @@ export default function UserSwitchPage() {
     }
   };
 
-  const headline = userMeta?.is_teamlid
+  const headline = userMeta?.teamlid_only
+    ? 'Kies een Teamlid-werkruimte'
+    : userMeta?.is_teamlid
     ? "Kies hoe je wilt werken"
     : "Selecteer een werkruimte";
 

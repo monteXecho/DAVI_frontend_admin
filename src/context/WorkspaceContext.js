@@ -27,6 +27,7 @@ export function normalizeWorkspaceCompanies(data) {
       companyName: (b.company_name && String(b.company_name)) || '',
       memberUserId: b.member_user_id != null ? String(b.member_user_id) : '',
       memberIsTeamlid: Boolean(b.member_is_teamlid),
+      memberTeamlidOnly: Boolean(b.member_teamlid_only),
       membershipKind: b.membership_kind || '',
       self: b.self ?? null,
       guestOf: Array.isArray(b.guestOf) ? b.guestOf : [],
@@ -44,6 +45,7 @@ export function normalizeWorkspaceCompanies(data) {
       companyName: '',
       memberUserId: '',
       memberIsTeamlid: false,
+      memberTeamlidOnly: false,
       membershipKind: '',
       self,
       guestOf,
@@ -137,7 +139,7 @@ export function repairActingPrefsForActiveCompanyBlock(block) {
       return ownerId;
     }
 
-    const selfOwner = block.self?.ownerId;
+    const selfOwner = block.memberTeamlidOnly ? null : block.self?.ownerId;
     if (selfOwner) {
       window.localStorage.setItem('daviActingOwnerId', selfOwner);
       window.localStorage.setItem('daviActingOwnerIsGuest', 'false');
@@ -153,6 +155,9 @@ export function repairActingPrefsForActiveCompanyBlock(block) {
       window.localStorage.setItem('daviActingOwnerIsGuest', 'true');
       if (block.memberUserId) {
         window.localStorage.setItem('daviActingOwnerUserId', String(block.memberUserId));
+      }
+      if (block.memberTeamlidOnly) {
+        window.sessionStorage.setItem('daviActingOwnerSelectedForSession', 'true');
       }
       return firstGuest.ownerId;
     }

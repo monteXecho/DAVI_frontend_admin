@@ -7,6 +7,7 @@ import SuccessBttn from "@/components/buttons/SuccessBttn"
 import RedCancelIcon from "@/components/icons/RedCancelIcon"
 import AddIcon from "@/components/icons/AddIcon"
 import { Settings } from "lucide-react"
+import TeamlidNewEmailModal from "./modals/TeamlidNewEmailModal"
 import "react-toastify/dist/ReactToastify.css"
 
 // Short labels for modules when adding a company-admin (Beheerder)
@@ -31,6 +32,7 @@ export default function MakenTab({
   onAssignTeamlidPermissions,
   onAddRoleToUsers,
   onGetUsers,
+  knownEmails = [],
   canWrite = true,
   companyModules = [],
   assignerEnabledModuleNames = [],
@@ -58,6 +60,18 @@ export default function MakenTab({
   const [publicchatPermission, setPublicchatPermission] = useState(false)
   const [webchatPermission, setWebchatPermission] = useState(false)
   const [selectedPublicChatIds, setSelectedPublicChatIds] = useState([])
+
+  const [teamlidNewEmailModalOpen, setTeamlidNewEmailModalOpen] = useState(false)
+  const [teamlidModalEmail, setTeamlidModalEmail] = useState("")
+
+  const knownEmailSet = useMemo(() => {
+    const set = new Set()
+    ;(knownEmails || []).forEach((e) => {
+      const v = String(e || "").trim().toLowerCase()
+      if (v) set.add(v)
+    })
+    return set
+  }, [knownEmails])
 
   // Company modules (enabled for this company) - for Beheerder module assignment
   const companyModulesObj = useMemo(() => {
@@ -165,6 +179,93 @@ export default function MakenTab({
     setSelectedAdminModules((prev) => ({ ...prev, [moduleName]: !prev[moduleName] }))
   }
 
+  const buildTeamlidPermissions = () => ({
+    role_folder_modify_permission: !!(showTeamlidDocumentenChat && roleFolderPermission),
+    user_create_modify_permission: !!userPermission,
+    document_modify_permission: !!(showTeamlidDocumentenChat && documentPermission),
+    publicchat_modify_permission: !!(showTeamlidPublicChat && publicchatPermission),
+    webchat_modify_permission: !!(showTeamlidWebChat && webchatPermission),
+  })
+
+  const resetFormAfterSuccess = () => {
+    setEmail("")
+    setSelectedRoles([])
+    setSelected(availableRoles.length > 0 ? availableRoles[0] : "")
+    setRoleFolderPermission(false)
+    setUserPermission(false)
+    setDocumentPermission(false)
+    setPublicchatPermission(false)
+    setWebchatPermission(false)
+    setSelectedPublicChatIds([])
+    setSelectedAdminModules({})
+  }
+
+  const submitTeamlidInvite = async (trimmedEmail) => {
+    const team_permissions = buildTeamlidPermissions()
+    await onAssignTeamlidPermissions(
+      trimmedEmail,
+      team_permissions,
+      showTeamlidPublicChat && publicchatPermission ? selectedPublicChatIds : undefined
+    )
+    toast.success(
+      "Teamlid uitgenodigd. De gebruiker kan zich registreren en direct als teamlid inloggen."
+    )
+    resetFormAfterSuccess()
+  }
+
+  const emailExistsInCompany = async (trimmedEmail) => {
+    const normalized = trimmedEmail.trim().toLowerCase()
+    if (knownEmailSet.has(normalized)) return true
+    if (!onGetUsers) return false
+    try {
+      const res = await onGetUsers()
+      const members = res?.members || []
+      return members.some(
+        (u) => String(u.email || "").trim().toLowerCase() === normalized
+      )
+    } catch {
+      return false
+    }
+  }
+
+  const closeTeamlidNewEmailModal = () => {
+    if (loading) return
+    setTeamlidNewEmailModalOpen(false)
+    setTeamlidModalEmail("")
+  }
+
+  const handleConfirmTeamlidOnly = async () => {
+    const trimmed = teamlidModalEmail.trim()
+    if (!trimmed) return
+    try {
+      setLoading(true)
+      await submitTeamlidInvite(trimmed)
+      closeTeamlidNewEmailModal()
+    } catch (err) {
+      console.error("Failed to add teamlid:", err)
+      const msg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        "Fout bij het toevoegen van teamlid."
+      toast.error(typeof msg === "string" ? msg : "Fout bij het toevoegen van teamlid.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChooseOtherRoleFirst = () => {
+    closeTeamlidNewEmailModal()
+    setSelectedRoles((prev) => prev.filter((r) => r !== "Teamlid"))
+    setSelected((prev) => {
+      if (prev && prev !== "Teamlid") return prev
+      const next = ["Beheerder", ...allRoles].find((r) => r !== "Teamlid")
+      return next || ""
+    })
+    toast.info(
+      "Kies Beheerder of een documentrol voor dit e-mailadres. Voeg daarna eventueel Teamlid toe via de tab Wijzigen."
+    )
+  }
+
   const handleSave = async () => {
     if (!canWrite) {
       toast.error("U heeft geen toestemming om gebruikers toe te voegen.")
@@ -199,19 +300,14 @@ export default function MakenTab({
       }
       // Handle Teamlid role
       else if (hasTeamlid) {
-        const team_permissions = {
-          role_folder_modify_permission: !!(showTeamlidDocumentenChat && roleFolderPermission),
-          user_create_modify_permission: !!userPermission,
-          document_modify_permission: !!(showTeamlidDocumentenChat && documentPermission),
-          publicchat_modify_permission: !!(showTeamlidPublicChat && publicchatPermission),
-          webchat_modify_permission: !!(showTeamlidWebChat && webchatPermission)
+        const trimmedEmail = email.trim()
+        const exists = await emailExistsInCompany(trimmedEmail)
+        if (!exists) {
+          setTeamlidModalEmail(trimmedEmail)
+          setTeamlidNewEmailModalOpen(true)
+          return
         }
-        await onAssignTeamlidPermissions(
-          email.trim(),
-          team_permissions,
-          showTeamlidPublicChat && publicchatPermission ? selectedPublicChatIds : undefined
-        )
-        toast.success("Gebruiker toegevoegd als Teamlid")
+        await submitTeamlidInvite(trimmedEmail)
       }
       // Handle regular roles
       else if (regularRoles.length > 0) {
@@ -273,17 +369,16 @@ export default function MakenTab({
         }
       }
 
-      // Reset form
-      setEmail("")
-      setSelectedRoles([])
-      setSelected(availableRoles.length > 0 ? availableRoles[0] : "")
-      setRoleFolderPermission(false)
-      setUserPermission(false)
-      setDocumentPermission(false)
-      setSelectedAdminModules({})
+      if (!hasTeamlid) {
+        resetFormAfterSuccess()
+      }
     } catch (err) {
       console.error("Failed to add user:", err)
-      toast.error(err?.message || "Fout bij het toevoegen van de gebruiker.")
+      const msg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        "Fout bij het toevoegen van de gebruiker."
+      toast.error(typeof msg === "string" ? msg : "Fout bij het toevoegen van de gebruiker.")
     } finally {
       setLoading(false)
     }
@@ -564,6 +659,16 @@ export default function MakenTab({
       >
         {loading ? "Opslaan..." : "Opslaan"}
       </button>
+
+      {teamlidNewEmailModalOpen ? (
+        <TeamlidNewEmailModal
+          email={teamlidModalEmail}
+          loading={loading}
+          onClose={closeTeamlidNewEmailModal}
+          onConfirmTeamlidOnly={handleConfirmTeamlidOnly}
+          onChooseOtherRoleFirst={handleChooseOtherRoleFirst}
+        />
+      ) : null}
 
       <ToastContainer position="top-right" />
     </div>

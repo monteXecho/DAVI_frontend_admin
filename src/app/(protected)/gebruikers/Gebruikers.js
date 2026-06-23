@@ -55,6 +55,7 @@ export default function Gebruikers() {
       Email: u.email || "—",
       Rol: roles,
       is_teamlid: u.is_teamlid || false,
+      teamlid_only: u.teamlid_only === true,
       modules: u.modules,
       teamlid_permissions: u.teamlid_permissions,
       teamlid_public_chat_ids: u.teamlid_public_chat_ids || null,
@@ -376,6 +377,7 @@ export default function Gebruikers() {
               onAssignTeamlidPermissions={handleAssignTeamlidPermissions}
               onAssignUserModules={handleAssignUserModules}
               onGetUsers={getUsers}
+              knownEmails={users.map((u) => u.Email).filter((e) => e && e !== "—")}
               onUpdateUser={handleUpdateUser}
               onDeleteUsers={handleDeleteUsers}
               onDeleteRoleFromUsers={handleDeleteRoleFromUsers}

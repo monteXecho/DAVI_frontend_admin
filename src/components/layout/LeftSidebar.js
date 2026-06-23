@@ -261,7 +261,9 @@ export default function LeftSidebar() {
 
     // Teamlid must pick a workspace/role first; allow through once a choice exists and was selected this session
     // Super admins should never be forced into user switch
-    if (user.is_teamlid && !userRoles.isSuperAdmin) {
+    // Teamlid-only accounts have no own workspace — skip picker when guest mode is already configured.
+    const isTeamlidOnly = user.teamlid_only === true;
+    if (user.is_teamlid && !userRoles.isSuperAdmin && !isTeamlidOnly) {
       const ownerBelongsToThisUser =
         storedOwnerUserId && String(storedOwnerUserId) === String(user.user_id);
 
@@ -305,6 +307,9 @@ export default function LeftSidebar() {
   const hasTeamlidAccess = useMemo(() => {
     if (userRoles.isSuperAdmin || userRoles.isCompanyAdmin) return true;
     if (!userRoles.isCompanyUser) return false;
+
+    const currentUser = user || stableUser;
+    if (currentUser?.teamlid_only) return true;
     
     if (!selectedOwnerId || !workspaces) return false;
     
@@ -332,7 +337,12 @@ export default function LeftSidebar() {
     
     // If selectedOwnerId matches self.ownerId and isGuest flag is not set, it's the self workspace
     return false;
-  }, [userRoles, workspaces, selectedOwnerId]);
+  }, [userRoles, workspaces, selectedOwnerId, user, stableUser]);
+
+  const isTeamlidOnlyUser = useMemo(() => {
+    const currentUser = user || stableUser;
+    return currentUser?.teamlid_only === true;
+  }, [user, stableUser]);
 
   const { filteredPublicModules, filteredAdminModules } = useMemo(() => {
     // For company admins: Only show BEHEER (adminModules), hide MODULES (publicModules)
@@ -436,11 +446,12 @@ export default function LeftSidebar() {
       const currentUser = user || stableUser;
 
       /**
-       * MODULES (publicModules) are derived from the user's *own* role-based modules and stay
-       * visible in both normal and teamlid mode. Hiding them in teamlid mode used to confuse
-       * users into thinking "adding Teamlid wiped my standard role" — it didn't; only BEHEER
-       * changes between modes.
+       * Teamlid-only users have no document-chat modules — only BEHEER via guest permissions.
+       * Regular company users keep MODULES visible in both normal and teamlid mode.
        */
+      if (isTeamlidOnlyUser) {
+        publicModules = [];
+      } else {
       publicModules = MENU_CONFIG.publicModules.filter(module => {
         if (!currentUser) return false;
         const companyModules = currentUser?.company_modules || [];
@@ -451,6 +462,7 @@ export default function LeftSidebar() {
         const userHasModule = userModule?.enabled === true;
         return companyHasModule && userHasModule;
       });
+      }
 
       // Company users with teamlid access can see BEHEER items (teamlid-assigned only when in teamlid mode)
       if (hasTeamlidAccess) {
@@ -478,7 +490,7 @@ export default function LeftSidebar() {
     }
 
     return { filteredPublicModules: publicModules, filteredAdminModules: adminModules };
-  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions, ownerModules, isGuestMode]);
+  }, [stableUser, user, userRoles, hasTeamlidAccess, workspacePermissions, ownerModules, isGuestMode, isTeamlidOnlyUser]);
 
   const routeToTab = useMemo(() => {
     const map = {

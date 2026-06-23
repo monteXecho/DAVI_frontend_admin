@@ -43,11 +43,13 @@ const UserAvatar = ({ name, email, isActive, size = 32 }) => {
 };
 
 function buildOptionsForBlock(blockSlice, meta) {
-  const { companyId, companyName, multiOrg } = meta;
+  const { companyId, companyName, multiOrg, teamlidOnly } = meta;
   if (!blockSlice) return [];
 
   const selfOwnerId = blockSlice.self?.ownerId;
-  const allOptions = [blockSlice.self, ...(blockSlice.guestOf || [])].filter(Boolean);
+  const allOptions = teamlidOnly
+    ? [...(blockSlice.guestOf || [])]
+    : [blockSlice.self, ...(blockSlice.guestOf || [])].filter(Boolean);
 
   const seen = new Set();
   const uniqueOptions = [];
@@ -139,6 +141,7 @@ export default function WorkspaceSwitcher() {
             companyId: cid,
             companyName: b.companyName || '',
             multiOrg: multiCompany,
+            teamlidOnly: Boolean(b.memberTeamlidOnly),
           })
         );
       });

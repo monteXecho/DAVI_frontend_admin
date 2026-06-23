@@ -123,6 +123,25 @@ export default function ProtectedRoute({ children }) {
           return; // Wait for user data before checking
         }
 
+        // Teamlid-only accounts have no module access — redirect to Beheer.
+        if (user?.teamlid_only) {
+          const gp = user?.guest_permissions || {};
+          if (gp.can_publicchat_write) {
+            router.replace('/public-chat-admin');
+          } else if (gp.can_document_write) {
+            router.replace('/documenten');
+          } else if (gp.can_role_write || gp.can_folder_write) {
+            router.replace('/rollen');
+          } else if (gp.can_user_write) {
+            router.replace('/gebruikers');
+          } else if (gp.can_webchat_write) {
+            router.replace('/webchat');
+          } else {
+            router.replace('/gebruikers');
+          }
+          return;
+        }
+
         // Check if user has access to this specific module
         if (user) {
           let hasAccess = false;
