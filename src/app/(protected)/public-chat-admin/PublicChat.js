@@ -117,7 +117,7 @@ export default function PublicChat() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full p-8">
+    <div className="flex flex-col w-full min-h-full p-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold font-montserrat mb-2">QR-Chat</h1>
         <p className="text-gray-600 font-montserrat">
@@ -162,7 +162,7 @@ export default function PublicChat() {
       </div>
 
       {/* Active Tab Content */}
-      <div className="flex-1">
+      <div>
         <ActiveComponent
           chats={chats}
           loading={loading}
