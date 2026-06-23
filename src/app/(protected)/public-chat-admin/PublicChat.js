@@ -119,9 +119,9 @@ export default function PublicChat() {
   return (
     <div className="flex flex-col w-full h-full p-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold font-montserrat mb-2">PublicChat</h1>
+        <h1 className="text-4xl font-bold font-montserrat mb-2">QR-Chat</h1>
         <p className="text-gray-600 font-montserrat">
-          Beheer publieke chats die toegankelijk zijn zonder inloggen.
+          Beheer QR-Chats die toegankelijk zijn zonder inloggen.
         </p>
         <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
           <div className="flex items-start gap-2">
@@ -132,7 +132,7 @@ export default function PublicChat() {
               <span className="font-semibold text-slate-800">URL-bronnen</span>{' '}
               worden niet op de achtergrond bijgewerkt. Kies{' '}
               <span className="font-semibold">URL&apos;s synchroniseren</span> onder Alle chats voor al je chats, of{' '}
-              <span className="font-semibold">Nu synchroniseren</span> bij één chat (tab Wijzigen) om de inhoud van
+              <span className="font-semibold">Nu synchroniseren</span> bij één chat (Wijzigen → URL) om de inhoud van
               gekoppelde webpagina&apos;s opnieuw op te halen en naar RAG te sturen.
             </p>
           </div>

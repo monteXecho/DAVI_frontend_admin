@@ -347,7 +347,7 @@ export default function AddCompany({ onClose, onCreate }) {
                   <span className={`font-montserrat text-base font-medium ${
                     enabled ? 'text-gray-900' : 'text-gray-600'
                   }`}>
-                    {moduleName}
+                    {moduleName === 'PublicChat' ? 'QR-Chat' : moduleName}
                   </span>
                 </div>
                 <Toggle

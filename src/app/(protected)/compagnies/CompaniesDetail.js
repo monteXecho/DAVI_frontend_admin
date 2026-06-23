@@ -317,7 +317,7 @@ export default function CompaniesDetail() {
                         currentSort={sortConfig}
                         className="px-6 py-3"
                       >
-                        Public
+                        QR-Chat
                       </SortableHeader>
                       <th className="w-20 px-6 py-3 font-montserrat font-bold text-[16px] text-gray-900 text-center">
                         

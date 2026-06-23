@@ -18,7 +18,7 @@ const MODULES = [
   { key: 'GGD Checks', label: 'GGD Checks', shortLabel: 'GGD' },
   { key: 'CreatieChat', label: 'CreatieChat', shortLabel: 'Creatie' },
   { key: 'WebChat', label: 'WebChat', shortLabel: 'WebChat' },
-  { key: 'PublicChat', label: 'PublicChat', shortLabel: 'Public' },
+  { key: 'PublicChat', label: 'QR-Chat', shortLabel: 'QR' },
 ];
 
 export default function ModulesDetail() {

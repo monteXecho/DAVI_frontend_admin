@@ -308,7 +308,7 @@ export default function PublicChatPage({ params }) {
               <div className="min-w-0">
                 <h1 className="font-montserrat text-2xl font-bold leading-none tracking-normal text-[#23BD92] sm:text-3xl">DAVI</h1>
                 <p className="mt-1 min-w-0 break-words font-montserrat text-xs font-medium leading-snug text-gray-600 sm:text-sm">
-                  {chatName || 'Public Chat'}
+                  {chatName || 'QR-Chat'}
                 </p>
               </div>
             </div>
@@ -341,7 +341,7 @@ export default function PublicChatPage({ params }) {
               <h2 className="mx-auto mb-3 flex min-w-0 max-w-full flex-wrap items-baseline justify-center gap-x-1.5 px-2 text-center text-3xl font-bold leading-tight font-montserrat text-gray-800">
                 <span className="shrink-0 whitespace-nowrap">Welkom bij</span>
                 <span className="min-w-0 max-w-full text-balance break-words">
-                  {chatName || 'Public Chat'}
+                  {chatName || 'QR-Chat'}
                 </span>
               </h2>
               <p className="text-lg text-gray-600 font-montserrat text-center max-w-md">

@@ -238,6 +238,24 @@ export function usePublicChat() {
     [withAuth, apiClient, createAuthHeaders]
   );
 
+  const correctPublicChatQuerySources = useCallback(
+    (chatId, historyId, sourceIds) =>
+      withAuth((token) =>
+        apiClient
+          .post(
+            `/company-admin/public-chats/${chatId}/query-history/${historyId}/correct-sources`,
+            { source_ids: sourceIds, regenerate_answer: true },
+            createAuthHeaders(token)
+          )
+          .then((res) => res.data)
+          .catch((err) => {
+            console.error("[useApi] Correct query history sources failed:", err.response?.data || err);
+            throw err;
+          })
+      ),
+    [withAuth, apiClient, createAuthHeaders]
+  );
+
   return {
     getPublicChats,
     createPublicChat,
@@ -253,6 +271,7 @@ export function usePublicChat() {
     getPublicChatUrlSyncSchedule,
     deleteChatSource,
     getPublicChatQueryHistory,
+    correctPublicChatQuerySources,
   };
 }
 

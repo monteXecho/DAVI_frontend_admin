@@ -104,7 +104,7 @@ const MENU_CONFIG = {
     },
     {
       id: 'publicchat',
-      label: 'PublicChat',
+      label: 'QR-Chat',
       icon: ChatItem,
       path: '/public-chat-admin',
       requiredRoles: ['super_admin', 'company_admin'],
@@ -500,7 +500,7 @@ export default function LeftSidebar() {
       "/rol-pz": "Rollen",
       "/gebruikers": "Gebruikers",
       "/documenten": "Documenten",
-      "/public-chat-admin": "PublicChat",
+      "/public-chat-admin": "QR-Chat",
       "/mappen": "Mappen"
     };
 

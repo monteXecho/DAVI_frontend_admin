@@ -386,7 +386,7 @@ export default function EditAdmin({ admin, company, onClose, onSave }) {
                         <span className={`font-montserrat text-sm font-medium ${
                           isSelected ? 'text-gray-900' : 'text-gray-600'
                         }`}>
-                          {moduleName}
+                          {moduleName === 'PublicChat' ? 'QR-Chat' : moduleName}
                         </span>
                       </div>
                       <Toggle

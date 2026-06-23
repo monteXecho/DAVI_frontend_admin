@@ -87,7 +87,7 @@ export default function CreateEditChatModal({
           />
           {chat && adminUserId && chatName.trim() ? (
             <p className="mt-2 text-xs text-gray-600 break-all">
-              <span className="font-medium text-gray-700">Publieke chat-URL:</span>{' '}
+              <span className="font-medium text-gray-700">QR-Chat-URL:</span>{' '}
               <span className="font-mono text-[11px] sm:text-xs">
                 {buildPublicChatPageUrl(adminUserId, chatName.trim())}
               </span>

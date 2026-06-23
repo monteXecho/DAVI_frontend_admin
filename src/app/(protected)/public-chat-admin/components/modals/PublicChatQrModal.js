@@ -112,7 +112,7 @@ export default function PublicChatQrModal({ url, chatName, onClose }) {
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-[#E5E7EB]">
           <div>
             <h2 id="qr-modal-title" className="font-montserrat font-bold text-lg text-gray-900">
-              QR-code publieke chat
+              QR-code voor QR-Chat
             </h2>
             <p className="font-montserrat text-sm text-gray-600 mt-1">{chatName || 'Chat'}</p>
           </div>
@@ -145,7 +145,7 @@ export default function PublicChatQrModal({ url, chatName, onClose }) {
             // eslint-disable-next-line @next/next/no-img-element -- data URL from qrcode
             <img
               src={dataUrl}
-              alt="QR-code met link naar de publieke chat"
+              alt="QR-code met link naar de QR-Chat"
               className="w-[280px] h-[280px] rounded-lg border border-gray-200 bg-white"
             />
           )}

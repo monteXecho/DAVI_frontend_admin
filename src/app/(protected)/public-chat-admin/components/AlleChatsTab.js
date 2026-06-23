@@ -29,7 +29,7 @@ export default function AlleChatsTab({
   onSyncAll,
   adminUserId,
 }) {
-  const { getPublicChatQueryHistory: loadPublicChatHistory } = usePublicChat()
+  const { getPublicChatQueryHistory: loadPublicChatHistory, getChatSources, correctPublicChatQuerySources } = usePublicChat()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedChats, setSelectedChats] = useState(new Set())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -179,7 +179,7 @@ export default function AlleChatsTab({
     navigator.clipboard
       .writeText(url)
       .then(() => {
-        alert("Publieke chatlink gekopieerd naar het klembord!")
+        alert("QR-Chat-link gekopieerd naar het klembord!")
       })
       .catch(() => {
         alert(`Kopiëren mislukt. Link:\n${url}`)
@@ -345,8 +345,8 @@ export default function AlleChatsTab({
                             onClick={() => handleCopyPublicChatLink(fullChat)}
                             disabled={!adminUserId}
                             className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-                            title="Publieke chatlink kopiëren"
-                            aria-label="Publieke chatlink kopiëren"
+                            title="QR-Chat-link kopiëren"
+                            aria-label="QR-Chat-link kopiëren"
                           >
                             <Link2 className="w-[20px] h-[20px] text-sky-600" strokeWidth={2.25} aria-hidden />
                           </button>
@@ -355,7 +355,7 @@ export default function AlleChatsTab({
                             onClick={() => handleOpenQrModal(fullChat)}
                             disabled={!adminUserId}
                             className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-                            title="QR-code voor publieke link"
+                            title="QR-code voor QR-Chat-link"
                             aria-label="QR-code genereren"
                           >
                             <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
@@ -397,8 +397,8 @@ export default function AlleChatsTab({
                             onClick={() => handleCopyPublicChatLink(fullChat)}
                             disabled={!adminUserId}
                             className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-                            title="Publieke chatlink kopiëren"
-                            aria-label="Publieke chatlink kopiëren"
+                            title="QR-Chat-link kopiëren"
+                            aria-label="QR-Chat-link kopiëren"
                           >
                             <Link2 className="w-[20px] h-[20px] text-sky-600" strokeWidth={2.25} aria-hidden />
                           </button>
@@ -407,7 +407,7 @@ export default function AlleChatsTab({
                             onClick={() => handleOpenQrModal(fullChat)}
                             disabled={!adminUserId}
                             className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-                            title="QR-code voor publieke link"
+                            title="QR-code voor QR-Chat-link"
                             aria-label="QR-code genereren"
                           >
                             <QrCode className="w-[20px] h-[20px] text-gray-800" strokeWidth={2.25} aria-hidden />
@@ -495,6 +495,9 @@ export default function AlleChatsTab({
           chatId={historyModalChat.id}
           chatName={historyModalChat.chat_name}
           loadHistory={loadPublicChatHistory}
+          getChatSources={getChatSources}
+          correctQueryHistorySources={correctPublicChatQuerySources}
+          canWrite={canWrite}
           onClose={() => setHistoryModalChat(null)}
         />
       )}

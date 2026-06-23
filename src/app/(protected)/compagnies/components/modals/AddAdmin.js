@@ -300,7 +300,7 @@ export default function AddAdmin({ onClose, onCreate, selectedCompany, companies
                         <span className={`font-montserrat text-sm font-medium ${
                           isSelected ? 'text-gray-900' : 'text-gray-600'
                         }`}>
-                          {moduleName}
+                          {moduleName === 'PublicChat' ? 'QR-Chat' : moduleName}
                         </span>
                       </div>
                       <Toggle

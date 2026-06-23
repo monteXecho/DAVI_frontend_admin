@@ -16,6 +16,9 @@ const MODULE_LABELS = {
 function getModuleLabel(name) {
   return MODULE_LABELS[name] || name
 }
+function getModuleDisplayName(name) {
+  return name === 'PublicChat' ? 'QR-Chat' : name
+}
 
 export default function WijzigenTab({
   user,
@@ -373,7 +376,7 @@ export default function WijzigenTab({
                 return (
                   <div key={moduleName} className="flex items-center justify-between gap-4">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-montserrat text-sm font-medium text-gray-800">{moduleName}</span>
+                      <span className="font-montserrat text-sm font-medium text-gray-800">{getModuleDisplayName(moduleName)}</span>
                       <span className="font-montserrat text-xs text-gray-500">{getModuleLabel(moduleName)}</span>
                     </div>
                     <Toggle
@@ -442,7 +445,7 @@ export default function WijzigenTab({
               {showTeamlidPublicChat && (
                 <>
                   <div className="flex items-center gap-3">
-                    <span className="w-1/3 font-montserrat font-medium text-gray-800">PublicChat</span>
+                    <span className="w-1/3 font-montserrat font-medium text-gray-800">QR-Chat</span>
                     <Toggle
                       checked={publicchatPermission}
                       onChange={setPublicchatPermission}
@@ -457,7 +460,7 @@ export default function WijzigenTab({
                     <div className="flex flex-col gap-2 pl-2 border-l-2 border-[#23BD92]/40">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-montserrat text-sm font-medium text-gray-700">
-                          Toegewezen public chats
+                          Toegewezen QR-Chats
                         </span>
                         <button
                           type="button"
@@ -486,7 +489,7 @@ export default function WijzigenTab({
                   )}
                   {publicchatPermission && !(ownerPublicChats?.length > 0) && (
                     <p className="text-xs text-amber-700">
-                      Nog geen public chats. Maak chats aan onder Public Chat om ze hier toe te wijzen.
+                      Nog geen QR-Chats. Maak chats aan onder QR-Chat om ze hier toe te wijzen.
                     </p>
                   )}
                 </>
@@ -507,12 +510,12 @@ export default function WijzigenTab({
               )}
               {!showTeamlidDocumentenChat && !showTeamlidPublicChat && !showTeamlidWebChat && (
                 <p className="text-sm text-gray-500">
-                  Geen extra modules (Documenten chat, PublicChat, WebChat) om te delegeren. Gebruikers staat los van Documenten chat.
+                  Geen extra modules (Documenten chat, QR-Chat, WebChat) om te delegeren. Gebruikers staat los van Documenten chat.
                 </p>
               )}
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              Rollen-Mappen en Documenten volgen uw Documenten chat-module; Gebruikers, PublicChat en WebChat volgen dezelfde logica als in het beheerdersmenu.
+              Rollen-Mappen en Documenten volgen uw Documenten chat-module; Gebruikers, QR-Chat en WebChat volgen dezelfde logica als in het beheerdersmenu.
             </p>
           </div>
         )}

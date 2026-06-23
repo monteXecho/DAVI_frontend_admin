@@ -9,6 +9,13 @@ import UrlSection from "./sections/UrlSection"
 import HtmlSection from "./sections/HtmlSection"
 import FilesSection from "./sections/FilesSection"
 
+const WIJZIGEN_SUB_TABS = [
+  { id: "wachtwoord", label: "Wachtwoord" },
+  { id: "documenten", label: "Documenten" },
+  { id: "url", label: "URL" },
+  { id: "html", label: "HTML" },
+]
+
 export default function WijzigenTab({
   selectedChat,
   adminUserId,
@@ -21,9 +28,9 @@ export default function WijzigenTab({
   const [loading, setLoading] = useState(false)
   const [lastSync, setLastSync] = useState(null)
   const [nextSync, setNextSync] = useState(null)
-  
+  const [activeSubTab, setActiveSubTab] = useState("wachtwoord")
+
   // Password management state
-  const [showPasswordSection, setShowPasswordSection] = useState(false)
   const [newPassword, setNewPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState("")
@@ -99,6 +106,10 @@ export default function WijzigenTab({
   useEffect(() => {
     if (selectedChat?.id) {
       loadSources()
+      setActiveSubTab("wachtwoord")
+      setNewPassword("")
+      setPasswordError("")
+      setShowPassword(false)
     } else {
       setSources([])
       setLastSync(null)
@@ -179,9 +190,8 @@ export default function WijzigenTab({
         is_private: true, // Ensure chat is private when password is set
       })
       setNewPassword("")
-      setShowPasswordSection(false)
       await onRefresh()
-      alert("Wachtwoord succesvol bijgewerkt!")
+      toast.success("Wachtwoord succesvol bijgewerkt!")
     } catch (err) {
       setPasswordError(err.response?.data?.detail || err.message || "Fout bij bijwerken van wachtwoord")
     } finally {
@@ -203,9 +213,8 @@ export default function WijzigenTab({
         is_private: false, // Set to not private when password is removed
       })
       setNewPassword("")
-      setShowPasswordSection(false)
       await onRefresh()
-      alert("Wachtwoord succesvol verwijderd!")
+      toast.success("Wachtwoord succesvol verwijderd!")
     } catch (err) {
       setPasswordError(err.response?.data?.detail || err.message || "Fout bij verwijderen van wachtwoord")
     } finally {
@@ -245,9 +254,15 @@ export default function WijzigenTab({
   const htmlSources = sources.filter(s => s.type === "html")
   const fileSources = sources.filter(s => s.type === "file")
 
+  const subTabCounts = {
+    documenten: fileSources.length,
+    url: urlSources.length,
+    html: htmlSources.length,
+  }
+
   return (
-    <div className="flex flex-col w-full space-y-8">
-      <div className="mb-4">
+    <div className="flex flex-col w-full">
+      <div className="mb-6">
         <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
           <h2 className="text-2xl font-bold font-montserrat min-w-0 m-0">
             Chat:&nbsp;
@@ -266,11 +281,11 @@ export default function WijzigenTab({
           ) : null}
         </div>
         <p className="text-gray-600 font-montserrat">
-          Beheer bronnen voor deze publieke chat.
+          Beheer wachtwoord en bronnen voor deze QR-Chat.
         </p>
         {adminUserId && selectedChat?.chat_name ? (
           <p className="mt-2 text-xs text-gray-600 break-all font-montserrat">
-            <span className="font-semibold text-gray-700">Publieke chat-URL:</span>{' '}
+            <span className="font-semibold text-gray-700">QR-Chat-URL:</span>{' '}
             <span className="font-mono text-[11px] sm:text-xs">
               {buildPublicChatPageUrl(adminUserId, selectedChat.chat_name)}
             </span>
@@ -345,148 +360,185 @@ export default function WijzigenTab({
         </div>
       ) : null}
 
-      {/* Password Management Section */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-linear-to-r from-[#F9FBFA] to-[#F0F7F4] px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#23BD92]/10 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-[#23BD92]" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold font-montserrat text-gray-900">Wachtwoord Beheer</h3>
-                <p className="text-sm text-gray-600">Wijzig of verwijder het wachtwoord voor deze chat</p>
-              </div>
-            </div>
+      <div className="flex flex-wrap gap-1 border-b border-gray-200 mb-6">
+        {WIJZIGEN_SUB_TABS.map((tab) => {
+          const count = subTabCounts[tab.id]
+          const isActive = activeSubTab === tab.id
+          return (
             <button
-              onClick={() => {
-                setShowPasswordSection(!showPasswordSection)
-                setNewPassword("")
-                setPasswordError("")
-              }}
-              className="px-4 py-2 bg-[#23BD92] hover:bg-[#1ea87c] text-white font-montserrat text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveSubTab(tab.id)}
+              className={`px-4 sm:px-5 py-2.5 font-montserrat text-sm font-medium transition-colors rounded-t-lg -mb-px ${
+                isActive
+                  ? "border-b-2 border-[#23BD92] text-[#23BD92] bg-white"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+              aria-selected={isActive}
+              role="tab"
             >
-              <Key className="w-4 h-4" />
-              {showPasswordSection ? "Verberg" : selectedChat.password ? "Wijzig Wachtwoord" : "Stel Wachtwoord In"}
+              {tab.label}
+              {typeof count === "number" ? (
+                <span
+                  className={`ml-1.5 text-xs font-semibold tabular-nums ${
+                    isActive ? "text-[#23BD92]" : "text-gray-400"
+                  }`}
+                >
+                  ({count})
+                </span>
+              ) : null}
             </button>
-          </div>
-        </div>
+          )
+        })}
+      </div>
 
-        {showPasswordSection && (
-          <div className="p-6 space-y-4">
-            {/* Current Password Status */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                selectedChat.password ? 'bg-[#23BD92]/20' : 'bg-gray-200'
-              }`}>
-                {selectedChat.password ? (
-                  <Check className="w-5 h-5 text-[#23BD92]" />
-                ) : (
-                  <X className="w-5 h-5 text-gray-400" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-montserrat font-medium text-gray-900">
-                  Huidige status: {selectedChat.password ? "Wachtwoord ingesteld" : "Geen wachtwoord"}
-                </p>
-                {selectedChat.password && (
-                  <p className="text-sm text-gray-600 font-montserrat mt-1">
-                    Huidig wachtwoord: <span className="font-mono font-semibold text-[#23BD92]">{selectedChat.password}</span>
+      <div className="min-h-[200px]" role="tabpanel">
+        {activeSubTab === "wachtwoord" && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="bg-linear-to-r from-[#F9FBFA] to-[#F0F7F4] px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#23BD92]/10 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-[#23BD92]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold font-montserrat text-gray-900">Wachtwoord</h3>
+                  <p className="text-sm text-gray-600">
+                    Stel een wachtwoord in om deze QR-Chat privé te maken.
                   </p>
-                )}
+                </div>
               </div>
             </div>
 
-            {/* New Password Input */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 font-montserrat">
-                Nieuw Wachtwoord
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value)
-                    setPasswordError("")
-                  }}
-                  placeholder="Voer nieuw wachtwoord in"
-                  className="w-full h-12 rounded-xl border-2 border-gray-200 px-4 pr-12 font-montserrat focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    selectedChat.password ? "bg-[#23BD92]/20" : "bg-gray-200"
+                  }`}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                  {selectedChat.password ? (
+                    <Check className="w-5 h-5 text-[#23BD92]" />
+                  ) : (
+                    <X className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-montserrat font-medium text-gray-900">
+                    Huidige status:{" "}
+                    {selectedChat.password ? "Wachtwoord ingesteld" : "Geen wachtwoord (openbaar)"}
+                  </p>
+                  {selectedChat.password && (
+                    <p className="text-sm text-gray-600 font-montserrat mt-1">
+                      Huidig wachtwoord:{" "}
+                      <span className="font-mono font-semibold text-[#23BD92]">
+                        {selectedChat.password}
+                      </span>
+                    </p>
+                  )}
+                </div>
               </div>
-              {passwordError && (
-                <p className="text-sm text-red-600 font-montserrat flex items-center gap-1">
-                  <X className="w-4 h-4" />
-                  {passwordError}
+
+              {canWrite ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 font-montserrat">
+                      Nieuw wachtwoord
+                    </label>
+                    <div className="relative max-w-md">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value)
+                          setPasswordError("")
+                        }}
+                        placeholder="Voer nieuw wachtwoord in"
+                        className="w-full h-12 rounded-xl border-2 border-gray-200 px-4 pr-12 font-montserrat focus:outline-none focus:ring-2 focus:ring-[#23BD92] focus:border-transparent transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label={showPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    {passwordError && (
+                      <p className="text-sm text-red-600 font-montserrat flex items-center gap-1">
+                        <X className="w-4 h-4" />
+                        {passwordError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleUpdatePassword}
+                      disabled={isUpdatingPassword || !newPassword.trim()}
+                      className="px-6 py-3 bg-[#23BD92] hover:bg-[#1ea87c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
+                    >
+                      <Key className="w-4 h-4" />
+                      {isUpdatingPassword ? "Bijwerken…" : "Wachtwoord bijwerken"}
+                    </button>
+                    {selectedChat.password && (
+                      <button
+                        type="button"
+                        onClick={handleRemovePassword}
+                        disabled={isUpdatingPassword}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        {isUpdatingPassword ? "Verwijderen…" : "Wachtwoord verwijderen"}
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500 font-montserrat italic">
+                  Alleen-lezen: u heeft geen rechten om het wachtwoord te wijzigen.
                 </p>
               )}
             </div>
-
-            {/* Action Buttons */}
-            {canWrite && (
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={handleUpdatePassword}
-                  disabled={isUpdatingPassword || !newPassword.trim()}
-                  className="px-6 py-3 bg-[#23BD92] hover:bg-[#1ea87c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
-                >
-                  <Key className="w-4 h-4" />
-                  {isUpdatingPassword ? "Bijwerken..." : "Wachtwoord Bijwerken"}
-                </button>
-                {selectedChat.password && (
-                  <button
-                    onClick={handleRemovePassword}
-                    disabled={isUpdatingPassword}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-montserrat font-semibold rounded-xl transition-colors flex items-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    {isUpdatingPassword ? "Verwijderen..." : "Wachtwoord Verwijderen"}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
+
+        {activeSubTab === "documenten" && (
+          <FilesSection
+            sources={fileSources}
+            loading={loading}
+            canWrite={canWrite}
+            onAddFile={handleAddFile}
+            onDeleteSource={handleDeleteSource}
+          />
+        )}
+
+        {activeSubTab === "url" && (
+          <UrlSection
+            sources={urlSources}
+            loading={loading}
+            canWrite={canWrite}
+            onAddUrl={handleAddUrl}
+            onDeleteSource={handleDeleteSource}
+            onSync={handleSync}
+            lastSync={lastSync}
+            nextSync={nextSync}
+            formatDateTime={formatDateTime}
+            formatNextSync={formatNextSync}
+          />
+        )}
+
+        {activeSubTab === "html" && (
+          <HtmlSection
+            sources={htmlSources}
+            loading={loading}
+            canWrite={canWrite}
+            onAddHtml={handleAddHtml}
+            onDeleteSource={handleDeleteSource}
+          />
+        )}
       </div>
-
-      {/* URL Section */}
-      <UrlSection
-        sources={urlSources}
-        loading={loading}
-        canWrite={canWrite}
-        onAddUrl={handleAddUrl}
-        onDeleteSource={handleDeleteSource}
-        onSync={handleSync}
-        lastSync={lastSync}
-        nextSync={nextSync}
-        formatDateTime={formatDateTime}
-        formatNextSync={formatNextSync}
-      />
-
-      {/* HTML Section */}
-      <HtmlSection
-        sources={htmlSources}
-        loading={loading}
-        canWrite={canWrite}
-        onAddHtml={handleAddHtml}
-        onDeleteSource={handleDeleteSource}
-      />
-
-      {/* Files Section */}
-      <FilesSection
-        sources={fileSources}
-        loading={loading}
-        canWrite={canWrite}
-        onAddFile={handleAddFile}
-        onDeleteSource={handleDeleteSource}
-      />
     </div>
   )
 }

@@ -79,7 +79,7 @@ export function buildPublicChatManifestJson(opts) {
   return {
     name,
     short_name: short,
-    description: 'DAVI publieke chat',
+    description: 'DAVI QR-Chat',
     start_url,
     scope,
     display: 'standalone',
