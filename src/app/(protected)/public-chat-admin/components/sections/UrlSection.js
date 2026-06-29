@@ -14,7 +14,7 @@ export default function UrlSection({
   sources = [],
   loading,
   canWrite = true,
-  onAddUrl,
+  onAddUrls,
   onDeleteSource,
   onSync,
   lastSync,
@@ -27,6 +27,7 @@ export default function UrlSection({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [addingUrls, setAddingUrls] = useState(false)
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
   const [errorInfo, setErrorInfo] = useState(null)
 
@@ -280,22 +281,40 @@ export default function UrlSection({
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center mb-[120px] xl:mb-0 bg-black/50">
           <AddUrlModal
-            onConfirm={async (url) => {
+            isSubmitting={addingUrls}
+            onConfirm={async (urls) => {
+              setAddingUrls(true)
               try {
-                await onAddUrl(url)
-                setIsAddModalOpen(false)
-              } catch (err) {
-                // Extract error message from axios error response
-                const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || "Er is een fout opgetreden bij het toevoegen van de URL."
-                setErrorInfo({
-                  error: { message: errorMessage, detail: err.response?.data?.detail },
-                  url: url
-                })
-                setIsErrorModalOpen(true)
-                // Keep the add modal open so user can see the error and try again
+                const result = await onAddUrls(urls)
+                const failed = result?.failed || []
+                if (failed.length === 0) {
+                  setIsAddModalOpen(false)
+                } else {
+                  const first = failed[0]
+                  const errorMessage =
+                    first.err?.response?.data?.detail ||
+                    first.err?.response?.data?.message ||
+                    first.err?.message ||
+                    "Er is een fout opgetreden bij het toevoegen van de URL."
+                  setErrorInfo({
+                    error: { message: errorMessage, detail: first.err?.response?.data?.detail },
+                    url: first.url,
+                    partialSuccess: (result?.succeeded || 0) > 0,
+                    succeededCount: result?.succeeded || 0,
+                    failedCount: failed.length,
+                  })
+                  setIsErrorModalOpen(true)
+                  if ((result?.succeeded || 0) > 0) {
+                    setIsAddModalOpen(false)
+                  }
+                }
+              } finally {
+                setAddingUrls(false)
               }
             }}
-            onClose={() => setIsAddModalOpen(false)}
+            onClose={() => {
+              if (!addingUrls) setIsAddModalOpen(false)
+            }}
           />
         </div>
       )}
@@ -316,6 +335,9 @@ export default function UrlSection({
           <UrlErrorModal
             error={errorInfo.error}
             url={errorInfo.url}
+            partialSuccess={errorInfo.partialSuccess}
+            succeededCount={errorInfo.succeededCount}
+            failedCount={errorInfo.failedCount}
             onClose={() => {
               setIsErrorModalOpen(false)
               setErrorInfo(null)

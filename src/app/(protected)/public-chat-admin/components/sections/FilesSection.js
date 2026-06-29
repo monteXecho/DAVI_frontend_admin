@@ -12,12 +12,13 @@ export default function FilesSection({
   sources = [],
   loading,
   canWrite = true,
-  onAddFile,
+  onAddFiles,
   onDeleteSource,
 }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSources, setSelectedSources] = useState(new Set())
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(null)
   const [error, setError] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const fileInputRef = useRef(null)
@@ -64,13 +65,25 @@ export default function FilesSection({
   const someSelected = filteredSources.some(s => selectedSources.has(s.id)) && !allSelected
 
   const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
     try {
       setUploading(true)
       setError("")
-      await onAddFile(file)
+      const result = await onAddFiles(files, (current, total, name) => {
+        setUploadProgress({ current, total, name })
+      })
+
+      if (result?.failed?.length) {
+        const names = result.failed.map((f) => f.name).join(", ")
+        setError(
+          result.succeeded > 0
+            ? `${result.succeeded} van ${result.total} bestanden geüpload. Mislukt: ${names}`
+            : `Upload mislukt: ${names}`
+        )
+      }
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -78,6 +91,7 @@ export default function FilesSection({
       setError(err.message || "Failed to upload file")
     } finally {
       setUploading(false)
+      setUploadProgress(null)
     }
   }
 
@@ -144,6 +158,7 @@ export default function FilesSection({
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             onChange={handleFileSelect}
             disabled={uploading}
             className="hidden"
@@ -151,7 +166,13 @@ export default function FilesSection({
           {canWrite && (
             <AddButton 
               onClick={handleAddClick} 
-              text={uploading ? "Uploaden..." : "Toevoegen"}
+              text={
+                uploading && uploadProgress
+                  ? `Uploaden ${uploadProgress.current}/${uploadProgress.total}…`
+                  : uploading
+                    ? "Uploaden..."
+                    : "Toevoegen"
+              }
               disabled={uploading}
             />
           )}
@@ -162,6 +183,11 @@ export default function FilesSection({
       {/* Error Message */}
       {error && (
         <div className="mt-2 text-red-500 text-sm">{error}</div>
+      )}
+      {uploadProgress && (
+        <div className="mt-2 text-sm text-gray-600 font-montserrat truncate">
+          Bezig: {uploadProgress.name}
+        </div>
       )}
 
       {/* Table */}

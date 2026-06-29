@@ -4,6 +4,9 @@ export default function UrlErrorModal({
   error,
   url,
   onClose,
+  partialSuccess = false,
+  succeededCount = 0,
+  failedCount = 0,
 }) {
   // Parse error message to determine error type and provide helpful information
   const getErrorInfo = () => {
@@ -124,6 +127,13 @@ export default function UrlErrorModal({
       <h2 className="text-2xl font-bold text-gray-900 text-center">
         {errorInfo.title}
       </h2>
+
+      {partialSuccess && succeededCount > 0 && (
+        <div className="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900 font-montserrat">
+          {succeededCount} URL{succeededCount !== 1 ? "s" : ""} succesvol toegevoegd.
+          {failedCount > 0 ? ` ${failedCount} mislukt (zie hieronder).` : ""}
+        </div>
+      )}
 
       {/* URL Display */}
       {url && (

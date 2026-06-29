@@ -130,34 +130,95 @@ export default function WijzigenTab({
     }
   }, [selectedChat?.id, syncChatSources, loadSources, onRefresh])
 
-  const handleAddUrl = async (url) => {
-    try {
-      await addUrlSource(selectedChat.id, url)
+  const handleAddUrls = async (urls) => {
+    const list = Array.isArray(urls) ? urls : [urls]
+    const failed = []
+    let succeeded = 0
+
+    for (let i = 0; i < list.length; i++) {
+      try {
+        await addUrlSource(selectedChat.id, list[i])
+        succeeded++
+      } catch (err) {
+        failed.push({ url: list[i], err })
+      }
+    }
+
+    if (succeeded > 0) {
       await loadSources()
       onRefresh()
-    } catch (err) {
-      throw err
+      if (failed.length === 0) {
+        toast.success(
+          succeeded === 1 ? "URL toegevoegd" : `${succeeded} URL's toegevoegd`
+        )
+      } else {
+        toast.warn(`${succeeded} URL's toegevoegd, ${failed.length} mislukt`)
+      }
     }
+
+    return { succeeded, failed, total: list.length }
   }
 
-  const handleAddHtml = async (file) => {
-    try {
-      await addHtmlSource(selectedChat.id, file)
+  const handleAddHtmlFiles = async (files, onProgress) => {
+    const list = Array.from(files || [])
+    const failed = []
+    let succeeded = 0
+
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i]
+      onProgress?.(i + 1, list.length, file.name)
+      try {
+        await addHtmlSource(selectedChat.id, file)
+        succeeded++
+      } catch (err) {
+        failed.push({ name: file.name, err })
+      }
+    }
+
+    if (succeeded > 0) {
       await loadSources()
       onRefresh()
-    } catch (err) {
-      throw err
+      if (failed.length === 0) {
+        toast.success(
+          succeeded === 1 ? "HTML bestand toegevoegd" : `${succeeded} HTML bestanden toegevoegd`
+        )
+      } else {
+        toast.warn(`${succeeded} geüpload, ${failed.length} mislukt`)
+      }
     }
+
+    return { succeeded, failed, total: list.length }
   }
 
-  const handleAddFile = async (file) => {
-    try {
-      await addFileSource(selectedChat.id, file)
+  const handleAddFiles = async (files, onProgress) => {
+    const list = Array.from(files || [])
+    const failed = []
+    let succeeded = 0
+
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i]
+      onProgress?.(i + 1, list.length, file.name)
+      try {
+        await addFileSource(selectedChat.id, file)
+        succeeded++
+      } catch (err) {
+        failed.push({ name: file.name, err })
+      }
+    }
+
+    if (succeeded > 0) {
       await loadSources()
       onRefresh()
-    } catch (err) {
-      throw err
+      if (failed.length === 0) {
+        toast.success(
+          succeeded === 1 ? "Bestand toegevoegd" : `${succeeded} bestanden toegevoegd`
+        )
+      } else {
+        toast.warn(`${succeeded} geüpload, ${failed.length} mislukt`)
+      }
     }
+
+    return { succeeded, failed, total: list.length }
   }
 
   const handleDeleteSource = async (sourceId) => {
@@ -509,7 +570,7 @@ export default function WijzigenTab({
             sources={fileSources}
             loading={loading}
             canWrite={canWrite}
-            onAddFile={handleAddFile}
+            onAddFiles={handleAddFiles}
             onDeleteSource={handleDeleteSource}
           />
         )}
@@ -519,7 +580,7 @@ export default function WijzigenTab({
             sources={urlSources}
             loading={loading}
             canWrite={canWrite}
-            onAddUrl={handleAddUrl}
+            onAddUrls={handleAddUrls}
             onDeleteSource={handleDeleteSource}
             onSync={handleSync}
             lastSync={lastSync}
@@ -534,7 +595,7 @@ export default function WijzigenTab({
             sources={htmlSources}
             loading={loading}
             canWrite={canWrite}
-            onAddHtml={handleAddHtml}
+            onAddHtmlFiles={handleAddHtmlFiles}
             onDeleteSource={handleDeleteSource}
           />
         )}

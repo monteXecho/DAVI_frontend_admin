@@ -12,12 +12,13 @@ export default function HtmlSection({
   sources = [],
   loading,
   canWrite = true,
-  onAddHtml,
+  onAddHtmlFiles,
   onDeleteSource,
 }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSources, setSelectedSources] = useState(new Set())
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(null)
   const [error, setError] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const fileInputRef = useRef(null)
@@ -64,18 +65,34 @@ export default function HtmlSection({
   const someSelected = filteredSources.some(s => selectedSources.has(s.id)) && !allSelected
 
   const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
-      setError("Alleen HTML bestanden zijn toegestaan")
+    const invalid = files.filter(
+      (file) => !file.name.endsWith(".html") && !file.name.endsWith(".htm")
+    )
+    if (invalid.length > 0) {
+      setError("Alleen HTML bestanden (.html, .htm) zijn toegestaan")
+      if (fileInputRef.current) fileInputRef.current.value = ""
       return
     }
 
     try {
       setUploading(true)
       setError("")
-      await onAddHtml(file)
+      const result = await onAddHtmlFiles(files, (current, total, name) => {
+        setUploadProgress({ current, total, name })
+      })
+
+      if (result?.failed?.length) {
+        const names = result.failed.map((f) => f.name).join(", ")
+        setError(
+          result.succeeded > 0
+            ? `${result.succeeded} van ${result.total} bestanden geüpload. Mislukt: ${names}`
+            : `Upload mislukt: ${names}`
+        )
+      }
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -83,6 +100,7 @@ export default function HtmlSection({
       setError(err.message || "Failed to upload HTML file")
     } finally {
       setUploading(false)
+      setUploadProgress(null)
     }
   }
 
@@ -150,6 +168,7 @@ export default function HtmlSection({
             ref={fileInputRef}
             type="file"
             accept=".html,.htm"
+            multiple
             onChange={handleFileSelect}
             disabled={uploading}
             className="hidden"
@@ -157,7 +176,13 @@ export default function HtmlSection({
           {canWrite && (
             <AddButton 
               onClick={handleAddClick} 
-              text={uploading ? "Uploaden..." : "Toevoegen"}
+              text={
+                uploading && uploadProgress
+                  ? `Uploaden ${uploadProgress.current}/${uploadProgress.total}…`
+                  : uploading
+                    ? "Uploaden..."
+                    : "Toevoegen"
+              }
               disabled={uploading}
             />
           )}
@@ -168,6 +193,11 @@ export default function HtmlSection({
       {/* Error Message */}
       {error && (
         <div className="mt-2 text-red-500 text-sm">{error}</div>
+      )}
+      {uploadProgress && (
+        <div className="mt-2 text-sm text-gray-600 font-montserrat truncate">
+          Bezig: {uploadProgress.name}
+        </div>
       )}
 
       {/* Table */}
