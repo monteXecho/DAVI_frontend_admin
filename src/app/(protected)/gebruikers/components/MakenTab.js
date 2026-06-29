@@ -208,7 +208,7 @@ export default function MakenTab({
       showTeamlidPublicChat && publicchatPermission ? selectedPublicChatIds : undefined
     )
     toast.success(
-      "Teamlid uitgenodigd. De gebruiker kan zich registreren en direct als teamlid inloggen."
+      "Nodig het teamlid uit. De gebruiker kan zich registreren en direct als teamlid inloggen."
     )
     resetFormAfterSuccess()
   }
